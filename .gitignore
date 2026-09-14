@@ -1,18 +1,47 @@
+# Python virtual environments
 venv/
+.venv/
+
+# Environment and secret files
 .env
+.env.*
+!.env.example
+
+# Python cache files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 .pytest_cache/
-model/artifacts/*.pkl
-model/artifacts/*.joblib
+.mypy_cache/
+.ruff_cache/
+
+# Database files
 *.db
 *.sqlite
 *.sqlite3
-.DS_Store
 
+# Logs
+*.log
+
+# Model artifacts
+model/artifacts/*.pkl
+model/artifacts/*.joblib
+
+# Scratch and temporary files
 scratch/
-venv/
-__pycache__/
-*.pyc
+*.tmp
+*.temp
+
+# Generated reports and test outputs
+*.pdf
+
+# Frontend dependencies
+node_modules/
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db

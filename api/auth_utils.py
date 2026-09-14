@@ -103,11 +103,16 @@ def get_current_user(authorization: Optional[str] = Header(None), db: Session = 
     return user
 
 def get_required_user(current_user: Optional[User] = Depends(get_current_user)) -> User:
-    """Dependency: enforces authentication (raises 401 if unauthenticated)."""
+    """Dependency: enforces authentication (raises 401 if unauthenticated, 403 if deactivated)."""
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication token missing or invalid. Please login."
+        )
+    if getattr(current_user, "is_active", 1) == 0 or getattr(current_user, "status", "ACTIVE") == "INACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated by administrator. Access revoked."
         )
     return current_user
 

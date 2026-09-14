@@ -58,3 +58,14 @@ def init_db():
                 conn.execute(text(f"ALTER TABLE raw_hotspots ADD COLUMN {col_name} {col_type}"))
             except Exception:
                 pass
+
+        user_cols_to_add = [
+            ("is_active", "INTEGER DEFAULT 1"),
+            ("status", "VARCHAR DEFAULT 'ACTIVE'")
+        ]
+        for col_name, col_type in user_cols_to_add:
+            try:
+                from sqlalchemy import text
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+            except Exception:
+                pass

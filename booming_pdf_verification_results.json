@@ -1,0 +1,81 @@
+{
+  "government": {
+    "login_and_alert": {
+      "role": "GOVERNMENT_AUTHORITY",
+      "username": "gov1",
+      "govDashboardDisplay": "flex",
+      "bannerDisplay": "block",
+      "bannerText": "URGENT: Incident #1030 (Factory) has Risk Score 61/100 and Peak FRP 63 MW \u2014 Immediate Dispatch / Acknowledgment Required!",
+      "modalDisplay": "flex",
+      "modalTitle": "\ud83d\udea8 OFFICIAL INCIDENT ALERT \u2014 IMMEDIATE INTERVENTION DIRECTIVE",
+      "modalBadge": "CRITICAL THREAT \u00b7 UNACKNOWLEDGED",
+      "incidentId": "Incident #1030",
+      "incidentStatus": "UNACKNOWLEDGED",
+      "riskScore": "60.5",
+      "frp": "62.8 MW",
+      "classification": "Possible Vegetation/Agricultural Fire",
+      "location": "Factory",
+      "coords": "8.3610\u00b0N, 80.2057\u00b0E",
+      "primaryBtnText": " Take Immediate Action & Dispatch"
+    },
+    "primary_action": {
+      "modalDisplayAfter": "none",
+      "bannerDisplayAfter": "block",
+      "drawerDisplay": "flex",
+      "drawerTitle": "Incident #1030",
+      "drawerStatusVal": "DISPATCHED",
+      "dispatchBtnActive": true
+    },
+    "reports_view": {
+      "currentRoute": "#/official-reports",
+      "reportsViewDisplay": "flex",
+      "btnDownloadDisplay": "inline-flex",
+      "btnPrintDisplay": "inline-flex",
+      "formatVal": "pdf",
+      "metaText": "Scope: ALL | Region: ALL | Officer: gov1 | Compiled: 2026-09-13 18:51:31 UTC",
+      "bodyHasTable": true
+    },
+    "pdf_download_print": {
+      "pdfFetchUrl": "http://127.0.0.1:8000/api/government/reports/generate-pdf",
+      "blobCreated": {
+        "url": "blob:http://127.0.0.1:8000/76db34e4-d66e-4454-afb5-2d5e2ae474d1",
+        "size": 11805,
+        "type": "application/pdf"
+      },
+      "printIframes": [
+        "blob:http://127.0.0.1:8000/76db34e4-d66e-4454-afb5-2d5e2ae474d1"
+      ]
+    }
+  },
+  "analyst": {
+    "login_and_alert": {
+      "role": "ANALYST",
+      "username": "analyst1",
+      "analystDashboardDisplay": "flex",
+      "bannerDisplay": "block",
+      "bannerText": "URGENT: Incident #1113 (Industrial) has Risk Score 66/100 and Peak FRP 127 MW \u2014 Immediate Telemetry Verification Required!",
+      "modalDisplay": "flex",
+      "modalTitle": "\ud83d\udea8 HIGH-RISK THERMAL ANOMALY \u2014 IMMEDIATE ANALYST VERIFICATION",
+      "modalBadge": "HIGH RISK \u00b7 TELEMETRY ESCALATION",
+      "incidentId": "Incident #1113",
+      "incidentStatus": "ACKNOWLEDGED",
+      "riskScore": "66.1",
+      "frp": "127.3 MW",
+      "classification": "Possible Vegetation/Agricultural Fire",
+      "location": "Industrial",
+      "primaryBtnText": " Inspect Satellite Evidence"
+    },
+    "primary_action": {
+      "modalDisplayAfter": "none",
+      "currentNav": "satellite",
+      "hash": "#/satellite-data?cluster=1213"
+    }
+  },
+  "screenshots": [
+    "c:\\Users\\vanip\\Downloads\\sih26162-thermal-detection\\government_booming_alert.png",
+    "c:\\Users\\vanip\\Downloads\\sih26162-thermal-detection\\government_reports_pdf.png",
+    "c:\\Users\\vanip\\Downloads\\sih26162-thermal-detection\\analyst_booming_alert.png",
+    "c:\\Users\\vanip\\Downloads\\sih26162-thermal-detection\\analyst_investigation_view.png"
+  ],
+  "overall_success": true
+}

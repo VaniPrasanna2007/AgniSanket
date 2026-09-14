@@ -1,0 +1,11 @@
+{
+  "firms_area": "IND",
+  "firms_confidence_min": 30,
+  "dbscan_eps_km": 5.0,
+  "dbscan_min_samples": 2,
+  "high_frp_threshold_mw": 50.0,
+  "industrial_buffer_km": 1.5,
+  "persistence_threshold_days": 3,
+  "audio_alerts_enabled": true,
+  "auto_sync_interval_sec": 180
+}

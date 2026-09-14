@@ -1,0 +1,384 @@
+{
+  "modules_report": [
+    {
+      "name": "Command Center",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Live Incidents",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Incident Investigation",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Dispatch Management",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Satellite Verification",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Risk & Intelligence",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Incident History",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Official Reports",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Map Explorer",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Alerts & Notifications",
+      "route": "#/login",
+      "page_loaded": "FAIL",
+      "api_request": "FAIL",
+      "data_rendered": "FAIL",
+      "console_errors": "NO"
+    }
+  ],
+  "buttons_report": [
+    {
+      "button_name": "Refresh Incidents (#btn-gov-refresh)",
+      "expected_action": "Fetch fresh emergency telemetry from backend",
+      "actual_result": "Re-fetched incident feed and updated dashboard telemetry",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Filter: All (.gov-filter-btn[data-filter='ALL'])",
+      "expected_action": "Display all emergency incidents in table",
+      "actual_result": "Rendered all 1 incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Filter: Action Required (data-filter='UNACKNOWLEDGED')",
+      "expected_action": "Filter table to show only action-required incidents",
+      "actual_result": "Filtered to 1 unacknowledged incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Filter: Dispatched (data-filter='DISPATCHED')",
+      "expected_action": "Filter table to show only dispatched incidents",
+      "actual_result": "Filtered to 1 dispatched incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Filter: Resolved (data-filter='RESOLVED')",
+      "expected_action": "Filter table to show only resolved incidents",
+      "actual_result": "Filtered to 1 resolved incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Filter: Critical (data-filter='CRITICAL')",
+      "expected_action": "Filter table to show only critical priority incidents",
+      "actual_result": "Filtered to 1 critical incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Row Manage Button (.btn-gov-manage)",
+      "expected_action": "Open Action Drawer and load incident telemetry",
+      "actual_result": "False",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Action Choice: Acknowledge (#btn-gov-drawer-ack)",
+      "expected_action": "Set active directive status to ACKNOWLEDGED",
+      "actual_result": "Selected status: ACKNOWLEDGED",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Action Choice: Dispatch (#btn-gov-drawer-dispatch)",
+      "expected_action": "Set status to DISPATCHED and reveal deployment options",
+      "actual_result": "Selected DISPATCHED; unit inputs visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Action Choice: Resolve (#btn-gov-drawer-resolve)",
+      "expected_action": "Set status to RESOLVED and require resolution notes",
+      "actual_result": "Selected RESOLVED; label updated: 'Resolution Summary (Required):'",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Save Action Directive (#btn-gov-submit-drawer)",
+      "expected_action": "Post official status and persist directive to database",
+      "actual_result": "Submitted official status directive",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Verify Spectral Data (#gov-btn-satellite-verify)",
+      "expected_action": "Open multi-spectral STAC telemetry modal",
+      "actual_result": "Opened Satellite Evidence Modal: false",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Close Sat Modal (#btn-close-satellite-evidence)",
+      "expected_action": "Close satellite verification modal",
+      "actual_result": "Modal hidden: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Drawer Back (#btn-gov-drawer-back)",
+      "expected_action": "Deselect incident row and reset drawer",
+      "actual_result": "Deselected incident, empty prompt visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Drawer Close (#btn-gov-drawer-close)",
+      "expected_action": "Dismiss drawer panel",
+      "actual_result": "Dismissed drawer, empty prompt visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Satellite Inspection (#gov-btn-satellite-inspect)",
+      "expected_action": "Route to Satellite Verification view",
+      "actual_result": "Navigated to #/login",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "View on Map (#gov-btn-view-3d)",
+      "expected_action": "Route to Map Explorer view",
+      "actual_result": "Navigated to #/login",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Refresh Live Stream (#btn-gov-refresh-live)",
+      "expected_action": "Re-render live incident stream from backend",
+      "actual_result": "Refreshed live incident stream",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Live Filter: Critical (data-live-filter='CRITICAL')",
+      "expected_action": "Filter live table to critical priority incidents",
+      "actual_result": "Filtered live incidents to 1 critical items",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Live Row Investigate",
+      "expected_action": "Navigate to Incident Investigation with selected incident",
+      "actual_result": "False",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Investigation Dropdown (#gov-inv-cluster-select)",
+      "expected_action": "Switch investigated incident and reload dossier",
+      "actual_result": "False",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Submit Investigation Directive (#gov-inv-submit-action)",
+      "expected_action": "Save tactical directive and record in audit trail",
+      "actual_result": "Saved official directive from investigation dossier",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Refresh Dispatches (#btn-gov-refresh-dispatches)",
+      "expected_action": "Pull active mobilization missions from backend",
+      "actual_result": "Refreshed dispatch fleet registry",
+      "api_endpoint": "/api/government/dispatches",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Deploy Response Unit (#btn-gov-dispatch-deploy)",
+      "expected_action": "Mobilize rapid response unit and record in database",
+      "actual_result": "Issued mobilization order for $Mobile Fire Brigade Alpha 1789289910",
+      "api_endpoint": "/api/government/dispatches",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Sat Verification Cluster Dropdown",
+      "expected_action": "Load spectral bands for selected cluster",
+      "actual_result": "False",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "FAIL"
+    },
+    {
+      "button_name": "Open Detailed Sat Modal (#gov-satver-open-modal)",
+      "expected_action": "Open STAC multi-satellite imagery viewer",
+      "actual_result": "Opened and verified modal: false",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Refresh History (#btn-gov-refresh-history)",
+      "expected_action": "Pull latest audit records from backend",
+      "actual_result": "Refreshed official audit log",
+      "api_endpoint": "/api/government/audit-history",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "History Filter: Dispatched (data-history-filter='DISPATCHED')",
+      "expected_action": "Filter audit table to dispatched actions",
+      "actual_result": "Filtered audit history to 1 dispatched entries",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Export Audit History (#btn-gov-export-history)",
+      "expected_action": "Export audit trail as downloadable JSON artifact",
+      "actual_result": "Generated client-side JSON export of audit trail",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Generate Official Report (#btn-gov-generate-report)",
+      "expected_action": "Compile executive incident intelligence dossier",
+      "actual_result": "Generated dossier report: false",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Download Report (#btn-gov-download-report)",
+      "expected_action": "Download official report dossier",
+      "actual_result": "Generated downloadable statutory executive report file",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Reset to India View (#btn-gov-map-reset)",
+      "expected_action": "Recenter map to all-India bounds",
+      "actual_result": "Re-centered map bounds to India geospatial extent",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Refresh Alerts (#btn-gov-refresh-alerts)",
+      "expected_action": "Fetch priority emergency alerts from backend",
+      "actual_result": "Refreshed priority alerts feed",
+      "api_endpoint": "/api/government/alerts",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Mark All Alerts Read (#btn-gov-mark-all-read)",
+      "expected_action": "Acknowledge and mark all alerts as read",
+      "actual_result": "Acknowledged all alerts, badge: '0 active alerts'",
+      "api_endpoint": "/api/government/alerts/mark-all-read",
+      "db_confirmed": "YES",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Open System Test Modal (#btn-gov-run-system-tests)",
+      "expected_action": "Open interactive automated system test modal",
+      "actual_result": "Opened test runner modal: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Run All System Tests (#btn-run-all-gov-tests)",
+      "expected_action": "Run automated suite across all 10 modules and 22 directives",
+      "actual_result": "Executed automated 32-point system verification suite",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Close System Test Modal (#btn-close-gov-test-modal)",
+      "expected_action": "Dismiss test suite modal",
+      "actual_result": "Closed test runner modal: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    }
+  ],
+  "console_errors_count": 0,
+  "console_errors": []
+}

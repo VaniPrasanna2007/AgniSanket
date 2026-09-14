@@ -1,0 +1,255 @@
+{
+  "modules": [
+    {
+      "name": "Command Center",
+      "route": "#/command-center",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Live Incidents",
+      "route": "#/live-incidents",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Incident Investigation",
+      "route": "#/incident-investigation",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Dispatch Management",
+      "route": "#/dispatch-management",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Satellite Verification",
+      "route": "#/satellite-verification",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Risk & Intelligence",
+      "route": "#/risk-intelligence",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Incident History",
+      "route": "#/incident-history",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Official Reports",
+      "route": "#/official-reports",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Map Explorer",
+      "route": "#/map-explorer",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "name": "Alerts & Notifications",
+      "route": "#/alerts-notifications",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    }
+  ],
+  "buttons": [
+    {
+      "button_name": "Refresh Incidents",
+      "expected_action": "Fetch fresh incident telemetry and update table",
+      "actual_result": "Triggered reload of live operational incidents",
+      "api_endpoint": "/api/government/incidents",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "All Incidents",
+      "expected_action": "Filter incident stream to show all records",
+      "actual_result": "Rendered all 1063 incidents in operational stream",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Action Required",
+      "expected_action": "Filter stream to show only unacknowledged incidents",
+      "actual_result": "Filtered stream to 1061 unacknowledged emergency incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Dispatched",
+      "expected_action": "Filter stream to show only dispatched incidents",
+      "actual_result": "Filtered stream to 1 dispatched response incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Resolved",
+      "expected_action": "Filter stream to show only resolved incidents",
+      "actual_result": "Filtered stream to 1 resolved incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Critical Priority",
+      "expected_action": "Filter stream to show only critical priority threats",
+      "actual_result": "Filtered stream to 1 critical priority threats",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Search",
+      "expected_action": "Filter incident table in real-time by search query",
+      "actual_result": "Real-time search query matched 13 coordinate records",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Manage",
+      "expected_action": "Open Action Drawer for selected cluster and render telemetry",
+      "actual_result": "Opened Action Drawer for Incident #233 (Database Cluster ID #332)",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Acknowledge",
+      "expected_action": "Set directive choice to ACKNOWLEDGED",
+      "actual_result": "Set active directive status to ACKNOWLEDGED in drawer",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Dispatch",
+      "expected_action": "Set status to DISPATCHED and reveal deployment options",
+      "actual_result": "Set status to DISPATCHED; unit selection revealed: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Resolve",
+      "expected_action": "Set status to RESOLVED and require resolution summary",
+      "actual_result": "Set status to RESOLVED; prompt updated: 'Resolution Summary (Required):'",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Save Official Action",
+      "expected_action": "Persist official status and directive notes into database",
+      "actual_result": "Submitted action directive to cluster ID #$332",
+      "api_endpoint": "/api/government/incidents",
+      "db_confirmed": "YES",
+      "status": "PASS"
+    },
+    {
+      "button_name": "View History",
+      "expected_action": "Navigate and scroll to incident history panel",
+      "actual_result": "Smoothly scrolled to history panel below action drawer (offsetTop: 1180px)",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Satellite Verification",
+      "expected_action": "Open multi-spectral satellite evidence modal",
+      "actual_result": "Opened STAC multi-spectral verification modal: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Satellite Inspection",
+      "expected_action": "Route to Satellite Verification workspace view",
+      "actual_result": "Navigated to #/satellite-verification",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Back",
+      "expected_action": "Deselect active incident and reset drawer state",
+      "actual_result": "Deselected incident row (selectedGovIncidentId: null), empty prompt displayed: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Close",
+      "expected_action": "Dismiss and close action drawer",
+      "actual_result": "Closed action drawer view, empty prompt displayed: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Generate Report",
+      "expected_action": "Compile executive incident intelligence brief",
+      "actual_result": "Compiled and rendered official statutory incident dossier in preview",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Download Report",
+      "expected_action": "Download statutory incident report artifact",
+      "actual_result": "Triggered browser file download of statutory report dossier",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Mark as Read",
+      "expected_action": "Mark all priority alerts as read",
+      "actual_result": "Acknowledged all alerts; badge updated to: '21 active alerts'",
+      "api_endpoint": "/api/government/alerts/mark-all-read",
+      "db_confirmed": "YES",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Logout",
+      "expected_action": "Sign out and clear session tokens",
+      "actual_result": "Successfully signed out and redirected to login portal (#/alerts-notifications)",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    }
+  ],
+  "console_errors": []
+}

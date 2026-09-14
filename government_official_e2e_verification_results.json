@@ -1,0 +1,144 @@
+{
+  "timestamp": "2026-09-13 18:11:18 UTC",
+  "status": "PASSED",
+  "role": "GOVERNMENT_AUTHORITY",
+  "tests": {
+    "login": {
+      "authenticated": true,
+      "username": "gov1",
+      "role": "GOVERNMENT_AUTHORITY",
+      "hash": "#/command-center",
+      "heroRole": "Government Official",
+      "btnText": "Sign in as Government Official"
+    },
+    "layout": {
+      "govDashVisible": true,
+      "govDashLayoutClass": "dashboard-view gov-command-layout",
+      "analystDashHidden": true,
+      "adminDashHidden": true,
+      "govSidebarVisible": true,
+      "govViewportVisible": true,
+      "kpis": {
+        "total": "1125",
+        "unack": "1121",
+        "dispatched": "3",
+        "resolved": "0",
+        "critical": "0"
+      },
+      "rowCount": 1125,
+      "navItems": [
+        "1. Command Center",
+        "2. Live Incidents",
+        "3. Incident Investigation",
+        "4. Dispatch Management",
+        "5. Map Explorer",
+        "6. Official Reports",
+        "7. Alerts & Notifications"
+      ]
+    },
+    "routes": [
+      {
+        "route": "#/command-center",
+        "viewId": "gov-view-command-center",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/command-center"
+      },
+      {
+        "route": "#/live-incidents",
+        "viewId": "gov-view-live-incidents",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/live-incidents"
+      },
+      {
+        "route": "#/incident-investigation",
+        "viewId": "gov-view-incident-investigation",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/incident-investigation"
+      },
+      {
+        "route": "#/dispatch-management",
+        "viewId": "gov-view-dispatch-management",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/dispatch-management"
+      },
+      {
+        "route": "#/map-explorer",
+        "viewId": "gov-view-map-explorer",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/map-explorer"
+      },
+      {
+        "route": "#/official-reports",
+        "viewId": "gov-view-official-reports",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/official-reports"
+      },
+      {
+        "route": "#/alerts-notifications",
+        "viewId": "gov-view-alerts-notifications",
+        "viewVisible": true,
+        "navActive": true,
+        "hash": "#/alerts-notifications"
+      }
+    ],
+    "buttons": {
+      "drawer_select": {
+        "opened": true,
+        "title": "Incident #1113",
+        "dbId": "1213"
+      },
+      "choice_buttons": {
+        "hasAck": true,
+        "hasDisp": true,
+        "hasRes": true,
+        "dispSecToggled": true
+      },
+      "add_notes": {
+        "notesInputFound": true,
+        "notesValue": "Automated CDP Verification Directive - Perimeter Securing"
+      },
+      "save_official_action": {
+        "submitted": true,
+        "drawerStatus": "DISPATCHED"
+      },
+      "incident_history": {
+        "btnHistFound": true,
+        "historyLength": 418,
+        "historyText": "\n                \n                    \n                         gov1\n                        2026-09"
+      },
+      "system_test_suite": {
+        "modalOpened": true,
+        "scoreText": "33 / 33 Passed"
+      },
+      "official_reports": {
+        "hasContent": true,
+        "dlBtnVisible": true,
+        "printBtnVisible": true
+      }
+    },
+    "persistence": {
+      "hash": "#/command-center",
+      "role": "GOVERNMENT_AUTHORITY",
+      "govDashVisible": true,
+      "rowCount": 1125
+    },
+    "security_isolation": {
+      "dom_check": {
+        "switcherHidden": true,
+        "adminDashHidden": true,
+        "sysBadgeHidden": true
+      },
+      "url_guard": {
+        "finalHash": "#/command-center",
+        "govDashVisible": true,
+        "adminDashHidden": true
+      }
+    }
+  }
+}

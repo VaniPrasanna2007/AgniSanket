@@ -144,5 +144,7 @@ class User(Base):
     email = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default="ANALYST") # ADMIN, ANALYST, GOVERNMENT_AUTHORITY
+    is_active = Column(Integer, default=1)
+    status = Column(String, default="ACTIVE") # ACTIVE, INACTIVE
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-09-13 17:56:03 UTC",
+  "tests_run": 5,
+  "overall_status": "PASSED",
+  "audit_logs": {
+    "direct_route": "#/admin/audit",
+    "details_modal_opened": true,
+    "navigated_away": false,
+    "incident_card_rendered": true,
+    "back_button_works": true,
+    "close_button_works": true,
+    "search_filter_works": true
+  },
+  "incident_investigation": {
+    "direct_route": "#/admin/incidents",
+    "row_action_buttons": [
+      "Details",
+      "Status",
+      "History",
+      "Satellite"
+    ],
+    "details_modal_works": true,
+    "history_modal_works": true,
+    "status_modal_options": [
+      "UNACKNOWLEDGED",
+      "ACKNOWLEDGED",
+      "DISPATCHED",
+      "RESOLVED"
+    ],
+    "immediate_ui_badge_update": true,
+    "satellite_button_inspection": true,
+    "satellite_banner_visible": true,
+    "back_to_incidents_button_works": true
+  },
+  "satellite_data": {
+    "direct_route": "#/admin/satellite",
+    "cluster_query_support": true,
+    "detections_returned": true
+  },
+  "all_12_routes_verified": [
+    "dashboard",
+    "incidents",
+    "satellite",
+    "ml-insights",
+    "reports",
+    "map",
+    "alerts",
+    "users",
+    "roles",
+    "settings",
+    "audit",
+    "health"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "login_page_sliding_bar": {
+    "leftColScrollHeight": 699,
+    "leftColClientHeight": 699,
+    "hasOverflow": false,
+    "leftColScrollbarWidth": "none",
+    "leftColOverflowY": "auto",
+    "mainGridOverflow": "hidden",
+    "pageContainerOverflow": "hidden"
+  },
+  "admin_demo_access": {
+    "hash": "#/admin/dashboard",
+    "parentTag": "DIV",
+    "parentId": "app-container",
+    "adminDashDisplay": "flex",
+    "adminDashVisibility": "visible",
+    "adminDashOffsetHeight": 746,
+    "adminDashClientHeight": 746,
+    "landingDisplay": "flex",
+    "landingActive": true,
+    "statUsers": "6",
+    "statClusters": "1125",
+    "currentUser": "admin",
+    "currentRole": "ADMIN"
+  },
+  "analyst_demo_access": {
+    "hash": "#/dashboard",
+    "analystDashDisplay": "flex",
+    "analystDashVisibility": "visible",
+    "analystDashOffsetHeight": 703,
+    "analystDashClientHeight": 703,
+    "currentUser": "analyst1",
+    "currentRole": "ANALYST"
+  },
+  "government_demo_access": {
+    "hash": "#/command-center",
+    "govDashDisplay": "flex",
+    "govDashVisibility": "visible",
+    "govDashOffsetHeight": 703,
+    "govDashClientHeight": 703,
+    "currentUser": "gov1",
+    "currentRole": "GOVERNMENT_AUTHORITY"
+  },
+  "form_submit_auto_demo": {
+    "hash": "#/admin/dashboard",
+    "currentUser": "admin",
+    "currentRole": "ADMIN",
+    "adminDashDisplay": "flex",
+    "adminDashOffsetHeight": 703
+  }
+}

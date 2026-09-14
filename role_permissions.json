@@ -1,0 +1,37 @@
+{
+  "ADMIN": {
+    "description": "Root System Administrator with full planetary governance, pipeline controls, RBAC management, and parameter tuning.",
+    "permissions": [
+      "ingest_scans",
+      "model_retrain",
+      "incident_view",
+      "human_verification",
+      "satellite_telemetry",
+      "incident_status_update",
+      "dispatch_teams",
+      "export_reports",
+      "system_settings",
+      "manage_users",
+      "manage_roles",
+      "view_audit_logs"
+    ]
+  },
+  "ANALYST": {
+    "description": "Forest Intelligence Analyst with anomaly investigation, satellite evidence analysis, and expert classification rights.",
+    "permissions": [
+      "incident_view",
+      "export_reports"
+    ]
+  },
+  "GOVERNMENT_AUTHORITY": {
+    "description": "Emergency Response Authority with official alert acknowledgement, unit dispatching, and field incident containment command.",
+    "permissions": [
+      "ingest_scans",
+      "incident_view",
+      "satellite_telemetry",
+      "incident_status_update",
+      "dispatch_teams",
+      "export_reports"
+    ]
+  }
+}

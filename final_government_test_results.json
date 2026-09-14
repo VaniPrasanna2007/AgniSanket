@@ -1,0 +1,281 @@
+{
+  "modules_report": [
+    {
+      "module_name": "Command Center",
+      "route": "#/command-center",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Live Incidents",
+      "route": "#/live-incidents",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Incident Investigation",
+      "route": "#/incident-investigation",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Dispatch Management",
+      "route": "#/dispatch-management",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Map Explorer",
+      "route": "#/map-explorer",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Official Reports",
+      "route": "#/official-reports",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    },
+    {
+      "module_name": "Alerts & Notifications",
+      "route": "#/alerts-notifications",
+      "page_loaded": "PASS",
+      "api_request": "PASS",
+      "data_rendered": "PASS",
+      "console_errors": "NO"
+    }
+  ],
+  "buttons_report": [
+    {
+      "button_name": "Refresh Incidents",
+      "expected_action": "Fetch fresh incident telemetry and reload table",
+      "actual_result": "Reloaded live incident stream via operational API",
+      "api_endpoint": "/api/government/incidents",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "System Functionality Test",
+      "expected_action": "Open and run automated system functionality test modal",
+      "actual_result": "Opened Automated Test Suite Modal: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "All Incidents",
+      "expected_action": "Filter stream to show all incidents",
+      "actual_result": "Rendered all 1091 incidents in stream",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Action Required",
+      "expected_action": "Filter stream to show only unacknowledged incidents",
+      "actual_result": "Filtered stream to 1089 unacknowledged incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Dispatched",
+      "expected_action": "Filter stream to show only dispatched incidents",
+      "actual_result": "Filtered stream to 1 dispatched response incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Resolved",
+      "expected_action": "Filter stream to show only resolved incidents",
+      "actual_result": "Filtered stream to 1 resolved incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Critical Priority",
+      "expected_action": "Filter stream to show only critical priority threats",
+      "actual_result": "Filtered stream to 1 critical priority incidents",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Search",
+      "expected_action": "Real-time incident filtering by search text",
+      "actual_result": "Matched 13 incident records by coordinate query",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Manage",
+      "expected_action": "Open Action Drawer for selected cluster and render telemetry",
+      "actual_result": "Opened Action Drawer for Incident #233 (DB ID #332) with active row highlight: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Back",
+      "expected_action": "Deselect active incident and reset drawer state",
+      "actual_result": "Deselected incident row and closed drawer; prompt visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Close",
+      "expected_action": "Dismiss and close action drawer",
+      "actual_result": "Dismissed action drawer; prompt visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Acknowledge",
+      "expected_action": "Select ACKNOWLEDGED response mode in action drawer",
+      "actual_result": "Set action directive choice to ACKNOWLEDGED in drawer",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Dispatch",
+      "expected_action": "Select DISPATCHED mode and reveal deployment unit assignment",
+      "actual_result": "Set action choice to DISPATCHED; unit assignment field visible: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Assign Units",
+      "expected_action": "Select specialized deployment force unit",
+      "actual_result": "Assigned response unit: National Disaster Response Force (NDRF)",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Add Official Notes",
+      "expected_action": "Focus and highlight official notes input",
+      "actual_result": "Focused notes textarea for input: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Save Official Action",
+      "expected_action": "Persist official directive notes and status in database",
+      "actual_result": "Saved directive for cluster DB #332",
+      "api_endpoint": "/api/government/incidents",
+      "db_confirmed": "YES",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Resolve",
+      "expected_action": "Switch mode to RESOLVED and require resolution notes",
+      "actual_result": "Switched mode to RESOLVED with required prompt: 'Resolution Summary (Required):'",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "View History",
+      "expected_action": "Scroll smoothly to Incident History panel",
+      "actual_result": "Scrolled to Incident History panel",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Satellite Verification",
+      "expected_action": "Open multi-spectral satellite verification modal",
+      "actual_result": "Opened STAC multi-spectral satellite evidence modal: true",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Satellite Inspection",
+      "expected_action": "Navigate to Incident Investigation preselecting the incident",
+      "actual_result": "Navigated to #/incident-investigation",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "3D View",
+      "expected_action": "Open 3D Elevation View for cluster centroid",
+      "actual_result": "Triggered 3D Elevation Terrain View: null",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Generate Report",
+      "expected_action": "Compile executive incident intelligence dossier",
+      "actual_result": "Compiled statutory incident brief in preview",
+      "api_endpoint": "/api/government/reports/generate",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Download Report",
+      "expected_action": "Trigger browser file export of statutory dossier",
+      "actual_result": "Triggered download of official report",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Mark as Read",
+      "expected_action": "Acknowledge and mark alerts as read",
+      "actual_result": "Marked all official alerts as read",
+      "api_endpoint": "/api/government/alerts/mark-all-read",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Map controls",
+      "expected_action": "Reset geospatial map viewport to India",
+      "actual_result": "Reset tactical map perspective to India bounding box",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    },
+    {
+      "button_name": "Logout",
+      "expected_action": "Clear authentication session and redirect to login",
+      "actual_result": "Logged out and redirected to login page: #/map-explorer",
+      "api_endpoint": "None",
+      "db_confirmed": "NO",
+      "status": "PASS"
+    }
+  ],
+  "layout_metrics": {
+    "layoutWidth": 1316,
+    "tableWidth": 803.6875,
+    "actionWidth": 502.3125,
+    "tableRatio": "61.1%",
+    "actionRatio": "38.2%",
+    "manageBtnWidth": "90px",
+    "manageBtnHeight": "30px",
+    "hasHorizontalScroll": false
+  },
+  "console_errors": []
+}
