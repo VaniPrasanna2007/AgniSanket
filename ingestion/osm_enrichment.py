@@ -31,16 +31,15 @@ def log_osm_debug(msg: str):
 
 def query_real_osm_industrial_facilities(lat: float, lon: float, radius_km: float = 50.0) -> list:
     """
-    Queries live OpenStreetMap spatial data using Overpass API mirrors with multi-term failover to Nominatim Search API.
+    Queries live OpenStreetMap spatial data using Overpass API mirrors with short timeout.
     Does NOT use synthetic data or hardcoded fake fallback distances.
     Writes detailed diagnostic logs to osm_debug.log.
     """
     radius_meters = int(radius_km * 1000)
     log_header = f"\n=== [{datetime.utcnow().isoformat()}] OSM QUERY FOR ({lat}, {lon}) RADIUS {radius_km}km ==="
-    print(log_header)
     log_osm_debug(log_header)
 
-    overpass_query = f"""[out:json][timeout:15];
+    overpass_query = f"""[out:json][timeout:8];
 (
   node(around:{radius_meters},{lat},{lon})["landuse"~"industrial|construction|commercial|harbour"];
   way(around:{radius_meters},{lat},{lon})["landuse"~"industrial|construction|commercial|harbour"];
@@ -59,20 +58,13 @@ out center 25;"""
     headers = {"User-Agent": "SIH26162-ThermalDetection/1.0 (contact@sih26162.gov.in)"}
     facilities = []
 
-    # 1. Try Overpass API mirrors
+    # 1. Try Overpass API mirrors with 5s timeout
     for ep in OVERPASS_MIRRORS:
-        log_msg = f"Attempting Overpass Mirror: {ep}"
-        log_osm_debug(log_msg)
         try:
-            res = requests.post(ep, data={"data": overpass_query}, headers=headers, timeout=6)
-            resp_snippet = res.text[:500].replace("\n", " ")
-            status_log = f"Mirror {ep} -> Status: {res.status_code} | Body snippet: {resp_snippet}"
-            log_osm_debug(status_log)
-
+            res = requests.post(ep, data={"data": overpass_query}, headers=headers, timeout=5)
             if res.status_code == 200:
                 data = res.json()
                 elements = data.get("elements", [])
-                log_osm_debug(f"Mirror {ep} returned {len(elements)} raw elements.")
                 
                 for elem in elements:
                     elem_lat = elem.get("lat") or (elem.get("center", {}).get("lat") if "center" in elem else None)
@@ -92,93 +84,101 @@ out center 25;"""
                         })
                 if facilities:
                     facilities.sort(key=lambda x: x["distance_km"])
-                    success_log = f"SUCCESS via Overpass Mirror {ep}: Picked nearest '{facilities[0]['name']}' at {facilities[0]['distance_km']} km"
-                    log_osm_debug(success_log)
+                    print(f"[OSM ENRICHMENT] Fetched {len(facilities)} facilities from Overpass mirror: {ep}")
                     return facilities
         except Exception as e:
-            err_log = f"Mirror {ep} Exception: {e}"
-            log_osm_debug(err_log)
+            log_osm_debug(f"Overpass Mirror {ep} Exception: {e}")
 
-    # 2. Fallback to Nominatim Spatial Search API across multi-industrial terms
-    log_osm_debug("Overpass mirrors returned no valid items or failed. Triggering Multi-Term Nominatim Fallback Path...")
-    search_terms = ["industrial", "refinery", "factory", "steel", "power plant", "GIDC", "substation"]
-    
-    for term in search_terms:
-        try:
-            search_url = f"https://nominatim.openstreetmap.org/search?q={term}&format=json&viewbox={lon-0.75},{lat+0.75},{lon+0.75},{lat-0.75}&bounded=1&limit=10"
-            log_osm_debug(f"Attempting Nominatim Fallback URL [{term}]: {search_url}")
-            r = requests.get(search_url, headers=headers, timeout=5)
-            log_osm_debug(f"Nominatim [{term}] -> Status: {r.status_code}")
+    # 2. Fast single-term fallback to Nominatim only if Overpass failed
+    try:
+        search_url = f"https://nominatim.openstreetmap.org/search?q=industrial&format=json&viewbox={lon-0.5},{lat+0.5},{lon+0.5},{lat-0.5}&bounded=1&limit=5"
+        r = requests.get(search_url, headers=headers, timeout=4)
+        if r.status_code == 200:
+            results = r.json()
+            for res_item in results:
+                elem_lat = float(res_item['lat'])
+                elem_lon = float(res_item['lon'])
+                dist = haversine_distance(lat, lon, elem_lat, elem_lon)
+                name = res_item.get("display_name", "OSM Industrial Facility").split(",")[0]
+                facilities.append({
+                    "name": name,
+                    "facility_type": res_item.get("type", "industrial"),
+                    "latitude": elem_lat,
+                    "longitude": elem_lon,
+                    "osm_id": f"nominatim/{res_item.get('place_id')}",
+                    "distance_km": round(dist, 2)
+                })
+            if facilities:
+                facilities.sort(key=lambda x: x["distance_km"])
+                print(f"[OSM ENRICHMENT] Fetched {len(facilities)} facilities from Nominatim fallback.")
+                return facilities
+    except Exception as ne:
+        log_osm_debug(f"Nominatim Exception: {ne}")
 
-            if r.status_code == 200:
-                results = r.json()
-                for res_item in results:
-                    elem_lat = float(res_item['lat'])
-                    elem_lon = float(res_item['lon'])
-                    dist = haversine_distance(lat, lon, elem_lat, elem_lon)
-                    name = res_item.get("display_name", "OSM Industrial Facility").split(",")[0]
-                    fac_type = res_item.get("type", term)
-                    facilities.append({
-                        "name": name,
-                        "facility_type": fac_type,
-                        "latitude": elem_lat,
-                        "longitude": elem_lon,
-                        "osm_id": f"nominatim/{res_item.get('place_id')}",
-                        "distance_km": round(dist, 2)
-                    })
-        except Exception as ne:
-            log_osm_debug(f"Nominatim Exception [{term}]: {ne}")
-
-    if facilities:
-        facilities.sort(key=lambda x: x["distance_km"])
-        success_nom_log = f"SUCCESS via Multi-Term Nominatim Fallback: Picked nearest '{facilities[0]['name']}' at {facilities[0]['distance_km']} km"
-        log_osm_debug(success_nom_log)
-        return facilities
-
-    log_osm_debug("ULTIMATE RESULT: NO_NEARBY_INDUSTRIAL_FEATURE found.")
     return []
 
-def get_nearest_industrial_facility(db: Session, lat: float, lon: float) -> dict:
+def get_nearest_industrial_facility(db: Session, lat: float, lon: float, cached_facilities: list = None, allow_live_query: bool = True) -> dict:
     """
-    Finds nearest industrial facility by querying live Overpass/Nominatim APIs or local database cache.
+    Finds nearest industrial facility by checking local database cache first.
+    Reuses the existing facilities stored in DB before making live Overpass requests.
     Returns distance_km=None if no OSM feature is found within search radius.
     """
     # 1. Check local DB table of previously cached OSM facilities first for speed
-    db_facilities = db.query(IndustrialFacility).all()
-    if db_facilities:
+    facilities_to_check = cached_facilities
+    if facilities_to_check is None:
+        facilities_to_check = db.query(IndustrialFacility).all()
+
+    if facilities_to_check:
         nearest_db = None
         min_dist = float("inf")
-        for f in db_facilities:
-            d = haversine_distance(lat, lon, f.latitude, f.longitude)
+        for f in facilities_to_check:
+            # Check attribute access (object or dict)
+            f_lat = f.latitude if hasattr(f, "latitude") else f.get("latitude")
+            f_lon = f.longitude if hasattr(f, "longitude") else f.get("longitude")
+            f_name = f.name if hasattr(f, "name") else f.get("name")
+            f_type = f.facility_type if hasattr(f, "facility_type") else f.get("facility_type")
+            f_osm_id = f.osm_id if hasattr(f, "osm_id") else f.get("osm_id")
+
+            d = haversine_distance(lat, lon, f_lat, f_lon)
             if d < min_dist:
                 min_dist = d
                 nearest_db = {
-                    "name": f.name,
-                    "facility_type": f.facility_type,
-                    "latitude": f.latitude,
-                    "longitude": f.longitude,
-                    "osm_id": f.osm_id,
+                    "name": f_name,
+                    "facility_type": f_type,
+                    "latitude": f_lat,
+                    "longitude": f_lon,
+                    "osm_id": f_osm_id,
                     "distance_km": round(d, 2)
                 }
-        if nearest_db and nearest_db["distance_km"] <= 35.0:
+        if nearest_db and nearest_db["distance_km"] <= 50.0:
             return nearest_db
 
-    # 2. Query live OpenStreetMap API if not cached within 35 km
-    live_facilities = query_real_osm_industrial_facilities(lat, lon, radius_km=50.0)
-    if live_facilities:
-        nearest = live_facilities[0]
-        existing = db.query(IndustrialFacility).filter(IndustrialFacility.osm_id == nearest["osm_id"]).first()
-        if not existing:
-            fac = IndustrialFacility(
-                name=nearest["name"],
-                facility_type=nearest["facility_type"],
-                latitude=nearest["latitude"],
-                longitude=nearest["longitude"],
-                osm_id=nearest["osm_id"]
-            )
-            db.add(fac)
-            db.commit()
-        return nearest
+    # 2. Query live OpenStreetMap API only if allowed and no cached facility within 50 km
+    if allow_live_query:
+        live_facilities = query_real_osm_industrial_facilities(lat, lon, radius_km=50.0)
+        if live_facilities:
+            # Persist ALL returned facilities to database for future clusters to reuse
+            stored_count = 0
+            existing_osm_ids = set(r[0] for r in db.query(IndustrialFacility.osm_id).all())
+            for fac_item in live_facilities:
+                if fac_item["osm_id"] not in existing_osm_ids:
+                    existing_osm_ids.add(fac_item["osm_id"])
+                    new_fac = IndustrialFacility(
+                        name=fac_item["name"],
+                        facility_type=fac_item["facility_type"],
+                        latitude=fac_item["latitude"],
+                        longitude=fac_item["longitude"],
+                        osm_id=fac_item["osm_id"]
+                    )
+                    db.add(new_fac)
+                    if cached_facilities is not None:
+                        cached_facilities.append(new_fac)
+                    stored_count += 1
+            if stored_count > 0:
+                db.commit()
+                print(f"[OSM ENRICHMENT] Stored {stored_count} newly fetched industrial facilities in DB.")
+            
+            return live_facilities[0]
 
     return {
         "name": "NO_NEARBY_INDUSTRIAL_FEATURE",

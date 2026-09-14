@@ -43,16 +43,21 @@ def get_real_firms_data(map_key: str = None, days: int = 2, sources: list = ["VI
     bbox_formatted = format_bbox(BBOX)
     all_records = []
 
-    days_capped = min(days, 5)
-    print(f"Connecting to official NASA FIRMS API (Bounding Box: {bbox_formatted}, Past {days_capped} Days)...")
+    # Support up to 10 days as per NASA FIRMS Area API specification
+    days_capped = min(max(1, days), 10)
+    print(f"\n==================== [NASA FIRMS INGESTION INITIATED] ====================")
+    print(f"[FIRMS PIPELINE] Requested Days       : {days} (Capped: {days_capped})")
+    print(f"[FIRMS PIPELINE] Geographic Bounds    : {bbox_formatted} [MinLon,MinLat,MaxLon,MaxLat]")
+    print(f"[FIRMS PIPELINE] Target Satellites    : {', '.join(sources)}")
+    print(f"==========================================================================\n")
 
     for src in sources:
         url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/{src}/{bbox_formatted}/{days_capped}"
-        print(f"Fetching from NASA FIRMS source {src}: {url} ...")
+        print(f"[FIRMS PIPELINE] Fetching source '{src}' from {url} ...")
         try:
             res = requests.get(url, timeout=25)
             if res.status_code != 200:
-                print(f"Source {src} returned HTTP {res.status_code}: {res.text.strip()}")
+                print(f"[FIRMS PIPELINE WARNING] Source {src} returned HTTP {res.status_code}: {res.text.strip()}")
                 continue
 
             content = res.text.strip()
@@ -60,19 +65,32 @@ def get_real_firms_data(map_key: str = None, days: int = 2, sources: list = ["VI
                 raise ValueError(f"NASA FIRMS API Key Error: {content}")
 
             if len(content.splitlines()) <= 1:
-                print(f"NASA FIRMS API returned 0 active hotspots for source {src}.")
+                print(f"[FIRMS PIPELINE] NASA FIRMS returned 0 active hotspots for source {src}.")
                 continue
 
             df = pd.read_csv(io.StringIO(content))
             records = parse_and_clean_firms_dataframe(df, src)
-            print(f"Source {src}: Parsed {len(records)} real hotspot records.")
+            print(f"[FIRMS PIPELINE] Source '{src}': Parsed {len(records)} active hotspot records.")
             all_records.extend(records)
 
         except Exception as e:
-            print(f"Error querying NASA FIRMS API source {src}: {e}")
+            print(f"[FIRMS PIPELINE ERROR] Error querying NASA FIRMS API source {src}: {e}")
             raise e
 
-    print(f"\nSuccessfully fetched total of {len(all_records)} real NASA FIRMS hotspot records!")
+    # Compute actual date range from fetched records
+    if all_records:
+        all_dates = [r["acquisition_date"] for r in all_records if r.get("acquisition_date")]
+        actual_start = min(all_dates).strftime("%Y-%m-%d %H:%M:%S") if all_dates else "N/A"
+        actual_end = max(all_dates).strftime("%Y-%m-%d %H:%M:%S") if all_dates else "N/A"
+    else:
+        actual_start, actual_end = "N/A", "N/A"
+
+    print(f"\n==================== [NASA FIRMS INGESTION SUMMARY] ====================")
+    print(f"[FIRMS PIPELINE] Total Records Fetched: {len(all_records)}")
+    print(f"[FIRMS PIPELINE] Actual Date Range    : {actual_start} to {actual_end}")
+    print(f"[FIRMS PIPELINE] Geographic Bounds    : {bbox_formatted}")
+    print(f"[FIRMS PIPELINE] Satellite Sources    : {', '.join(sources)}")
+    print(f"========================================================================\n")
     return all_records
 
 def parse_and_clean_firms_dataframe(df: pd.DataFrame, default_source: str = "VIIRS_SNPP_NRT") -> list:
@@ -132,21 +150,30 @@ def parse_and_clean_firms_dataframe(df: pd.DataFrame, default_source: str = "VII
 def ingest_raw_hotspots(db: Session, records: list) -> int:
     """
     Persists real FIRMS records into DB without wiping historical data.
-    Uses deduplication matching (latitude, longitude, acquisition_date).
+    Uses fast set-based deduplication matching (latitude, longitude, acquisition_date).
+    Saves all raw FIRMS hotspots immediately before feature extraction.
     """
     if not records:
+        print("[FIRMS PIPELINE] 0 records to insert.")
         return 0
 
-    inserted_count = 0
-    for r in records:
-        existing = db.query(RawHotspot).filter(
-            RawHotspot.latitude == r["latitude"],
-            RawHotspot.longitude == r["longitude"],
-            RawHotspot.acquisition_date == r["acquisition_date"]
-        ).first()
+    # Build an in-memory index of recent raw hotspots in DB to avoid N individual queries
+    min_date = min((r["acquisition_date"] for r in records if r.get("acquisition_date")), default=None)
+    existing_query = db.query(RawHotspot.latitude, RawHotspot.longitude, RawHotspot.acquisition_date)
+    if min_date:
+        existing_query = existing_query.filter(RawHotspot.acquisition_date >= min_date)
+    
+    existing_set = set(
+        (round(row[0], 5), round(row[1], 5), row[2])
+        for row in existing_query.all()
+    )
 
-        if not existing:
-            rec = RawHotspot(
+    new_objects = []
+    for r in records:
+        key = (round(r["latitude"], 5), round(r["longitude"], 5), r["acquisition_date"])
+        if key not in existing_set:
+            existing_set.add(key)
+            new_objects.append(RawHotspot(
                 latitude=r["latitude"],
                 longitude=r["longitude"],
                 brightness=r["brightness"],
@@ -155,12 +182,16 @@ def ingest_raw_hotspots(db: Session, records: list) -> int:
                 acquisition_date=r["acquisition_date"],
                 satellite=r["satellite"],
                 raw_json=r.get("raw_json")
-            )
-            db.add(rec)
-            inserted_count += 1
+            ))
 
-    db.commit()
-    print(f"Persisted {inserted_count} new real FIRMS hotspot records to database (deduplicated).")
+    inserted_count = len(new_objects)
+    if new_objects:
+        db.bulk_save_objects(new_objects)
+        db.commit()
+
+    total_in_db = db.query(RawHotspot).count()
+    print(f"\n[FIRMS PIPELINE PERSISTENCE] New Raw Hotspots Inserted: {inserted_count}")
+    print(f"[FIRMS PIPELINE PERSISTENCE] Total Raw Hotspots in DB : {total_in_db}\n")
     return inserted_count
 
 if __name__ == "__main__":

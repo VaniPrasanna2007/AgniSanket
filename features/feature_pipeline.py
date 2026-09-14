@@ -4,7 +4,7 @@ from datetime import datetime
 from sklearn.cluster import DBSCAN
 from sqlalchemy.orm import Session
 from db.database import SessionLocal, init_db
-from db.models import RawHotspot, HotspotCluster, SatelliteObservation
+from db.models import RawHotspot, HotspotCluster, SatelliteObservation, IndustrialFacility
 from ingestion.satellite_verification import verify_hotspot_stac_satellite
 from ingestion.osm_enrichment import get_nearest_industrial_facility
 from features.risk_engine import calculate_evidence_risk_score, get_satellite_evidence_strength, calculate_individual_hotspot_risk_score
@@ -43,11 +43,28 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
     dbscan = DBSCAN(eps=epsilon, min_samples=min_samples, metric="haversine")
     df["cluster_label"] = dbscan.fit_predict(coords_rad)
 
-    cluster_count = 0
+    cluster_groups = list(df.groupby("cluster_label"))
+    if max_clusters:
+        cluster_groups = cluster_groups[:max_clusters]
 
-    for label, group in df.groupby("cluster_label"):
-        if max_clusters and cluster_count >= max_clusters:
-            break
+    total_groups = len(cluster_groups)
+    print(f"\n[CLUSTERING PIPELINE] DBSCAN partitioned {len(raw_hotspots)} hotspots into {total_groups} clusters.")
+    print(f"[CLUSTERING PIPELINE] Stage 1: Creating and saving basic clusters immediately...")
+
+    # Load existing clusters in DB for fast in-memory key lookup
+    existing_clusters_by_key = {c.cluster_key: c for c in db.query(HotspotCluster).all()}
+    
+    # Pre-load industrial facilities from DB once to avoid repeated DB queries
+    cached_facilities = db.query(IndustrialFacility).all()
+    print(f"[OSM ENRICHMENT] Loaded {len(cached_facilities)} cached industrial facilities from database.")
+
+    # -------------------------------------------------------------------------
+    # STAGE 1: IMMEDIATE CREATION & PERSISTENCE OF BASIC CLUSTERS (< 1 second)
+    # -------------------------------------------------------------------------
+    staged_clusters = []
+    cluster_hotspot_map = {}  # cluster_obj -> list of hotspot ids
+
+    for label, group in cluster_groups:
         centroid_lat = float(group["latitude"].mean())
         centroid_lon = float(group["longitude"].mean())
         avg_frp = float(group["frp"].mean())
@@ -73,116 +90,30 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
             frp_trend = 0.0
 
         cluster_key = f"c_{round(centroid_lat, 3)}_{round(centroid_lon, 3)}"
+        c_obj = existing_clusters_by_key.get(cluster_key)
 
-        # 1. Query live Overpass API / cache for nearest industrial facility
-        facility = get_nearest_industrial_facility(db, centroid_lat, centroid_lon)
-        dist_km = facility.get("distance_km")
-        facility_name = facility.get("name", "NO_NEARBY_INDUSTRIAL_FEATURE")
+        # Baseline fast risk score so clusters have a valid score immediately
+        base_risk = min(99.0, max(15.0, round(float(max_frp * 1.4 + persistence_days * 4.0 + (detection_count * 2.0)), 1)))
 
-        # 2. Perform REAL PIXEL-LEVEL satellite raster analysis (Landsat LST + Sentinel-2 NDVI)
-        sat_info = verify_hotspot_stac_satellite(centroid_lat, centroid_lon, last_detected)
-
-        # Calculate satellite evidence strength
-        sat_evidence = get_satellite_evidence_strength(
-            thermal_data_available=sat_info["thermal_data_available"],
-            optical_data_available=sat_info["optical_data_available"],
-            temporal_match_quality=sat_info["temporal_match_quality"],
-            cloud_percentage=sat_info.get("cloud_percentage"),
-            thermal_anomaly_c=sat_info.get("thermal_anomaly_c")
-        )
-
-        fire_evidence_status = "INSUFFICIENT_DATA"
-        if sat_evidence in ["STRONG SATELLITE EVIDENCE", "MODERATE SATELLITE EVIDENCE"]:
-            fire_evidence_status = "EVIDENCE_AVAILABLE"
-
-        # 3. Calculate transparent evidence-based risk score
-        risk_data = calculate_evidence_risk_score(
-            max_frp=max_frp,
-            persistence_days=persistence_days,
-            detection_count=detection_count,
-            dist_to_nearest_industry_km=dist_km,
-            satellite_status=sat_info["status"],
-            temporal_match_quality=sat_info["temporal_match_quality"],
-            thermal_anomaly_c=sat_info.get("thermal_anomaly_c"),
-            cloud_percentage=sat_info.get("cloud_percentage"),
-            satellite_data_available=sat_info["satellite_data_available"]
-        )
-
-        cluster_feature_dict = {
-            "centroid_lat": centroid_lat,
-            "centroid_lon": centroid_lon,
-            "avg_frp": avg_frp,
-            "max_frp": max_frp,
-            "persistence_days": persistence_days,
-            "recurrence_freq": recurrence_freq,
-            "dist_to_nearest_industry_km": dist_km,
-            "satellite_status": sat_info["status"],
-            "satellite_evidence_strength": sat_evidence,
-            "fire_evidence_status": fire_evidence_status,
-            "risk_score": risk_data["risk_score"]
-        }
-
-        classification_res = classify_cluster_evidence(db, cluster_feature_dict)
-        # Requirement 11: Authorization status must be UNKNOWN if no official registry is available
-        auth_status = "UNKNOWN"
-
-        existing_c = db.query(HotspotCluster).filter(HotspotCluster.cluster_key == cluster_key).first()
-
-        if existing_c:
-            existing_c.centroid_lat = centroid_lat
-            existing_c.centroid_lon = centroid_lon
-            existing_c.avg_frp = avg_frp
-            existing_c.max_frp = max_frp
-            existing_c.avg_brightness = avg_brightness
-            existing_c.max_brightness = max_brightness
-            existing_c.avg_confidence = avg_confidence
-            existing_c.frp_trend = frp_trend
-            existing_c.detection_count = detection_count
-            existing_c.first_detected = first_detected
-            existing_c.last_detected = last_detected
-            existing_c.persistence_days = persistence_days
-            existing_c.recurrence_freq = recurrence_freq
-            existing_c.dist_to_nearest_industry_km = dist_km
-            existing_c.nearest_industry_name = facility_name
-            existing_c.satellite_name = sat_info.get("satellite_name")
-            existing_c.landsat_scene_id = sat_info.get("landsat_scene_id")
-            existing_c.sentinel2_scene_id = sat_info.get("sentinel2_scene_id")
-            obs_dt = datetime.fromisoformat(sat_info["observation_datetime"].replace("Z", "+00:00")).replace(tzinfo=None) if sat_info.get("observation_datetime") else None
-            existing_c.satellite_name = sat_info.get("satellite_name")
-            existing_c.landsat_scene_id = sat_info.get("landsat_scene_id")
-            existing_c.sentinel2_scene_id = sat_info.get("sentinel2_scene_id")
-            existing_c.thermal_source = sat_info.get("thermal_source")
-            existing_c.optical_source = sat_info.get("optical_source")
-            existing_c.thermal_unavailable_reason = sat_info.get("thermal_unavailable_reason")
-            existing_c.optical_unavailable_reason = sat_info.get("optical_unavailable_reason")
-            existing_c.satellite_status = sat_info["status"]
-            existing_c.cloud_percentage = sat_info.get("cloud_percentage")
-            existing_c.valid_pixel_percentage = sat_info.get("valid_pixel_percentage")
-            existing_c.hotspot_max_temp_c = sat_info.get("hotspot_max_temp_c")
-            existing_c.surrounding_median_temp_c = sat_info.get("surrounding_median_temp_c")
-            existing_c.thermal_anomaly_c = sat_info.get("thermal_anomaly_c")
-            existing_c.ndvi_median = sat_info.get("ndvi_median")
-            existing_c.time_difference_hours = sat_info.get("time_difference_hours")
-            existing_c.temporal_match_quality = sat_info["temporal_match_quality"]
-            existing_c.observation_datetime = obs_dt
-            existing_c.satellite_data_available = sat_info["satellite_data_available"]
-            existing_c.thermal_data_available = sat_info["thermal_data_available"]
-            existing_c.optical_data_available = sat_info["optical_data_available"]
-            existing_c.satellite_evidence_strength = sat_evidence
-            existing_c.fire_evidence_status = fire_evidence_status
-            existing_c.predicted_class = classification_res["predicted_class"]
-            existing_c.risk_score = risk_data["risk_score"]
-            existing_c.authorization_status = auth_status
-            existing_c.ml_model_status = classification_res["ml_model_status"]
-            existing_c.evidence_json = {
-                "risk_breakdown": risk_data["evidence"],
-                "stac_satellite": sat_info,
-                "osm_facility": facility,
-                "evidence_reasoning": classification_res["reasoning"]
-            }
-            c_obj = existing_c
+        if c_obj:
+            c_obj.centroid_lat = centroid_lat
+            c_obj.centroid_lon = centroid_lon
+            c_obj.avg_frp = avg_frp
+            c_obj.max_frp = max_frp
+            c_obj.avg_brightness = avg_brightness
+            c_obj.max_brightness = max_brightness
+            c_obj.avg_confidence = avg_confidence
+            c_obj.frp_trend = frp_trend
+            c_obj.detection_count = detection_count
+            c_obj.first_detected = first_detected
+            c_obj.last_detected = last_detected
+            c_obj.persistence_days = persistence_days
+            c_obj.recurrence_freq = recurrence_freq
+            if not c_obj.risk_score:
+                c_obj.risk_score = base_risk
+            if not c_obj.predicted_class:
+                c_obj.predicted_class = "HIGH_CONFIDENCE_WILDFIRE" if base_risk >= 65 else "SUSPECTED_THERMAL_ANOMALY"
         else:
-            obs_dt = datetime.fromisoformat(sat_info["observation_datetime"].replace("Z", "+00:00")).replace(tzinfo=None) if sat_info.get("observation_datetime") else None
             c_obj = HotspotCluster(
                 cluster_key=cluster_key,
                 centroid_lat=centroid_lat,
@@ -198,93 +129,205 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
                 last_detected=last_detected,
                 persistence_days=persistence_days,
                 recurrence_freq=recurrence_freq,
-                dist_to_nearest_industry_km=dist_km,
-                nearest_industry_name=facility_name,
-                satellite_name=sat_info.get("satellite_name"),
-                landsat_scene_id=sat_info.get("landsat_scene_id"),
-                sentinel2_scene_id=sat_info.get("sentinel2_scene_id"),
-                thermal_source=sat_info.get("thermal_source"),
-                optical_source=sat_info.get("optical_source"),
-                thermal_unavailable_reason=sat_info.get("thermal_unavailable_reason"),
-                optical_unavailable_reason=sat_info.get("optical_unavailable_reason"),
-                satellite_status=sat_info["status"],
-                cloud_percentage=sat_info.get("cloud_percentage"),
-                valid_pixel_percentage=sat_info.get("valid_pixel_percentage"),
-                hotspot_max_temp_c=sat_info.get("hotspot_max_temp_c"),
-                surrounding_median_temp_c=sat_info.get("surrounding_median_temp_c"),
-                thermal_anomaly_c=sat_info.get("thermal_anomaly_c"),
-                ndvi_median=sat_info.get("ndvi_median"),
-                time_difference_hours=sat_info.get("time_difference_hours"),
-                temporal_match_quality=sat_info["temporal_match_quality"],
-                observation_datetime=obs_dt,
-                satellite_data_available=sat_info["satellite_data_available"],
-                thermal_data_available=sat_info["thermal_data_available"],
-                optical_data_available=sat_info["optical_data_available"],
-                satellite_evidence_strength=sat_evidence,
-                fire_evidence_status=fire_evidence_status,
-                predicted_class=classification_res["predicted_class"],
-                risk_score=risk_data["risk_score"],
-                authorization_status=auth_status,
-                ml_model_status=classification_res["ml_model_status"],
-                evidence_json={
-                    "risk_breakdown": risk_data["evidence"],
-                    "stac_satellite": sat_info,
-                    "osm_facility": facility,
-                    "evidence_reasoning": classification_res["reasoning"]
-                }
+                risk_score=base_risk,
+                predicted_class="HIGH_CONFIDENCE_WILDFIRE" if base_risk >= 65 else "SUSPECTED_THERMAL_ANOMALY",
+                authorization_status="UNKNOWN",
+                satellite_status="PROCESSING_ENRICHMENT",
+                satellite_evidence_strength="INSUFFICIENT_DATA",
+                fire_evidence_status="PROCESSING"
             )
             db.add(c_obj)
+            existing_clusters_by_key[cluster_key] = c_obj
 
-        db.commit()
+        staged_clusters.append((c_obj, last_detected, group))
+        cluster_hotspot_map[c_obj] = group["id"].tolist()
 
-        # 4. Compute genuine individual hotspot risk scores and link constituent RawHotspots
-        hotspot_ids = group["id"].tolist()
-        raw_members = db.query(RawHotspot).filter(RawHotspot.id.in_(hotspot_ids)).all()
-        for member in raw_members:
-            member.cluster_id = c_obj.id
-            h_risk = calculate_individual_hotspot_risk_score(
-                frp=member.frp,
-                brightness=member.brightness,
-                confidence=member.confidence,
-                dist_to_nearest_industry_km=dist_km,
-                satellite_data_available=sat_info["satellite_data_available"],
+    # Commit basic clusters to database immediately
+    db.commit()
+    print(f"[CLUSTERING PIPELINE] Successfully created/saved {len(staged_clusters)} basic clusters to database!")
+
+    # Associate constituent raw hotspots immediately
+    raw_hotspot_lookup = {h.id: h for h in raw_hotspots}
+    for c_obj, h_ids in cluster_hotspot_map.items():
+        for hid in h_ids:
+            h_record = raw_hotspot_lookup.get(hid)
+            if h_record:
+                h_record.cluster_id = c_obj.id
+                if not h_record.risk_score:
+                    h_record.risk_score = c_obj.risk_score
+                    h_record.risk_level = "HIGH" if c_obj.risk_score > 70 else ("MEDIUM" if c_obj.risk_score > 40 else "LOW")
+    db.commit()
+    print(f"[CLUSTERING PIPELINE] Linked constituent hotspots. All {len(staged_clusters)} clusters are now LIVE for API requests.\n")
+
+    # -------------------------------------------------------------------------
+    # STAGE 2: NON-BLOCKING ENRICHMENT (OSM Proximity & Satellite Raster)
+    # -------------------------------------------------------------------------
+    print(f"[CLUSTERING PIPELINE] Stage 2: Running feature enrichment (OSM proximity & satellite raster)...")
+    clusters_matched_industry = 0
+    clusters_no_nearby_industry = 0
+    cluster_count = 0
+
+    for idx, (c_obj, last_detected, group) in enumerate(staged_clusters, 1):
+        centroid_lat = c_obj.centroid_lat
+        centroid_lon = c_obj.centroid_lon
+        max_frp = c_obj.max_frp
+        avg_frp = c_obj.avg_frp
+        persistence_days = c_obj.persistence_days
+        detection_count = c_obj.detection_count
+        recurrence_freq = c_obj.recurrence_freq
+
+        # 1. Query nearest industrial facility (reusing cached facilities first)
+        facility = get_nearest_industrial_facility(
+            db, centroid_lat, centroid_lon,
+            cached_facilities=cached_facilities,
+            allow_live_query=False  # Do not block on slow external Overpass during bulk batch
+        )
+        dist_km = facility.get("distance_km")
+        facility_name = facility.get("name", "NO_NEARBY_INDUSTRIAL_FEATURE")
+
+        if dist_km is not None:
+            clusters_matched_industry += 1
+        else:
+            clusters_no_nearby_industry += 1
+
+        c_obj.dist_to_nearest_industry_km = dist_km
+        c_obj.nearest_industry_name = facility_name
+
+        # 2. Perform satellite verification (reuse existing valid observation if present)
+        sat_info = None
+        if c_obj.landsat_scene_id and c_obj.landsat_scene_id != "UNAVAILABLE" and c_obj.hotspot_max_temp_c is not None:
+            # Preserve existing high-fidelity raster analysis
+            sat_evidence = c_obj.satellite_evidence_strength or "MODERATE SATELLITE EVIDENCE"
+            fire_evidence_status = c_obj.fire_evidence_status or "EVIDENCE_AVAILABLE"
+            risk_score = c_obj.risk_score
+        else:
+            try:
+                sat_info = verify_hotspot_stac_satellite(centroid_lat, centroid_lon, last_detected)
+            except Exception as sat_err:
+                print(f"[SATELLITE WARNING] Cluster #{c_obj.id} STAC query skipped due to error: {sat_err}")
+                sat_info = {
+                    "status": "UNAVAILABLE",
+                    "satellite_name": "Multi-Satellite STAC",
+                    "landsat_scene_id": "UNAVAILABLE",
+                    "sentinel2_scene_id": "UNAVAILABLE",
+                    "thermal_source": "UNAVAILABLE",
+                    "optical_source": "UNAVAILABLE",
+                    "thermal_unavailable_reason": str(sat_err),
+                    "optical_unavailable_reason": str(sat_err),
+                    "thermal_asset_used": None,
+                    "observation_datetime": None,
+                    "cloud_percentage": None,
+                    "valid_pixel_percentage": None,
+                    "hotspot_max_temp_c": None,
+                    "hotspot_mean_temp_c": None,
+                    "surrounding_median_temp_c": None,
+                    "thermal_anomaly_c": None,
+                    "ndvi_median": None,
+                    "time_difference_hours": None,
+                    "temporal_match_quality": "INVALID",
+                    "quality_flag": "RASTER_UNAVAILABLE",
+                    "satellite_data_available": 0,
+                    "thermal_data_available": 0,
+                    "optical_data_available": 0
+                }
+
+            sat_evidence = get_satellite_evidence_strength(
+                thermal_data_available=sat_info["thermal_data_available"],
+                optical_data_available=sat_info["optical_data_available"],
+                temporal_match_quality=sat_info["temporal_match_quality"],
                 cloud_percentage=sat_info.get("cloud_percentage"),
-                temporal_match_quality=sat_info.get("temporal_match_quality"),
                 thermal_anomaly_c=sat_info.get("thermal_anomaly_c")
             )
-            member.risk_score = h_risk["risk_score"]
-            member.risk_level = h_risk["risk_level"]
-        db.commit()
 
-        # Save SatelliteObservation record
-        sat_obs = SatelliteObservation(
-            cluster_id=c_obj.id,
-            satellite_name=sat_info.get("satellite_name", "Landsat-8/9 & Sentinel-2"),
-            landsat_scene_id=sat_info.get("landsat_scene_id"),
-            sentinel2_scene_id=sat_info.get("sentinel2_scene_id"),
-            thermal_asset_used=sat_info.get("thermal_asset_used"),
-            observation_datetime=datetime.fromisoformat(sat_info["observation_datetime"].replace("Z", "+00:00")).replace(tzinfo=None) if sat_info.get("observation_datetime") else None,
-            cloud_percentage=sat_info.get("cloud_percentage"),
-            valid_pixel_percentage=sat_info.get("valid_pixel_percentage"),
-            hotspot_max_temp_c=sat_info.get("hotspot_max_temp_c"),
-            hotspot_mean_temp_c=sat_info.get("hotspot_mean_temp_c"),
-            surrounding_median_temp_c=sat_info.get("surrounding_median_temp_c"),
-            thermal_anomaly_c=sat_info.get("thermal_anomaly_c"),
-            ndvi_median=sat_info.get("ndvi_median"),
-            quality_flag=sat_info.get("quality_flag"),
-            time_difference_hours=sat_info.get("time_difference_hours"),
-            temporal_match_quality=sat_info.get("temporal_match_quality"),
-            satellite_data_available=sat_info.get("satellite_data_available"),
-            thermal_data_available=sat_info.get("thermal_data_available"),
-            optical_data_available=sat_info.get("optical_data_available"),
-            status=sat_info["status"]
-        )
-        db.add(sat_obs)
-        db.commit()
+            fire_evidence_status = "INSUFFICIENT_DATA"
+            if sat_evidence in ["STRONG SATELLITE EVIDENCE", "MODERATE SATELLITE EVIDENCE"]:
+                fire_evidence_status = "EVIDENCE_AVAILABLE"
+
+            risk_data = calculate_evidence_risk_score(
+                max_frp=max_frp,
+                persistence_days=persistence_days,
+                detection_count=detection_count,
+                dist_to_nearest_industry_km=dist_km,
+                satellite_status=sat_info["status"],
+                temporal_match_quality=sat_info["temporal_match_quality"],
+                thermal_anomaly_c=sat_info.get("thermal_anomaly_c"),
+                cloud_percentage=sat_info.get("cloud_percentage"),
+                satellite_data_available=sat_info["satellite_data_available"]
+            )
+            risk_score = risk_data["risk_score"]
+
+            obs_dt = datetime.fromisoformat(sat_info["observation_datetime"].replace("Z", "+00:00")).replace(tzinfo=None) if sat_info.get("observation_datetime") else None
+            c_obj.satellite_name = sat_info.get("satellite_name")
+            c_obj.landsat_scene_id = sat_info.get("landsat_scene_id")
+            c_obj.sentinel2_scene_id = sat_info.get("sentinel2_scene_id")
+            c_obj.thermal_source = sat_info.get("thermal_source")
+            c_obj.optical_source = sat_info.get("optical_source")
+            c_obj.thermal_unavailable_reason = sat_info.get("thermal_unavailable_reason")
+            c_obj.optical_unavailable_reason = sat_info.get("optical_unavailable_reason")
+            c_obj.satellite_status = sat_info["status"]
+            c_obj.cloud_percentage = sat_info.get("cloud_percentage")
+            c_obj.valid_pixel_percentage = sat_info.get("valid_pixel_percentage")
+            c_obj.hotspot_max_temp_c = sat_info.get("hotspot_max_temp_c")
+            c_obj.surrounding_median_temp_c = sat_info.get("surrounding_median_temp_c")
+            c_obj.thermal_anomaly_c = sat_info.get("thermal_anomaly_c")
+            c_obj.ndvi_median = sat_info.get("ndvi_median")
+            c_obj.time_difference_hours = sat_info.get("time_difference_hours")
+            c_obj.temporal_match_quality = sat_info["temporal_match_quality"]
+            c_obj.observation_datetime = obs_dt
+            c_obj.satellite_data_available = sat_info["satellite_data_available"]
+            c_obj.thermal_data_available = sat_info["thermal_data_available"]
+            c_obj.optical_data_available = sat_info["optical_data_available"]
+            c_obj.satellite_evidence_strength = sat_evidence
+            c_obj.fire_evidence_status = fire_evidence_status
+            c_obj.risk_score = risk_score
+            c_obj.evidence_json = {
+                "risk_breakdown": risk_data["evidence"],
+                "stac_satellite": sat_info,
+                "osm_facility": facility
+            }
+
+        # 3. Classify cluster evidence
+        cluster_feature_dict = {
+            "centroid_lat": centroid_lat,
+            "centroid_lon": centroid_lon,
+            "avg_frp": avg_frp,
+            "max_frp": max_frp,
+            "persistence_days": persistence_days,
+            "recurrence_freq": recurrence_freq,
+            "dist_to_nearest_industry_km": dist_km,
+            "satellite_status": c_obj.satellite_status,
+            "satellite_evidence_strength": sat_evidence,
+            "fire_evidence_status": fire_evidence_status,
+            "risk_score": c_obj.risk_score
+        }
+        classification_res = classify_cluster_evidence(db, cluster_feature_dict)
+        c_obj.predicted_class = classification_res["predicted_class"]
+        c_obj.ml_model_status = classification_res["ml_model_status"]
+
+        # Save constituent raw hotspot scores
+        for hid in cluster_hotspot_map.get(c_obj, []):
+            h_rec = raw_hotspot_lookup.get(hid)
+            if h_rec:
+                h_rec.cluster_id = c_obj.id
+                h_rec.risk_score = c_obj.risk_score
+                h_rec.risk_level = "HIGH" if c_obj.risk_score > 70 else ("MEDIUM" if c_obj.risk_score > 40 else "LOW")
 
         cluster_count += 1
 
-    print(f"Feature pipeline processed {cluster_count} real hotspot clusters with real pixel-level satellite metrics.")
+        # Periodically commit and log progress
+        if idx % 100 == 0 or idx == total_groups:
+            db.commit()
+            pct = round(idx / total_groups * 100.0, 1)
+            print(f"[FEATURE ENRICHMENT PROGRESS] Enriched {idx}/{total_groups} clusters ({pct}%)...")
+
+    db.commit()
+
+    print(f"\n==================== [CLUSTERING & ENRICHMENT COMPLETE] ====================")
+    print(f"[PIPELINE SUMMARY] Total Clusters Processed   : {cluster_count}")
+    print(f"[PIPELINE SUMMARY] Clusters Matched Industry  : {clusters_matched_industry}")
+    print(f"[PIPELINE SUMMARY] Clusters No Nearby Industry: {clusters_no_nearby_industry}")
+    print(f"[PIPELINE SUMMARY] Facilities in Database     : {len(cached_facilities)}")
+    print(f"============================================================================\n")
     return cluster_count
 
 if __name__ == "__main__":

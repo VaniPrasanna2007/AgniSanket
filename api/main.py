@@ -25,13 +25,15 @@ from api.auth_utils import (
     hash_password, verify_password, create_access_token,
     get_current_user, get_required_user, require_roles, seed_default_users, ALLOWED_ROLES
 )
+from db.baseline_seed import seed_baseline_if_empty
 
 init_db()
 
-# Seed default admin & analyst users if empty
+# Seed default admin & analyst users if empty, and optional baseline data if DB completely empty
 db_startup = SessionLocal()
 try:
     seed_default_users(db_startup)
+    seed_baseline_if_empty(db_startup)
 finally:
     db_startup.close()
 
@@ -1909,15 +1911,63 @@ def list_ml_feedbacks(limit: int = 50, db: Session = Depends(get_db)):
 
 
 @app.get("/api/hotspots")
-def list_clusters(risk_threshold: float = 0.0, db: Session = Depends(get_db)):
-    all_clusters = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots)).order_by(HotspotCluster.id.asc()).all()
-    id_to_display = {c.id: idx + 1 for idx, c in enumerate(all_clusters)}
-    
-    clusters = [c for c in all_clusters if c.risk_score >= risk_threshold]
+def list_clusters(
+    risk_threshold: float = 0.0,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    min_lat: Optional[float] = None,
+    max_lat: Optional[float] = None,
+    min_lon: Optional[float] = None,
+    max_lon: Optional[float] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots))
+
+    if risk_threshold > 0.0:
+        query = query.filter(HotspotCluster.risk_score >= risk_threshold)
+    if min_lat is not None:
+        query = query.filter(HotspotCluster.centroid_lat >= min_lat)
+    if max_lat is not None:
+        query = query.filter(HotspotCluster.centroid_lat <= max_lat)
+    if min_lon is not None:
+        query = query.filter(HotspotCluster.centroid_lon >= min_lon)
+    if max_lon is not None:
+        query = query.filter(HotspotCluster.centroid_lon <= max_lon)
+
+    # Date filters
+    parsed_start = None
+    parsed_end = None
+    if start_date:
+        try:
+            parsed_start = datetime.fromisoformat(start_date.replace("Z", "+00:00")).replace(tzinfo=None)
+            query = query.filter(HotspotCluster.last_detected >= parsed_start)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            parsed_end = datetime.fromisoformat(end_date.replace("Z", "+00:00")).replace(tzinfo=None)
+            query = query.filter(HotspotCluster.first_detected <= parsed_end)
+        except Exception:
+            pass
+
+    query = query.order_by(HotspotCluster.id.asc())
+
+    if offset is not None and offset > 0:
+        query = query.offset(offset)
+    if limit is not None and limit > 0:
+        query = query.limit(limit)
+
+    clusters = query.all()
+
+    # Pre-build display ID mapping
+    all_clusters_total = db.query(HotspotCluster.id).order_by(HotspotCluster.id.asc()).all()
+    id_to_display = {c_id[0]: idx + 1 for idx, c_id in enumerate(all_clusters_total)}
+
     results = []
-    
     for c in clusters:
-        disp_id = id_to_display[c.id]
+        disp_id = id_to_display.get(c.id, c.id)
         hotspot_list = [
             {
                 "id": h.id,
@@ -1943,6 +1993,13 @@ def list_clusters(risk_threshold: float = 0.0, db: Session = Depends(get_db)):
             "centroid_lon": c.centroid_lon,
             "avg_frp": round(c.avg_frp, 1),
             "max_frp": round(c.max_frp, 1),
+            "avg_brightness": c.avg_brightness,
+            "max_brightness": c.max_brightness,
+            "avg_confidence": c.avg_confidence,
+            "frp_trend": c.frp_trend,
+            "detection_count": c.detection_count,
+            "first_detected": c.first_detected.isoformat() if c.first_detected else None,
+            "last_detected": c.last_detected.isoformat() if c.last_detected else None,
             "persistence_days": c.persistence_days,
             "recurrence_freq": c.recurrence_freq,
             "dist_to_nearest_industry_km": round(c.dist_to_nearest_industry_km, 2) if c.dist_to_nearest_industry_km is not None else None,
@@ -1982,6 +2039,24 @@ def list_clusters(risk_threshold: float = 0.0, db: Session = Depends(get_db)):
             "acknowledged_at": c.acknowledged_at.isoformat() if c.acknowledged_at else None,
             "created_at": c.created_at.isoformat() if c.created_at else None
         })
+
+    # Structured request telemetry logging
+    applied_filters = []
+    if risk_threshold > 0.0: applied_filters.append(f"risk_threshold>={risk_threshold}")
+    if min_lat is not None: applied_filters.append(f"lat>={min_lat}")
+    if max_lat is not None: applied_filters.append(f"lat<={max_lat}")
+    if min_lon is not None: applied_filters.append(f"lon>={min_lon}")
+    if max_lon is not None: applied_filters.append(f"lon<={max_lon}")
+    if parsed_start: applied_filters.append(f"from={parsed_start.strftime('%Y-%m-%d')}")
+    if parsed_end: applied_filters.append(f"to={parsed_end.strftime('%Y-%m-%d')}")
+
+    filter_str = ", ".join(applied_filters) if applied_filters else "NONE (All India Records)"
+    print(
+        f"[HOTSPOT API] Returned: {len(results)} clusters | "
+        f"Filters: [{filter_str}] | "
+        f"Limit: {limit if limit is not None else 'None (ALL)'} | "
+        f"Offset: {offset if offset is not None else 0}"
+    )
     return results
 
 @app.get("/api/hotspots/{cluster_id}")
@@ -2090,6 +2165,7 @@ def get_cluster_detail(cluster_id: int, db: Session = Depends(get_db)):
 @app.get("/api/facilities")
 def list_facilities(db: Session = Depends(get_db)):
     facs = db.query(IndustrialFacility).all()
+    print(f"[OSM FACILITIES API] Returning {len(facs)} registered industrial facilities from database.")
     return [{
         "id": f.id,
         "name": f.name,

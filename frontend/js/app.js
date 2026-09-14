@@ -2897,6 +2897,9 @@ async function loadHotspotClusters(silent = false) {
         allClusters.forEach(c => normalizeClusterObject(c));
         window.allClusters = allClusters;
 
+        const totalNestedHotspots = allClusters.reduce((acc, c) => acc + (c.hotspots ? c.hotspots.length : 0), 0);
+        console.log(`[AgniSanket Frontend] Clusters Received: ${allClusters.length} | Nested Hotspots Received: ${totalNestedHotspots}`);
+
         // Automated Critical Threat Escalation & Audio Notification Trigger
         processCriticalAlertEscalation(allClusters);
 
@@ -3170,6 +3173,7 @@ async function loadHotspotClusters(silent = false) {
             }
         }
         window.hotspotMarkers = hotspotMarkers;
+        console.log(`[AgniSanket Frontend] Map Markers Rendered: ${hotspotMarkers.length} (Tactical Centroid Pins + Risk Dots)`);
 
         if (is3DMode) {
             render3DHotspots();
