@@ -184,12 +184,51 @@ let govHistorySearchQuery = "";
 let currentGovAlertFilter = "ALL";
 let lastGeneratedGovReportData = null;
 
-const API_BASE = (window.location && window.location.origin && window.location.origin.startsWith("http")) 
-    ? window.location.origin 
-    : "http://127.0.0.1:8000";
+const API_BASE = window.AGNI_BACKEND_URL 
+    || ((window.location && window.location.origin && window.location.origin.startsWith("http")) 
+        ? window.location.origin 
+        : "http://127.0.0.1:8000");
 
 function getAuthHeaders() {
     return authToken ? { "Authorization": `Bearer ${authToken}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+}
+
+async function safeFetchJson(url, options = {}) {
+    try {
+        const res = await fetch(url, options);
+        const contentType = res.headers.get("content-type") || "";
+        if (!res.ok || !contentType.includes("application/json")) {
+            return { ok: false, status: res.status, data: null, isHtml: contentType.includes("text/html") };
+        }
+        const data = await res.json();
+        return { ok: true, status: res.status, data };
+    } catch (err) {
+        return { ok: false, status: 0, data: null, error: err };
+    }
+}
+
+async function fetchWithFallback(apiUrl, fallbackPath, options = {}) {
+    try {
+        const res = await fetch(apiUrl, options);
+        const contentType = res.headers.get("content-type") || "";
+        if (res.ok && contentType.includes("application/json")) {
+            return await res.json();
+        }
+    } catch (err) {
+        console.warn(`[AgniSanket] Live API request failed for ${apiUrl}:`, err.message);
+    }
+    if (fallbackPath) {
+        try {
+            const fbRes = await fetch(fallbackPath);
+            const fbType = fbRes.headers.get("content-type") || "";
+            if (fbRes.ok && (!fbType || fbType.includes("application/json") || fbType.includes("text/plain"))) {
+                return await fbRes.json();
+            }
+        } catch (fbErr) {
+            console.warn(`[AgniSanket] Fallback request failed for ${fallbackPath}:`, fbErr.message);
+        }
+    }
+    return null;
 }
 
 const ROLE_CONFIGS = {
@@ -1647,9 +1686,8 @@ async function renderMLViewData() {
 
     // 4. Fetch Real ML Overview Data from /api/ml/overview
     try {
-        const res = await fetch(`${API_BASE}/api/ml/overview`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const mlData = await res.json();
+        const mlData = await fetchWithFallback(`${API_BASE}/api/ml/overview`, "data/ml_overview.json", { headers: getAuthHeaders() });
+        if (mlData) {
             if (mlData.metrics) {
                 setTxt("ml-kpi-accuracy", `${(mlData.metrics.accuracy * 100).toFixed(1)}%`);
                 setTxt("ml-kpi-f1", mlData.metrics.macro_f1 != null ? mlData.metrics.macro_f1.toFixed(3) : "0.927");
@@ -2855,9 +2893,8 @@ async function pollUpdates() {
 
 async function loadDashboardStats(silent = false) {
     try {
-        const res = await fetch(`${API_BASE}/api/stats`);
-        if (res.ok) {
-            const data = await res.json();
+        const data = await fetchWithFallback(`${API_BASE}/api/stats`, "data/stats.json");
+        if (data) {
             const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
             setVal("stat-raw-hotspots", data.total_raw_detections);
             setVal("stat-total-clusters", data.total_clusters);
@@ -2868,12 +2905,12 @@ async function loadDashboardStats(silent = false) {
             
             const badge = document.getElementById("ml-model-badge");
             if (badge) {
-                if (data.ml_model_status.includes("TRAINED")) {
+                if (data.ml_model_status && data.ml_model_status.includes("TRAINED")) {
                     badge.className = "model-badge trained";
                     badge.innerHTML = `<i class="fa-solid fa-brain"></i> ML Model Trained (${data.verified_human_labels} labels)`;
                 } else {
                     badge.className = "model-badge uninitialized";
-                    badge.innerHTML = `<i class="fa-solid fa-list-check"></i> Evidence Rules Mode (${data.verified_human_labels} verified labels)`;
+                    badge.innerHTML = `<i class="fa-solid fa-list-check"></i> Evidence Rules Mode (${data.verified_human_labels || 0} verified labels)`;
                 }
             }
             renderReportsViewData();
@@ -2891,10 +2928,10 @@ async function loadHotspotClusters(silent = false) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/hotspots?risk_threshold=0.0`);
-        if (!res.ok) return;
+        const clustersData = await fetchWithFallback(`${API_BASE}/api/hotspots?risk_threshold=0.0`, "data/clusters.json");
+        if (!clustersData) return;
 
-        allClusters = await res.json();
+        allClusters = clustersData;
         allClusters.forEach(c => normalizeClusterObject(c));
         window.allClusters = allClusters;
 
@@ -3200,10 +3237,9 @@ async function loadIndustrialFacilities(force = false) {
         return;
     }
     try {
-        const res = await fetch(`${API_BASE}/api/facilities`);
-        if (!res.ok) return;
+        const facs = await fetchWithFallback(`${API_BASE}/api/facilities`, "data/facilities.json");
+        if (!facs) return;
 
-        const facs = await res.json();
         cachedFacilities = facs;
         facilityLayerGroup.clearLayers();
 
@@ -5060,21 +5096,38 @@ async function checkAuthSession() {
         updateAuthUI();
         return;
     }
-    try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-            headers: { "Authorization": `Bearer ${authToken}` }
-        });
-        if (res.ok) {
-            currentUser = await res.json();
-        } else {
-            authToken = null;
-            localStorage.removeItem("auth_token");
-            currentUser = null;
+
+    if (authToken.startsWith("demo-token-")) {
+        const savedUser = localStorage.getItem("current_user");
+        if (savedUser) {
+            try {
+                currentUser = JSON.parse(savedUser);
+            } catch (e) {
+                currentUser = null;
+            }
         }
-    } catch (e) {
-        currentUser = null;
-    } finally {
         isCheckingAuth = false;
+    } else {
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/me`, {
+                headers: { "Authorization": `Bearer ${authToken}` }
+            });
+            const contentType = res.headers.get("content-type") || "";
+            if (res.ok && contentType.includes("application/json")) {
+                currentUser = await res.json();
+                localStorage.setItem("current_user", JSON.stringify(currentUser));
+            } else {
+                authToken = null;
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("token");
+                localStorage.removeItem("current_user");
+                currentUser = null;
+            }
+        } catch (e) {
+            currentUser = null;
+        } finally {
+            isCheckingAuth = false;
+        }
     }
 
     if (currentUser) {
@@ -5533,52 +5586,79 @@ async function launchDemoSession(role) {
     const displayName = roleNames[targetRole] || targetRole;
 
     try {
-        const res = await fetch(`${API_BASE}/api/auth/demo-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: targetRole })
-        });
-        const data = await res.json();
-        if (res.ok && data.access_token) {
-            authToken = data.access_token;
-            localStorage.setItem("auth_token", authToken);
-            localStorage.setItem("token", authToken);
-            currentUser = data.user;
+        let sessionToken = null;
+        let sessionUser = null;
 
-            // Clear any stale route from previous sessions
-            sessionStorage.removeItem("agnisanket_target_route");
-            pendingPostAuthHash = null;
-
-            // Immediately switch views
-            const loginPage = document.getElementById("login-page");
-            const appContainer = document.getElementById("app-container");
-            if (loginPage) loginPage.style.display = "none";
-            if (appContainer) appContainer.style.display = "flex";
-
-            activeBoomingIncident = null;
-            activeBoomingRole = targetRole;
-
-            // Route to appropriate role-based dashboard
-            let targetHash = "#/command-center";
-            if (targetRole === "ADMIN") {
-                targetHash = "#/admin/dashboard";
-            } else if (targetRole === "ANALYST") {
-                targetHash = "#/dashboard";
+        // 1. Attempt live demo-login endpoint first
+        try {
+            const res = await safeFetchJson(`${API_BASE}/api/auth/demo-login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role: targetRole })
+            });
+            if (res.ok && res.data && res.data.access_token) {
+                sessionToken = res.data.access_token;
+                sessionUser = res.data.user;
             }
-            window.location.hash = targetHash;
-
-            updateAuthUI();
-            renderDashboardView(targetHash);
-            return true;
-        } else {
-            const msg = data.detail || "Demo login failed.";
-            if (errAlert) {
-                errAlert.innerText = msg;
-                errAlert.classList.remove("hidden");
-            }
-            showToast(msg, "error");
-            return false;
+        } catch (fetchErr) {
+            console.warn("Live demo-login endpoint request failed, using client demo session:", fetchErr.message);
         }
+
+        // 2. Seamless client-side demo fallback if backend is offline or static (e.g. Netlify)
+        if (!sessionToken) {
+            const demoUsernames = {
+                ADMIN: "admin",
+                ANALYST: "analyst1",
+                GOVERNMENT_AUTHORITY: "gov1"
+            };
+            const demoEmails = {
+                ADMIN: "admin@agnisanket.gov.in",
+                ANALYST: "analyst@agnisanket.gov.in",
+                GOVERNMENT_AUTHORITY: "official@ndrf.gov.in"
+            };
+            sessionToken = "demo-token-" + targetRole.toLowerCase() + "-" + Date.now();
+            sessionUser = {
+                id: targetRole === "ADMIN" ? 1 : (targetRole === "ANALYST" ? 2 : 3),
+                username: demoUsernames[targetRole] || "demo_user",
+                role: targetRole,
+                email: demoEmails[targetRole] || "demo@agnisanket.gov.in",
+                status: "ACTIVE",
+                is_active: 1
+            };
+        }
+
+        authToken = sessionToken;
+        localStorage.setItem("auth_token", authToken);
+        localStorage.setItem("token", authToken);
+        localStorage.setItem("current_user", JSON.stringify(sessionUser));
+        currentUser = sessionUser;
+
+        // Clear any stale route from previous sessions
+        sessionStorage.removeItem("agnisanket_target_route");
+        pendingPostAuthHash = null;
+
+        // Immediately switch views
+        const loginPage = document.getElementById("login-page");
+        const appContainer = document.getElementById("app-container");
+        if (loginPage) loginPage.style.display = "none";
+        if (appContainer) appContainer.style.display = "flex";
+
+        activeBoomingIncident = null;
+        activeBoomingRole = targetRole;
+
+        // Route to appropriate role-based dashboard
+        let targetHash = "#/command-center";
+        if (targetRole === "ADMIN") {
+            targetHash = "#/admin/dashboard";
+        } else if (targetRole === "ANALYST") {
+            targetHash = "#/dashboard";
+        }
+        window.location.hash = targetHash;
+
+        updateAuthUI();
+        renderDashboardView(targetHash);
+        showToast(`Connected to ${displayName} Demo Environment`, "success");
+        return true;
     } catch (err) {
         console.error("Demo login request error:", err);
         const errMsg = "Demo connection error: " + err.message;
@@ -5648,6 +5728,14 @@ async function handleLoginSubmit(e) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: uname, password: pwd, role: role })
         });
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+            if (errAlert) {
+                errAlert.innerText = "Authentication service is running in static demo mode. Please click any 'Demo Access' button to explore.";
+                errAlert.classList.remove("hidden");
+            }
+            return;
+        }
         const data = await res.json();
         if (res.ok) {
             authToken = data.access_token;
@@ -5968,23 +6056,22 @@ window.loadAdminUsers = loadAdminUsersView;
 async function loadAdminDashboardLandingView() {
     if (!currentUser || currentUser.role !== "ADMIN") return;
     try {
-        const res = await fetch(`${API_BASE}/api/admin/system-overview`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const data = await res.json();
+        const data = await fetchWithFallback(`${API_BASE}/api/admin/system-overview`, "data/admin_overview.json", { headers: getAuthHeaders() });
+        if (data) {
             const uEl = document.getElementById("admin-stat-users");
-            if (uEl) uEl.innerText = data.users.total_users;
+            if (uEl && data.users) uEl.innerText = data.users.total_users;
             const cEl = document.getElementById("admin-stat-clusters");
-            if (cEl) cEl.innerText = data.data_ingestion.clusters_count;
+            if (cEl && data.data_ingestion) cEl.innerText = data.data_ingestion.clusters_count;
             const aEl = document.getElementById("admin-stat-active-incidents");
-            if (aEl) aEl.innerText = data.data_ingestion.high_risk_anomalies || data.pending_incidents || 0;
+            if (aEl && data.data_ingestion) aEl.innerText = data.data_ingestion.high_risk_anomalies || data.pending_incidents || 0;
             const hEl = document.getElementById("admin-stat-health-status");
             if (hEl) hEl.innerText = "OPTIMAL";
             const dbEl = document.getElementById("admin-stat-db");
-            if (dbEl) dbEl.innerText = data.system.database_type || "PostgreSQL";
+            if (dbEl && data.system) dbEl.innerText = data.system.database_type || "PostgreSQL";
 
             // Update Threat Banner
             const threatBanner = document.getElementById("admin-dash-alert-threat");
-            if (threatBanner) {
+            if (threatBanner && data.data_ingestion) {
                 threatBanner.innerText = `${data.data_ingestion.high_risk_anomalies} high-threat thermal anomalies actively prioritized for containment.`;
             }
         }
@@ -6001,9 +6088,8 @@ async function loadAdminDashboardRecentIncidents() {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading recent critical incidents...</td></tr>`;
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/incidents`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const list = await res.json();
+        const list = await fetchWithFallback(`${API_BASE}/api/admin/incidents`, "data/admin_incidents.json", { headers: getAuthHeaders() });
+        if (list) {
             adminIncidentsCache = list;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 18px; color: var(--text-muted);">No active thermal incidents detected.</td></tr>`;
@@ -6043,9 +6129,8 @@ async function loadAdminDashboardRecentIncidents() {
 
 async function loadAdminAuditLogsSnippet() {
     try {
-        const res = await fetch(`${API_BASE}/api/admin/audit-logs`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const logs = await res.json();
+        const logs = await fetchWithFallback(`${API_BASE}/api/admin/audit-logs`, "data/admin_audit_logs.json", { headers: getAuthHeaders() });
+        if (logs) {
             const listEl = document.getElementById("admin-audit-logs-list");
             if (!listEl) return;
             if (!logs || logs.length === 0) {
@@ -6205,13 +6290,12 @@ async function loadAdminUsersView() {
     if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="padding: 16px; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading account directory...</td></tr>`;
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/users`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            adminUsersCache = await res.json();
+        const users = await fetchWithFallback(`${API_BASE}/api/admin/users`, "data/admin_users.json", { headers: getAuthHeaders() });
+        if (users) {
+            adminUsersCache = users;
             renderAdminUsersTable();
         } else {
-            const err = await res.json();
-            showToast("Failed to load users: " + (err.detail || "Unauthorized"), "error");
+            showToast("Failed to load users", "error");
         }
     } catch (e) {
         showToast("Error loading user directory: " + e.message, "error");
@@ -6405,9 +6489,8 @@ function handleDeleteUser(userId, username) {
 async function loadAdminRolesView() {
     if (!currentUser || currentUser.role !== "ADMIN") return;
     try {
-        const res = await fetch(`${API_BASE}/api/admin/roles`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const data = await res.json();
+        const data = await fetchWithFallback(`${API_BASE}/api/admin/roles`, "data/admin_roles.json", { headers: getAuthHeaders() });
+        if (data) {
             adminRolesCache = data.roles || [];
             adminAvailablePermissions = data.available_permissions || [];
 
@@ -6542,9 +6625,9 @@ async function loadAdminIncidentsView() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/incidents`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            adminIncidentsCache = await res.json();
+        const incidents = await fetchWithFallback(`${API_BASE}/api/admin/incidents`, "data/admin_incidents.json", { headers: getAuthHeaders() });
+        if (incidents) {
+            adminIncidentsCache = incidents;
             window.adminIncidentsCache = adminIncidentsCache;
             initAdminInvestigationMap();
             renderAdminIncidentsTable();
@@ -7348,13 +7431,12 @@ function handleExportSatelliteCSV() {
 async function loadAdminRiskInsightsView() {
     if (!currentUser || currentUser.role !== "ADMIN") return;
     try {
-        const res = await fetch(`${API_BASE}/api/ml/overview`);
-        if (res.ok) {
-            const data = await res.json();
+        const data = await fetchWithFallback(`${API_BASE}/api/ml/overview`, "data/ml_overview.json");
+        if (data) {
             const modStat = document.getElementById("ml-insights-model-status");
-            if (modStat) modStat.innerText = data.model_status.includes("TRAINED") ? "TRAINED" : "HEURISTIC";
+            if (modStat) modStat.innerText = (data.model_status || "").includes("TRAINED") ? "TRAINED" : "HEURISTIC";
             const verCount = document.getElementById("ml-insights-verified-count");
-            if (verCount) verCount.innerText = data.verified_labels_count;
+            if (verCount) verCount.innerText = data.verified_labels_count || data.verified_feedback_samples || 0;
             const f1El = document.getElementById("ml-insights-f1-score");
             if (f1El) f1El.innerText = `${data.latest_metrics?.f1_score || 1.0} / 1.0`;
 
@@ -8160,9 +8242,9 @@ async function loadAdminAlertsView() {
     if (listEl) listEl.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Fetching emergency alert stream...</div>`;
 
     try {
-        const res = await fetch(`${API_BASE}/api/government/alerts`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            adminAlertsCache = await res.json();
+        const alerts = await fetchWithFallback(`${API_BASE}/api/government/alerts`, "data/gov_alerts.json", { headers: getAuthHeaders() });
+        if (alerts) {
+            adminAlertsCache = alerts;
             renderAdminAlertsList();
         } else {
             showToast("Failed to load alerts", "error");
@@ -8507,9 +8589,9 @@ async function loadAdminAuditView() {
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading security audit ledger...</td></tr>`;
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/audit-logs`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            adminAuditLogsCache = await res.json();
+        const logs = await fetchWithFallback(`${API_BASE}/api/admin/audit-logs`, "data/admin_audit_logs.json", { headers: getAuthHeaders() });
+        if (logs) {
+            adminAuditLogsCache = logs;
             renderAdminAuditTable();
         } else {
             showToast("Failed to load audit logs", "error");
@@ -9134,12 +9216,12 @@ async function loadGovernmentDashboard(isManual = false) {
     if (refreshIcon) refreshIcon.classList.add("fa-spin");
 
     try {
-        const res = await fetch(`${API_BASE}/api/government/incidents`, { headers: getAuthHeaders() });
-        if (!res.ok) {
-            showToast("Failed to load emergency incidents.", "error");
+        const data = await fetchWithFallback(`${API_BASE}/api/government/incidents`, "data/gov_incidents.json", { headers: getAuthHeaders() });
+        if (!data) {
+            if (isManual) showToast("Failed to load emergency incidents.", "error");
             return;
         }
-        govIncidents = await res.json();
+        govIncidents = data;
         window.govIncidents = govIncidents;
 
         // Calculate KPI Metrics
@@ -9767,18 +9849,18 @@ async function loadGovDispatchManagement() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/government/dispatches`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            govDispatches = await res.json();
+        const dispatches = await fetchWithFallback(`${API_BASE}/api/government/dispatches`, "data/gov_dispatches.json", { headers: getAuthHeaders() });
+        if (dispatches) {
+            govDispatches = dispatches;
         }
     } catch (err) {
         console.error("Failed to load dispatches:", err);
     }
 
     try {
-        const resHist = await fetch(`${API_BASE}/api/government/audit-history`, { headers: getAuthHeaders() });
-        if (resHist.ok) {
-            govAuditHistory = await resHist.json();
+        const hist = await fetchWithFallback(`${API_BASE}/api/government/audit-history`, "data/gov_audit_history.json", { headers: getAuthHeaders() });
+        if (hist) {
+            govAuditHistory = hist;
         }
     } catch (err) {
         console.error("Failed to load audit history:", err);
@@ -10354,9 +10436,9 @@ async function loadGovMapExplorer() {
 // 10. Alerts & Notifications Controller
 async function loadGovAlertsNotifications() {
     try {
-        const res = await fetch(`${API_BASE}/api/government/alerts`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            govAlerts = await res.json();
+        const alerts = await fetchWithFallback(`${API_BASE}/api/government/alerts`, "data/gov_alerts.json", { headers: getAuthHeaders() });
+        if (alerts) {
+            govAlerts = alerts;
         }
     } catch (err) {
         console.error("Failed to load alerts:", err);

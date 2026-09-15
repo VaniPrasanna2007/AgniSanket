@@ -1,0 +1,62 @@
+[
+  {
+    "cluster_id": 1213,
+    "display_id": 1113,
+    "action_status": "ACKNOWLEDGED",
+    "status": "ACKNOWLEDGED",
+    "notes": "Automated Verification Directive - Tier-1 Command Acknowledged",
+    "officer": "gov1",
+    "action_by": "gov1",
+    "timestamp": "2026-09-13T18:40:04.042690",
+    "location": "8.8159\u00b0N, 80.9935\u00b0E (NO_NEARBY_INDUSTRIAL_FEATURE)",
+    "predicted_class": "Possible Vegetation/Agricultural Fire"
+  },
+  {
+    "cluster_id": 1196,
+    "display_id": 1096,
+    "action_status": "ACKNOWLEDGED",
+    "status": "ACKNOWLEDGED",
+    "notes": "GOV_PERSISTENCE_VERIFICATION_PASS",
+    "officer": "gov1",
+    "action_by": "gov1",
+    "timestamp": "2026-09-13T18:22:02.347368",
+    "location": "8.3542\u00b0N, 80.2059\u00b0E (Factory)",
+    "predicted_class": "Possible Vegetation/Agricultural Fire"
+  },
+  {
+    "cluster_id": 765,
+    "display_id": 665,
+    "action_status": "DISPATCHED",
+    "status": "DISPATCHED",
+    "notes": "Emergency fire response team dispatched from regional base.",
+    "officer": "admin",
+    "action_by": "admin",
+    "timestamp": "2026-09-13T15:35:04.457447",
+    "location": "29.9101\u00b0N, 74.9502\u00b0E (Guru Gobind Singh Refinery)",
+    "predicted_class": "Possible Vegetation/Agricultural Fire"
+  },
+  {
+    "cluster_id": 332,
+    "display_id": 233,
+    "action_status": "DISPATCHED",
+    "status": "DISPATCHED",
+    "notes": "Automated unit dispatch verified via CDP.",
+    "officer": "admin",
+    "action_by": "admin",
+    "timestamp": "2026-09-13T13:57:39.526632",
+    "location": "26.5000\u00b0N, 71.5000\u00b0E (Regional)",
+    "predicted_class": "Possible Industrial Thermal Event"
+  },
+  {
+    "cluster_id": 100,
+    "display_id": 1,
+    "action_status": "ACKNOWLEDGED",
+    "status": "ACKNOWLEDGED",
+    "notes": "Incident reviewed by district response team",
+    "officer": "gov1",
+    "action_by": "gov1",
+    "timestamp": "2026-09-06T17:50:52.924460",
+    "location": "15.0713\u00b0N, 76.8661\u00b0E (Mundaragi Industrial Area Road)",
+    "predicted_class": "Possible Industrial Thermal Event"
+  }
+]

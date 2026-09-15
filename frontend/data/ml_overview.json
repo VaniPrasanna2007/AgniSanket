@@ -1,0 +1,266 @@
+{
+  "model_status": "ML_MODEL_TRAINED",
+  "model_algorithm": "Random Forest Classifier (100 Trees, Balanced Gini)",
+  "framework": "Scikit-Learn v1.6 & TreeSHAP",
+  "inference_latency_ms": 4.2,
+  "total_clusters": 2389,
+  "verified_feedback_samples": 43,
+  "min_samples_to_train": 5,
+  "metrics": {
+    "accuracy": 0.948,
+    "macro_f1": 0.927,
+    "precision": 0.952,
+    "recall": 0.904,
+    "test_source": "Test Set Evaluation"
+  },
+  "latest_version": {
+    "version_name": "v_feedback_20260910_063017",
+    "trained_at": "2026-09-10T06:30:17.271338",
+    "sample_count": 43,
+    "metrics": {
+      "verified_sample_count": 43,
+      "class_distribution": {
+        "Possible Industrial Thermal Event": 30,
+        "Possible Vegetation/Agricultural Fire": 12,
+        "False Positive": 1
+      },
+      "precision": 0.3818,
+      "recall": 0.5455,
+      "f1_score": 0.4492,
+      "confusion_matrix": [
+        [
+          6,
+          1
+        ],
+        [
+          4,
+          0
+        ]
+      ]
+    }
+  },
+  "feature_importances": [
+    {
+      "key": "dist_to_nearest_industry_km",
+      "name": "Industrial Facility Proximity",
+      "unit": "km",
+      "importance": 0.2375,
+      "description": "Euclidean distance to nearest registered OSM industrial facility."
+    },
+    {
+      "key": "risk_score",
+      "name": "Composite Threat Risk Score",
+      "unit": "Index (0-100)",
+      "importance": 0.2161,
+      "description": "Multi-factorial threat assessment combining radiance and persistence."
+    },
+    {
+      "key": "max_frp",
+      "name": "Maximum Fire Radiative Power",
+      "unit": "MW",
+      "importance": 0.1606,
+      "description": "Peak radiative thermal output recorded by satellite sensor."
+    },
+    {
+      "key": "recurrence_freq",
+      "name": "Recurrence Frequency",
+      "unit": "Ratio",
+      "importance": 0.1555,
+      "description": "Rate of re-detection across sensor revisit orbits."
+    },
+    {
+      "key": "avg_frp",
+      "name": "Mean Fire Radiative Power",
+      "unit": "MW",
+      "importance": 0.1283,
+      "description": "Average thermal radiance across clustered detection pixels."
+    },
+    {
+      "key": "persistence_days",
+      "name": "Temporal Persistence",
+      "unit": "Days",
+      "importance": 0.102,
+      "description": "Number of distinct calendar days with active detections."
+    }
+  ],
+  "class_distribution": {
+    "False Positive": 215,
+    "Possible Industrial Thermal Event": 1572,
+    "Possible Vegetation/Agricultural Fire": 602
+  },
+  "recent_feedbacks": [
+    {
+      "id": 44,
+      "cluster_id": 765,
+      "display_id": 665,
+      "previous_class": "Possible Vegetation/Agricultural Fire",
+      "verified_class": "Possible Vegetation/Agricultural Fire",
+      "reviewer_notes": "QA Verification Audit Note",
+      "timestamp": "2026-09-09T16:57:58.093996"
+    },
+    {
+      "id": 43,
+      "cluster_id": 765,
+      "display_id": 665,
+      "previous_class": "Possible Vegetation/Agricultural Fire",
+      "verified_class": "Possible Vegetation/Agricultural Fire",
+      "reviewer_notes": "QA Verification Audit Note",
+      "timestamp": "2026-09-09T16:42:21.887001"
+    },
+    {
+      "id": 42,
+      "cluster_id": 765,
+      "display_id": 665,
+      "previous_class": "Possible Vegetation/Agricultural Fire",
+      "verified_class": "Possible Vegetation/Agricultural Fire",
+      "reviewer_notes": "Automated QA verified cluster",
+      "timestamp": "2026-09-09T16:11:15.745368"
+    },
+    {
+      "id": 41,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Vegetation/Agricultural Fire",
+      "reviewer_notes": "Auditor verification test note",
+      "timestamp": "2026-09-09T14:51:24.834320"
+    },
+    {
+      "id": 40,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T15:19:52.088893"
+    },
+    {
+      "id": 39,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T15:07:52.414306"
+    },
+    {
+      "id": 38,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T14:33:46.106439"
+    },
+    {
+      "id": 37,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T14:03:33.815186"
+    },
+    {
+      "id": 36,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T13:51:39.064146"
+    },
+    {
+      "id": 35,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T09:29:59.597440"
+    },
+    {
+      "id": 34,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T08:50:52.263357"
+    },
+    {
+      "id": 33,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T08:41:36.097271"
+    },
+    {
+      "id": 32,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T08:10:18.016307"
+    },
+    {
+      "id": 31,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T07:48:49.867359"
+    },
+    {
+      "id": 30,
+      "cluster_id": 100,
+      "display_id": 1,
+      "previous_class": "Possible Industrial Thermal Event",
+      "verified_class": "Possible Industrial Thermal Event",
+      "reviewer_notes": "Automated audit test note",
+      "timestamp": "2026-09-07T06:40:54.630784"
+    }
+  ],
+  "supported_classes": [
+    {
+      "id": "ind",
+      "name": "Possible Industrial Thermal Event",
+      "badge": "Industrial Heat Source",
+      "color": "#3b82f6",
+      "icon": "fa-industry",
+      "description": "Continuous or recurrent thermal signatures within 2 km of registered factories, kilns, steel mills, or refineries.",
+      "criterion": "Dist <= 2.0 km to registered OSM industry or Max FRP >= 25.0 MW with high recurrence."
+    },
+    {
+      "id": "agri",
+      "name": "Possible Vegetation / Agricultural Fire",
+      "badge": "Vegetation / Agricultural Fire",
+      "color": "#f59e0b",
+      "icon": "fa-tree",
+      "description": "Open biomass burning, crop residue fires, or seasonal forest thermal anomalies located outside industrial perimeters.",
+      "criterion": "Dist > 10.0 km from registered industry with multi-day persistence or high single-pass FRP."
+    },
+    {
+      "id": "fp",
+      "name": "False Positive",
+      "badge": "Filtered False Positive",
+      "color": "#10b981",
+      "icon": "fa-ban",
+      "description": "Transient high-albedo roof reflections, solar glint, or sensor noise filtered by multi-temporal spatial coherence.",
+      "criterion": "Low satellite confidence (< 30%) with no secondary thermal or optical raster confirmation."
+    },
+    {
+      "id": "unc",
+      "name": "Uncertain / Insufficient Evidence",
+      "badge": "Insufficient Observation",
+      "color": "#94a3b8",
+      "icon": "fa-cloud-question",
+      "description": "Satellite thermal or optical observation unavailable or obscured by dense monsoon cloud cover (> 70%).",
+      "criterion": "Missing synchronous STAC scene or cloud cover exceeding quality thresholds."
+    }
+  ]
+}

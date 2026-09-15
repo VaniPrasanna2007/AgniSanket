@@ -1,0 +1,123 @@
+{
+  "status": "success",
+  "roles": [
+    {
+      "role": "ADMIN",
+      "title": "Root Administrator",
+      "description": "Root System Administrator with full planetary governance, pipeline controls, RBAC management, and parameter tuning.",
+      "user_count": 1,
+      "permissions": [
+        "ingest_scans",
+        "model_retrain",
+        "incident_view",
+        "human_verification",
+        "satellite_telemetry",
+        "incident_status_update",
+        "dispatch_teams",
+        "export_reports",
+        "system_settings",
+        "manage_users",
+        "manage_roles",
+        "view_audit_logs"
+      ]
+    },
+    {
+      "role": "ANALYST",
+      "title": "Geospatial Analyst",
+      "description": "Forest Intelligence Analyst with anomaly investigation, satellite evidence analysis, and expert classification rights.",
+      "user_count": 4,
+      "permissions": [
+        "incident_view",
+        "export_reports"
+      ]
+    },
+    {
+      "role": "GOVERNMENT_AUTHORITY",
+      "title": "Government Authority",
+      "description": "Emergency Response Authority with official alert acknowledgement, unit dispatching, and field incident containment command.",
+      "user_count": 1,
+      "permissions": [
+        "ingest_scans",
+        "incident_view",
+        "satellite_telemetry",
+        "incident_status_update",
+        "dispatch_teams",
+        "export_reports"
+      ]
+    }
+  ],
+  "available_permissions": [
+    {
+      "key": "ingest_scans",
+      "name": "Trigger Planetary Scans",
+      "category": "Data Pipelines",
+      "desc": "Execute manual ingestion from NASA FIRMS VIIRS & Sentinel-2 STAC"
+    },
+    {
+      "key": "model_retrain",
+      "name": "Retrain ML Models",
+      "category": "AI Governance",
+      "desc": "Retrain and deploy new Random Forest classifier checkpoints"
+    },
+    {
+      "key": "incident_view",
+      "name": "View Incident Clusters",
+      "category": "Intelligence",
+      "desc": "Access live hotspot clusters, spatial coordinates, and telemetry"
+    },
+    {
+      "key": "incident_status_update",
+      "name": "Update Incident Status",
+      "category": "Incident Response",
+      "desc": "Acknowledge, dispatch, and mark thermal anomalies resolved"
+    },
+    {
+      "key": "dispatch_teams",
+      "name": "Dispatch Field Units",
+      "category": "Incident Response",
+      "desc": "Assign disaster response and district fire brigade units to incidents"
+    },
+    {
+      "key": "human_verification",
+      "name": "Human Verification & Annotation",
+      "category": "Intelligence",
+      "desc": "Confirm or adjust ML classifications with expert analyst feedback"
+    },
+    {
+      "key": "export_reports",
+      "name": "Generate & Export Reports",
+      "category": "Reporting",
+      "desc": "Download mission intelligence reports in CSV, JSON, and print formats"
+    },
+    {
+      "key": "system_settings",
+      "name": "Modify System Parameters",
+      "category": "Administration",
+      "desc": "Tune clustering epsilon, confidence thresholds, and auto-sync intervals"
+    },
+    {
+      "key": "manage_users",
+      "name": "User Lifecycle & RBAC",
+      "category": "Administration",
+      "desc": "Provision accounts, activate/deactivate credentials, and assign roles"
+    },
+    {
+      "key": "manage_roles",
+      "name": "Role & Permission Management",
+      "category": "Administration",
+      "desc": "Configure fine-grained system access permissions across security tiers"
+    },
+    {
+      "key": "view_audit_logs",
+      "name": "Inspect Security Audit Trail",
+      "category": "Audit & Compliance",
+      "desc": "Review comprehensive tamper-evident audit history of system actions"
+    },
+    {
+      "key": "satellite_telemetry",
+      "name": "Access Satellite Imagery & STAC",
+      "category": "Intelligence",
+      "desc": "Inspect multi-spectral raster bands, cloud coverage, and scene IDs"
+    }
+  ]
+}
