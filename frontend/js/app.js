@@ -312,8 +312,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Initialize Login Role UI to Government Official (or URL query override)
-    updateLoginRoleView("GOVERNMENT_AUTHORITY");
+    // Login portal presents the role-based Demo Access cards directly
+    // updateLoginRoleView("GOVERNMENT_AUTHORITY");
     checkLoginUrlParams();
 
     // 2. Hash & History Router Listener
@@ -530,8 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 analyticsDrawer.style.display = "flex";
                 analyticsDrawer.classList.add("expanded");
                 btnToggleAnalytics.classList.add("expanded");
-                btnToggleAnalytics.setAttribute("aria-expanded", "true");
-                btnToggleAnalytics.textContent = "Hide Analytics ↑";
+                btnToggleAnalytics.innerHTML = '<i class="fa-solid fa-chart-line"></i> <span>Hide Analytics ↑</span>';
                 setTimeout(() => {
                     analyticsDrawer.scrollIntoView({ behavior: "smooth", block: "start" });
                 }, 100);
@@ -540,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 analyticsDrawer.classList.remove("expanded");
                 btnToggleAnalytics.classList.remove("expanded");
                 btnToggleAnalytics.setAttribute("aria-expanded", "false");
-                btnToggleAnalytics.textContent = "View More Analytics ↓";
+                btnToggleAnalytics.innerHTML = '<i class="fa-solid fa-chart-line"></i> <span>View More Analytics ↓</span>';
                 const viewport = document.getElementById("analyst-main-viewport");
                 if (viewport) {
                     viewport.scrollTo({ top: 0, behavior: "smooth" });
@@ -762,6 +761,8 @@ function switchAnalystRouteView(nav) {
         const itemNav = item.getAttribute("data-nav");
         let isActive = (itemNav === activeNavKey);
         if (!isGov && itemNav === "dashboard" && (nav === "dashboard" || nav === "analyst")) isActive = true;
+        if (!isGov && itemNav === "map" && (nav === "map" || nav === "investigation")) isActive = true;
+        if (!isGov && itemNav === "alerts" && (nav === "alerts" || nav === "reports")) isActive = true;
         if (isGov && (itemNav === "government" || itemNav === "dashboard") && (nav === "government" || nav === "dashboard")) isActive = true;
         item.classList.toggle("active", isActive);
     });
@@ -3005,7 +3006,10 @@ async function loadHotspotClusters(silent = false) {
             const distFormatted = (c.dist_to_nearest_industry_km !== null && c.dist_to_nearest_industry_km !== undefined)
                 ? `${c.dist_to_nearest_industry_km} km`
                 : 'None';
-            const siteFormatted = c.nearest_industry_name || 'None';
+            let siteFormatted = c.nearest_industry_name || 'None';
+            if (siteFormatted.startsWith('NO_NEARBY') || siteFormatted === 'None') {
+                siteFormatted = 'No Nearby Facility';
+            }
 
             clusterMarker.bindPopup(`
                 <div class="map-tactical-popup">
@@ -3074,6 +3078,7 @@ async function loadHotspotClusters(silent = false) {
                 });
 
                 hMarker.riskScore = hScore;
+                hMarker.on('click', () => openDrawer(c.id, h.id));
                 hMarker.bindPopup(`
                     <div class="map-tactical-popup">
                         <div class="popup-title-bar ${hRiskClass.replace('risk-', '')}">
@@ -3090,7 +3095,7 @@ async function loadHotspotClusters(silent = false) {
                             <div class="popup-row"><b>Satellite:</b> <span>${h.satellite || 'VIIRS'}</span></div>
                             <div class="popup-actions">
                                 <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id}, ${h.id})">
-                                    <i class="fa-solid fa-circle-info"></i> View Parent Cluster
+                                    <i class="fa-solid fa-circle-info"></i> Hotspot Details
                                 </button>
                                 <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="openSatelliteEvidenceModal(${c.id}, ${h.id})">
                                     <i class="fa-solid fa-file-shield"></i> Satellite Verification
@@ -5878,8 +5883,10 @@ function switchAdminRouteView(nav) {
     // 1. Sidebar active states
     document.querySelectorAll(".admin-nav-item").forEach(item => {
         const itemNav = item.getAttribute("data-nav");
-        const isMatch = (itemNav === activeNav) ||
-            ((activeNav === "risk-insights" || activeNav === "ml-insights") && itemNav === "ml-insights");
+        let isMatch = (itemNav === activeNav);
+        if (itemNav === "users" && (activeNav === "users" || activeNav === "roles" || activeNav === "user-management")) isMatch = true;
+        if (itemNav === "settings" && (activeNav === "settings" || activeNav === "health" || activeNav === "operations" || activeNav === "pipelines" || activeNav === "audit")) isMatch = true;
+        if (itemNav === "dashboard" && (activeNav === "dashboard" || activeNav === "overview")) isMatch = true;
         item.classList.toggle("active", isMatch);
     });
 
@@ -9057,7 +9064,23 @@ function switchGovernmentRouteView(nav, clusterId = null) {
     // 1. Update active state in .gov-nav-sidebar
     document.querySelectorAll(".gov-nav-item").forEach(item => {
         const itemNav = item.getAttribute("data-nav");
-        item.classList.toggle("active", itemNav === nav);
+        let isMatch = (itemNav === nav);
+        if (itemNav === "live-incidents" && [
+            "live-incidents", "incident-investigation", "dispatch-management",
+            "satellite-verification", "risk-intelligence", "incident-history"
+        ].includes(nav)) {
+            isMatch = true;
+        }
+        if (itemNav === "official-reports" && (nav === "official-reports" || nav === "reports")) {
+            isMatch = true;
+        }
+        if (itemNav === "map-explorer" && (nav === "map-explorer" || nav === "map")) {
+            isMatch = true;
+        }
+        if (itemNav === "command-center" && (nav === "command-center" || nav === "dashboard" || nav === "government")) {
+            isMatch = true;
+        }
+        item.classList.toggle("active", isMatch);
     });
 
     // 2. Toggle view containers inside #gov-main-viewport

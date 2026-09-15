@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/MarkerCluster.css" />
     <link rel="stylesheet" href="css/maplibre-gl.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="icon" type="image/png" href="img/logo_icon.png" />
     <link rel="stylesheet" href="css/styles.css?v=20260914_demo_direct_v1" />
@@ -43,10 +43,12 @@
             <div class="login-left-column">
                 <!-- Welcome Section -->
                 <div class="login-welcome-section">
-                    <h1 class="welcome-heading">Welcome</h1>
-                    <div class="welcome-role" id="hero-role-display">Government Official</div>
+                    <h1 class="welcome-heading">Welcome to</h1>
+                    <div class="welcome-role" id="hero-role-display">
+                        <span class="brand-agni">Agni</span> <span class="brand-sanket">Sanket</span>
+                    </div>
                     <p class="welcome-desc" id="hero-role-desc">
-                        Monitor verified thermal threats and coordinate official response operations.
+                        Satellite Thermal Detection &amp; Real-Time Anomaly Monitoring System.
                     </p>
 
                     <!-- Feature Highlight Badges -->
@@ -81,91 +83,66 @@
                     </div>
                 </div>
 
-                <!-- Login Glass Card -->
+                <!-- Demo Access Card (Replaces the old role-login box) -->
                 <div class="login-card-glass">
-                    <!-- Card Header -->
-                    <div class="login-card-head">
-                        <div class="login-card-icon-wrapper" id="login-card-badge-icon">
-                            <i class="fa-solid fa-building-columns"></i>
-                        </div>
-                        <div class="login-card-title-group">
-                            <h3 id="login-card-title">Government Official Login</h3>
-                            <span class="login-card-badge-sub" id="login-card-subtitle">Authorised official access only</span>
-                        </div>
+                    <div class="demo-access-header" style="margin-bottom: 4px;">
+                        <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #f8fafc; letter-spacing: 0.2px;">
+                            Demo Access
+                        </h3>
+                        <p style="margin: 0; font-size: 12px; color: #94a3b8; font-weight: 400; line-height: 1.4;">
+                            Explore Agni Sanket without login credentials
+                        </p>
                     </div>
 
-                    <!-- Role Selector Segmented Controls -->
-                    <div class="login-role-selector-wrap">
-                        <div class="role-cards-grid" id="login-role-selector">
-                            <button type="button" class="role-card" data-role="ADMIN" onclick="selectLoginRole('ADMIN')">
-                                <i class="fa-solid fa-shield-halved"></i>
-                                <span>Admin</span>
-                            </button>
-                            <button type="button" class="role-card" data-role="ANALYST" onclick="selectLoginRole('ANALYST')">
+                    <div class="demo-cards-stack">
+                        <!-- 1. Analyst Demo ⭐ (Recommended & Highlighted) -->
+                        <button type="button" class="demo-access-card analyst-featured" id="btn-demo-analyst" onclick="launchDemoSession('ANALYST')" title="Explore hotspots, clusters, analysis, and alerts">
+                            <div class="demo-card-icon cyan">
                                 <i class="fa-solid fa-chart-line"></i>
-                                <span>Analyst</span>
-                            </button>
-                            <button type="button" class="role-card active" data-role="GOVERNMENT_AUTHORITY" onclick="selectLoginRole('GOVERNMENT_AUTHORITY')">
-                                <i class="fa-solid fa-building-columns"></i>
-                                <span>Govt Official</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Error Alert -->
-                    <div id="login-error-alert" class="alert-box error hidden"></div>
-
-                    <!-- Login Form -->
-                    <form id="login-form">
-                        <input type="hidden" id="login-role" value="GOVERNMENT_AUTHORITY" />
-                        
-                        <div class="login-input-group">
-                            <div class="input-icon-left"><i class="fa-solid fa-user"></i></div>
-                            <input type="text" id="login-username" class="login-input-field" placeholder="Enter official email or username" autofocus />
-                        </div>
-
-                        <div class="login-input-group">
-                            <div class="input-icon-left"><i class="fa-solid fa-lock"></i></div>
-                            <input type="password" id="login-password" class="login-input-field" placeholder="Password" />
-                            <button type="button" class="btn-toggle-pwd" id="btn-toggle-pwd" title="Toggle password visibility" tabindex="-1">
-                                <i class="fa-solid fa-eye-slash" id="icon-toggle-pwd"></i>
-                            </button>
-                        </div>
-
-                        <div class="login-options-row">
-                            <label class="login-remember-label">
-                                <input type="checkbox" id="login-remember-check" checked />
-                                <span>Remember me</span>
-                            </label>
-                            <a href="javascript:void(0)" id="login-forgot-link" class="login-forgot-link">Forgot password?</a>
-                        </div>
-
-                        <button type="submit" id="btn-login-submit" class="btn-login-coral">
-                            <span id="btn-login-text">Sign in as Government Official</span>
-                            <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                            <div class="demo-card-body">
+                                <div class="demo-card-title-row">
+                                    <span class="demo-card-name">Analyst Demo</span>
+                                    <span class="demo-recommended-badge">⭐ Recommended</span>
+                                </div>
+                                <span class="demo-card-desc">Explore hotspots, clusters, analysis, and alerts</span>
+                            </div>
+                            <div class="demo-card-arrow">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
                         </button>
-                    </form>
 
-                    <!-- Dedicated Instant Demo Access Portal (Direct role access, bypasses normal login form) -->
-                    <div class="demo-access-section" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.5px; text-transform: uppercase;">Direct Demo Access</span>
-                            <span style="font-size: 10px; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                <span class="pulse-dot" style="width: 6px; height: 6px; background: #10b981;"></span> Live RBAC
-                            </span>
-                        </div>
-                        
-                        <div class="demo-roles-strip" style="margin-top: 0;">
-                            <button type="button" class="btn-demo-role-pill admin-demo" id="btn-demo-admin" onclick="launchDemoSession('ADMIN')" title="Instant Demo as Administrator">
-                                <i class="fa-solid fa-shield-halved"></i> Admin Demo
-                            </button>
-                            <button type="button" class="btn-demo-role-pill analyst-demo" id="btn-demo-analyst" onclick="launchDemoSession('ANALYST')" title="Instant Demo as Analyst">
-                                <i class="fa-solid fa-chart-line"></i> Analyst Demo
-                            </button>
-                            <button type="button" class="btn-demo-role-pill gov-demo" id="btn-demo-gov" onclick="launchDemoSession('GOVERNMENT_AUTHORITY')" title="Instant Demo as Government Official">
-                                <i class="fa-solid fa-building-columns"></i> Govt Demo
-                            </button>
-                        </div>
+                        <!-- 2. Government Official Demo -->
+                        <button type="button" class="demo-access-card gov-standard" id="btn-demo-gov" onclick="launchDemoSession('GOVERNMENT_AUTHORITY')" title="View high-risk incidents, response status, and reports">
+                            <div class="demo-card-icon amber">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div class="demo-card-body">
+                                <div class="demo-card-title-row">
+                                    <span class="demo-card-name">Government Official Demo</span>
+                                </div>
+                                <span class="demo-card-desc">View high-risk incidents, response status, and reports</span>
+                            </div>
+                            <div class="demo-card-arrow">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </button>
+
+                        <!-- 3. Admin Demo -->
+                        <button type="button" class="demo-access-card admin-standard" id="btn-demo-admin" onclick="launchDemoSession('ADMIN')" title="Manage users, system settings, and system status">
+                            <div class="demo-card-icon red">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div class="demo-card-body">
+                                <div class="demo-card-title-row">
+                                    <span class="demo-card-name">Admin Demo</span>
+                                </div>
+                                <span class="demo-card-desc">Manage users, system settings, and system status</span>
+                            </div>
+                            <div class="demo-card-arrow">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -352,29 +329,13 @@
                         <i class="fa-solid fa-gauge-high"></i>
                         <span>Dashboard</span>
                     </button>
-                    <button class="analyst-nav-item" data-nav="investigation" id="nav-item-investigation">
-                        <i class="fa-solid fa-fire-flame-curved"></i>
-                        <span>Incident Investigation</span>
-                    </button>
-                    <button class="analyst-nav-item" data-nav="satellite" id="nav-item-satellite">
-                        <i class="fa-solid fa-satellite"></i>
-                        <span>Satellite Data</span>
-                    </button>
-                    <button class="analyst-nav-item" data-nav="ml" id="nav-item-ml">
-                        <i class="fa-solid fa-brain"></i>
-                        <span>ML Insights</span>
-                    </button>
-                    <button class="analyst-nav-item" data-nav="reports" id="nav-item-reports">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <span>Reports</span>
-                    </button>
                     <button class="analyst-nav-item" data-nav="map" id="nav-item-map">
                         <i class="fa-solid fa-earth-asia"></i>
-                        <span>Map Explorer</span>
+                        <span>Map</span>
                     </button>
                     <button class="analyst-nav-item" data-nav="alerts" id="nav-item-alerts">
                         <i class="fa-solid fa-bell"></i>
-                        <span>Alerts & Notifications</span>
+                        <span>Alerts & Reports</span>
                     </button>
                 </div>
 
@@ -395,30 +356,8 @@
             <div class="analyst-main-viewport" id="analyst-main-viewport">
                 <!-- Route View 1: Unified Dashboard -->
                 <div id="analyst-view-dashboard" class="analyst-route-view active">
-                <!-- 1. Hero Greeting Section -->
-                <section class="analyst-hero-section">
-                    <div class="hero-text-col">
-                        <div class="hero-top-eyebrow">
-                            <span class="hero-pulse-badge"><span class="pulse-dot"></span> LIVE SURVEILLANCE FEED</span>
-                            <span class="hero-orbit-tag"><i class="fa-solid fa-satellite"></i> Sentinel-2 & Landsat-9 Active</span>
-                        </div>
-                        <h1 class="hero-analyst-title">Thermal Surveillance Operations</h1>
-                        <p class="hero-analyst-subtitle">Real-Time Multi-Mission Satellite Ingestion &amp; Hotspot Analytics</p>
-                    </div>
-                    <div class="hero-telemetry-col">
-                        <div class="hero-telemetry-chip">
-                            <span class="chip-label">Coverage Sector</span>
-                            <span class="chip-value"><i class="fa-solid fa-location-dot"></i> Pan-India (All Zones)</span>
-                        </div>
-                        <div class="hero-telemetry-chip">
-                            <span class="chip-label">Pipeline Status</span>
-                            <span class="chip-value text-green"><i class="fa-solid fa-circle-check"></i> Real Raster Ingestion Active</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 2. KPI 4-Card Row -->
-                <section class="analyst-kpi-row">
+                    <!-- 1. KPI 4-Card Row -->
+                    <section class="analyst-kpi-row">
                     <!-- 1. NASA FIRMS Detections -->
                     <div class="analyst-kpi-card blue">
                         <div class="kpi-icon-square blue">
@@ -443,7 +382,7 @@
                         <div class="kpi-content-box">
                             <span class="kpi-big-number" id="stat-clusters">0</span>
                             <div class="kpi-label-line">
-                                <span class="kpi-card-label">DBSCAN Clusters</span>
+                                <span class="kpi-card-label" title="Nearby hotspots are automatically grouped to make the map easier to explore. Clusters are generated using the DBSCAN algorithm.">Hotspot Clustering <i class="fa-solid fa-circle-info" style="font-size:10px; color:#94a3b8; cursor:help;"></i></span>
                                 <svg viewBox="0 0 36 12" class="kpi-micro-sparkline" preserveAspectRatio="none">
                                     <path d="M0,8 Q9,4 18,7 T28,4 T36,2" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
@@ -504,7 +443,7 @@
                     <div class="map-search-container">
                         <div class="map-search-input-wrapper">
                             <i class="fa-solid fa-location-dot map-search-icon"></i>
-                            <input type="text" id="map-search-input" placeholder="Search city, state, or location (e.g. Telangana, Mundargi)..." autocomplete="off">
+                            <input type="text" id="map-search-input" placeholder="Search city or location..." autocomplete="off">
                             <button id="btn-map-search" type="button" class="btn-map-search">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 <span>Search</span>
@@ -977,7 +916,7 @@
 
                 <!-- 5. Analytics Trigger Button -->
                 <div class="analyst-analytics-toggle-wrap">
-                    <button id="btn-toggle-analytics" class="btn-analytics-toggle" type="button" aria-expanded="false" aria-controls="analyst-analytics-drawer">View More Analytics ↓</button>
+                    <button id="btn-toggle-analytics" class="btn-analytics-toggle" type="button" aria-expanded="false" aria-controls="analyst-analytics-drawer"><i class="fa-solid fa-chart-line"></i> <span>View More Analytics ↓</span></button>
                 </div>
 
 
@@ -2648,43 +2587,19 @@
                 <div class="gov-sidebar-nav-menu" style="overflow-y: auto; max-height: calc(100vh - 150px); padding-right: 2px;">
                     <button type="button" class="gov-nav-item active" data-nav="command-center" id="gov-nav-command-center" onclick="handleGovSidebarNav('command-center')">
                         <i class="fa-solid fa-gauge-high"></i>
-                        <span>Command Center</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="live-incidents" id="gov-nav-live-incidents" onclick="handleGovSidebarNav('live-incidents')">
-                        <i class="fa-solid fa-fire"></i>
-                        <span>Live Incidents</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="incident-investigation" id="gov-nav-incident-investigation" onclick="handleGovSidebarNav('incident-investigation')">
-                        <i class="fa-solid fa-magnifying-glass-location"></i>
-                        <span>Incident Investigation</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="dispatch-management" id="gov-nav-dispatch-management" onclick="handleGovSidebarNav('dispatch-management')">
-                        <i class="fa-solid fa-truck-medical"></i>
-                        <span>Dispatch Management</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="satellite-verification" id="gov-nav-satellite-verification" onclick="handleGovSidebarNav('satellite-verification')">
-                        <i class="fa-solid fa-satellite"></i>
-                        <span>Satellite Verification</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="risk-intelligence" id="gov-nav-risk-intelligence" onclick="handleGovSidebarNav('risk-intelligence')">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span>Risk & Intelligence</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="incident-history" id="gov-nav-incident-history" onclick="handleGovSidebarNav('incident-history')">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        <span>Incident History</span>
-                    </button>
-                    <button type="button" class="gov-nav-item" data-nav="official-reports" id="gov-nav-official-reports" onclick="handleGovSidebarNav('official-reports')">
-                        <i class="fa-solid fa-file-contract"></i>
-                        <span>Official Reports</span>
+                        <span>Dashboard</span>
                     </button>
                     <button type="button" class="gov-nav-item" data-nav="map-explorer" id="gov-nav-map-explorer" onclick="handleGovSidebarNav('map-explorer')">
                         <i class="fa-solid fa-map-location-dot"></i>
-                        <span>Map Explorer</span>
+                        <span>Map</span>
                     </button>
-                    <button type="button" class="gov-nav-item" data-nav="alerts-notifications" id="gov-nav-alerts-notifications" onclick="handleGovSidebarNav('alerts-notifications')">
-                        <i class="fa-solid fa-bell"></i>
-                        <span>Alerts & Notifications</span>
+                    <button type="button" class="gov-nav-item" data-nav="live-incidents" id="gov-nav-live-incidents" onclick="handleGovSidebarNav('live-incidents')">
+                        <i class="fa-solid fa-fire"></i>
+                        <span>Incidents</span>
+                    </button>
+                    <button type="button" class="gov-nav-item" data-nav="official-reports" id="gov-nav-official-reports" onclick="handleGovSidebarNav('official-reports')">
+                        <i class="fa-solid fa-file-contract"></i>
+                        <span>Reports</span>
                     </button>
                 </div>
                 <div class="gov-sidebar-bottom-badge">
@@ -2702,9 +2617,9 @@
                     <div class="dashboard-banner" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 10px 16px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; flex-shrink: 0;">
                         <div class="dashboard-banner-title">
                             <h2 style="font-size: 15px; font-weight: 800; color: #f8fafc; margin: 0; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-building-shield" style="color: var(--accent-amber);"></i> Emergency Thermal Anomaly Incident Command Center
+                                <i class="fa-solid fa-building-shield" style="color: var(--accent-amber);"></i> Government Official Dashboard
                             </h2>
-                            <p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0 0;">Inter-Agency Incident Prioritization, Dispatch Management & Field Action Enforcement</p>
+                            <p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0 0;">Incident Prioritization, Risk Assessment &amp; Response Coordination</p>
                         </div>
                         <div class="dashboard-banner-actions" style="display: flex; gap: 8px; align-items: center;">
                             <button type="button" id="btn-gov-refresh" class="btn btn-secondary" style="font-size: 11.5px; padding: 4px 10px;"><i class="fa-solid fa-rotate-right"></i> Refresh Incidents</button>
@@ -3560,51 +3475,15 @@
                 <div class="admin-sidebar-nav-menu" style="overflow-y: auto; max-height: calc(100vh - 150px); padding-right: 2px;">
                     <button type="button" class="admin-nav-item active" data-nav="dashboard" id="admin-nav-dashboard" onclick="handleAdminSidebarNav('dashboard')">
                         <i class="fa-solid fa-gauge-high"></i>
-                        <span>Admin Dashboard</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="incidents" id="admin-nav-incidents" onclick="handleAdminSidebarNav('incidents')">
-                        <i class="fa-solid fa-magnifying-glass-location"></i>
-                        <span>Incident Investigation</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="satellite" id="admin-nav-satellite" onclick="handleAdminSidebarNav('satellite')">
-                        <i class="fa-solid fa-satellite-dish"></i>
-                        <span>Satellite Data</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="ml-insights" id="admin-nav-ml-insights" onclick="handleAdminSidebarNav('ml-insights')">
-                        <i class="fa-solid fa-brain"></i>
-                        <span>ML Insights</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="reports" id="admin-nav-reports" onclick="handleAdminSidebarNav('reports')">
-                        <i class="fa-solid fa-file-contract"></i>
-                        <span>Reports</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="map" id="admin-nav-map" onclick="handleAdminSidebarNav('map')">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span>Map Explorer</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="alerts" id="admin-nav-alerts" onclick="handleAdminSidebarNav('alerts')">
-                        <i class="fa-solid fa-bell"></i>
-                        <span>Alerts & Notifications</span>
+                        <span>Dashboard</span>
                     </button>
                     <button type="button" class="admin-nav-item" data-nav="users" id="admin-nav-users" onclick="handleAdminSidebarNav('users')">
                         <i class="fa-solid fa-users-gear"></i>
-                        <span>User Management</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="roles" id="admin-nav-roles" onclick="handleAdminSidebarNav('roles')">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Role & Permissions</span>
+                        <span>Users</span>
                     </button>
                     <button type="button" class="admin-nav-item" data-nav="settings" id="admin-nav-settings" onclick="handleAdminSidebarNav('settings')">
                         <i class="fa-solid fa-sliders"></i>
-                        <span>System Settings</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="audit" id="admin-nav-audit" onclick="handleAdminSidebarNav('audit')">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span>Audit Logs</span>
-                    </button>
-                    <button type="button" class="admin-nav-item" data-nav="health" id="admin-nav-health" onclick="handleAdminSidebarNav('health')">
-                        <i class="fa-solid fa-heart-pulse"></i>
-                        <span>System Health</span>
+                        <span>Settings</span>
                     </button>
                 </div>
 
@@ -3631,10 +3510,10 @@
                     <div class="admin-landing-hero">
                         <div>
                             <div class="admin-landing-hero-title">
-                                <i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i> Executive Infrastructure & System Overview
+                                <i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i> System Overview
                                 <span class="role-badge-admin"><i class="fa-solid fa-crown"></i> ROOT RBAC · LEVEL 0</span>
                             </div>
-                            <div class="admin-landing-hero-sub">NTRO AgniSanket Planetary Thermal Surveillance Infrastructure & Administration Console</div>
+                            <div class="admin-landing-hero-sub">AgniSanket Administration &amp; System Management Console</div>
                         </div>
                         <div class="admin-landing-hero-badges">
                             <span class="latency-pill" id="admin-dash-db-pill"><i class="fa-solid fa-database"></i> PostgreSQL Connected</span>
@@ -5080,10 +4959,10 @@
                     <div class="admin-view-header">
                         <div>
                             <div class="view-header-title">
-                                <i class="fa-solid fa-sliders" style="color: #f87171;"></i> System Operational Parameters & Thresholds
-                                <span class="role-badge-admin" style="margin-left: 8px;"><i class="fa-solid fa-lock"></i> ADMIN PROTECTED</span>
+                                <i class="fa-solid fa-sliders" style="color: #f87171;"></i> Settings
+                                <span class="role-badge-admin" style="margin-left: 8px;"><i class="fa-solid fa-lock"></i> SYSTEM MANAGEMENT</span>
                             </div>
-                            <div class="view-header-subtitle">Real-time Tuning of NASA FIRMS Ingestion Filters, DBSCAN Geometry & Emergency Alert Escalation</div>
+                            <div class="view-header-subtitle">Data Refresh Intervals, Alert Thresholds &amp; System Configuration</div>
                         </div>
                         <div class="view-header-actions">
                             <button id="btn-settings-save" class="btn btn-primary" style="background: var(--accent-red); border-color: var(--accent-red);"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
@@ -5096,59 +4975,32 @@
 
                     <!-- Parameters 3-Column Grid -->
                     <div class="admin-grid-3col">
-                        <!-- Group 1: NASA FIRMS Ingestion Filters -->
+                        <!-- Group 1: Data Refresh & Ingestion -->
                         <div class="admin-card">
                             <div class="admin-card-header">
-                                <h4><i class="fa-solid fa-satellite" style="color: #ef4444;"></i> NASA FIRMS Ingestion</h4>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="setting-firms-area">Target Area Code</label>
-                                <input type="text" id="setting-firms-area" class="admin-form-input" value="IND" placeholder="e.g. IND" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">Country bounding area for orbital sensor passes.</span>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="setting-firms-confidence">Minimum Detection Confidence (%)</label>
-                                <input type="number" id="setting-firms-confidence" class="admin-form-input" value="30" min="0" max="100" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">Lower values capture subtle fires; higher values reject noise.</span>
+                                <h4><i class="fa-solid fa-arrows-rotate" style="color: #38bdf8;"></i> Data Refresh Settings</h4>
                             </div>
                             <div class="admin-form-group">
                                 <label for="setting-auto-sync-interval">Auto-Sync Polling Interval (seconds)</label>
                                 <input type="number" id="setting-auto-sync-interval" class="admin-form-input" value="180" min="30" max="3600" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">Frequency of background orbital telemetry synchronization.</span>
+                                <span style="font-size: 10.5px; color: var(--text-muted);">Frequency of background satellite telemetry synchronization.</span>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="setting-firms-area">Target Country Code</label>
+                                <input type="text" id="setting-firms-area" class="admin-form-input" value="IND" placeholder="e.g. IND" />
+                                <span style="font-size: 10.5px; color: var(--text-muted);">Country bounding area for orbital sensor passes.</span>
                             </div>
                         </div>
 
-                        <!-- Group 2: DBSCAN Spatial Geometry -->
+                        <!-- Group 2: Alerting & Escalation Thresholds -->
                         <div class="admin-card">
                             <div class="admin-card-header">
-                                <h4><i class="fa-solid fa-cubes" style="color: #a78bfa;"></i> DBSCAN Clustering Geometry</h4>
+                                <h4><i class="fa-solid fa-bell" style="color: #fbbf24;"></i> Alert Thresholds</h4>
                             </div>
                             <div class="admin-form-group">
-                                <label for="setting-dbscan-eps">Spatial Epsilon Radius (km)</label>
-                                <input type="number" id="setting-dbscan-eps" class="admin-form-input" value="5.0" step="0.5" min="0.5" max="50" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">Maximum distance between thermal detections to cluster together.</span>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="setting-dbscan-min-samples">DBSCAN Min Samples</label>
-                                <input type="number" id="setting-dbscan-min-samples" class="admin-form-input" value="2" min="1" max="20" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">Minimum adjacent hotspots required to form an anomaly cluster.</span>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="setting-industrial-buffer">Industrial Proximity Buffer (km)</label>
-                                <input type="number" id="setting-industrial-buffer" class="admin-form-input" value="1.5" step="0.1" min="0.1" max="10" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">OSM heavy facility radius for Industrial Flare classification.</span>
-                            </div>
-                        </div>
-
-                        <!-- Group 3: Alerting & Dispatch Thresholds -->
-                        <div class="admin-card">
-                            <div class="admin-card-header">
-                                <h4><i class="fa-solid fa-bell" style="color: #fbbf24;"></i> Alerting & Escalation Thresholds</h4>
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="setting-high-frp">High FRP Critical Alert Threshold (MW)</label>
+                                <label for="setting-high-frp">High FRP Alert Threshold (MW)</label>
                                 <input type="number" id="setting-high-frp" class="admin-form-input" value="50.0" step="5" min="5" max="1000" />
-                                <span style="font-size: 10.5px; color: var(--text-muted);">FRP exceeding this threshold triggers high severity dispatch.</span>
+                                <span style="font-size: 10.5px; color: var(--text-muted);">FRP exceeding this threshold triggers critical escalation.</span>
                             </div>
                             <div class="admin-form-group">
                                 <label for="setting-persistence-days">Multi-Day Persistence Threshold (Days)</label>
@@ -5158,12 +5010,71 @@
                             <div class="admin-form-group" style="margin-top: 14px;">
                                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                     <input type="checkbox" id="setting-audio-alerts" checked style="width: 16px; height: 16px; accent-color: var(--accent-red);" />
-                                    <span>Enable Browser Sound Alarms on High-Risk Escalations</span>
+                                    <span>Enable Browser Sound Alarms</span>
                                 </label>
-                                <span style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px; display: block;">Audio synthesized buzzer when new critical cluster is ingested.</span>
+                            </div>
+                        </div>
+
+                        <!-- Group 3: System Health Overview -->
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h4><i class="fa-solid fa-heart-pulse" style="color: #10b981;"></i> System Health &amp; Services</h4>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(15,23,42,0.5); border-radius: 6px;">
+                                    <span style="font-size: 12px; color: #cbd5e1;"><i class="fa-solid fa-database" style="color:#38bdf8; margin-right: 6px;"></i> Primary Database</span>
+                                    <span class="status-pill" style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 11px;">Connected</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(15,23,42,0.5); border-radius: 6px;">
+                                    <span style="font-size: 12px; color: #cbd5e1;"><i class="fa-solid fa-satellite-dish" style="color:#f59e0b; margin-right: 6px;"></i> NASA FIRMS Feed</span>
+                                    <span class="status-pill" style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 11px;">Active</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(15,23,42,0.5); border-radius: 6px;">
+                                    <span style="font-size: 12px; color: #cbd5e1;"><i class="fa-solid fa-brain" style="color:#a855f7; margin-right: 6px;"></i> ML Classifier Engine</span>
+                                    <span class="status-pill" style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 11px;">Operational</span>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Collapsible Advanced Settings (Condition 5) -->
+                    <details style="margin-top: 14px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+                        <summary style="font-size: 12px; font-weight: 700; color: #94a3b8; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-gear"></i> Advanced Configuration (DBSCAN Geometry &amp; Ingestion Filters)
+                        </summary>
+                        <div class="admin-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+                            <div class="admin-card" style="margin: 0;">
+                                <div class="admin-card-header">
+                                    <h4><i class="fa-solid fa-cubes" style="color: #a78bfa;"></i> DBSCAN Clustering Geometry</h4>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="setting-dbscan-eps">Spatial Epsilon Radius (km)</label>
+                                    <input type="number" id="setting-dbscan-eps" class="admin-form-input" value="5.0" step="0.5" min="0.5" max="50" />
+                                    <span style="font-size: 10.5px; color: var(--text-muted);">Maximum distance between thermal detections to cluster together.</span>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="setting-dbscan-min-samples">DBSCAN Min Samples</label>
+                                    <input type="number" id="setting-dbscan-min-samples" class="admin-form-input" value="2" min="1" max="20" />
+                                    <span style="font-size: 10.5px; color: var(--text-muted);">Minimum adjacent hotspots required to form an anomaly cluster.</span>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="setting-industrial-buffer">Industrial Proximity Buffer (km)</label>
+                                    <input type="number" id="setting-industrial-buffer" class="admin-form-input" value="1.5" step="0.1" min="0.1" max="10" />
+                                    <span style="font-size: 10.5px; color: var(--text-muted);">OSM heavy facility radius for Industrial Flare classification.</span>
+                                </div>
+                            </div>
+                            <div class="admin-card" style="margin: 0;">
+                                <div class="admin-card-header">
+                                    <h4><i class="fa-solid fa-filter" style="color: #ef4444;"></i> Ingestion Filters</h4>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label for="setting-firms-confidence">Minimum Detection Confidence (%)</label>
+                                    <input type="number" id="setting-firms-confidence" class="admin-form-input" value="30" min="0" max="100" />
+                                    <span style="font-size: 10.5px; color: var(--text-muted);">Lower values capture subtle fires; higher values reject noise.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div> <!-- End #admin-dashboard -->
