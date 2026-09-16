@@ -1,1 +1,1 @@
-{"total_raw_detections": 9699, "total_clusters": 2389, "high_risk_anomalies": 40, "verified_human_labels": 43, "industrial_facilities_tracked": 805, "ml_model_status": "ML_MODEL_TRAINED"}
+{"total_raw_detections": 9699, "total_clusters": 2263, "high_risk_anomalies": 40, "verified_human_labels": 43, "industrial_facilities_tracked": 805, "ml_model_status": "ML_MODEL_TRAINED"}

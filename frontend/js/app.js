@@ -3089,6 +3089,11 @@ async function loadHotspotClusters(silent = false) {
         const totalNestedHotspots = allClusters.reduce((acc, c) => acc + (c.hotspots ? c.hotspots.length : 0), 0);
         console.log(`[AgniSanket Frontend] Clusters Received: ${allClusters.length} | Nested Hotspots Received: ${totalNestedHotspots}`);
 
+        const elStatClusters = document.getElementById("stat-clusters");
+        if (elStatClusters) elStatClusters.innerText = allClusters.length;
+        const elStatTotalClusters = document.getElementById("stat-total-clusters");
+        if (elStatTotalClusters) elStatTotalClusters.innerText = allClusters.length;
+
         // Automated Critical Threat Escalation & Audio Notification Trigger
         processCriticalAlertEscalation(allClusters);
 

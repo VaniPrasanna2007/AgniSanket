@@ -3,7 +3,7 @@
   "model_algorithm": "Random Forest Classifier (100 Trees, Balanced Gini)",
   "framework": "Scikit-Learn v1.6 & TreeSHAP",
   "inference_latency_ms": 4.2,
-  "total_clusters": 2389,
+  "total_clusters": 2263,
   "verified_feedback_samples": 43,
   "min_samples_to_train": 5,
   "metrics": {
