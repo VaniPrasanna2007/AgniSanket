@@ -1,2 +1,3 @@
-/api/*    /api/:splat   404
-/*        /index.html   200
+# Ensure API requests are not captured by the SPA index.html redirect
+/api/*    /404.html   404
+/*        /index.html 200

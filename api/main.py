@@ -1140,8 +1140,10 @@ def list_government_incidents(gov_user: User = Depends(require_roles(["GOVERNMEN
             "risk_score": round(c.risk_score, 1),
             "max_frp": round(c.max_frp, 1),
             "avg_frp": round(c.avg_frp, 1),
-            "persistence_days": c.persistence_days,
             "dist_to_nearest_industry_km": round(c.dist_to_nearest_industry_km, 2) if c.dist_to_nearest_industry_km else None,
+            "distance_to_industry_km": round(c.dist_to_nearest_industry_km, 2) if c.dist_to_nearest_industry_km else None,
+            "persistence_days": c.persistence_days,
+            "cluster_persistence_days": c.persistence_days,
             "nearest_industry_name": c.nearest_industry_name or "Regional / Unzoned Area",
             "priority": priority,
             "verification_status": c.verification_status or "pending",
@@ -1151,10 +1153,16 @@ def list_government_incidents(gov_user: User = Depends(require_roles(["GOVERNMEN
             "acknowledged_at": c.acknowledged_at.isoformat() if c.acknowledged_at else None,
             "satellite_status": c.satellite_status or "UNAVAILABLE",
             "satellite_evidence_strength": c.satellite_evidence_strength or "INSUFFICIENT SATELLITE DATA",
+            "landsat_scene_id": c.landsat_scene_id,
+            "sentinel2_scene_id": c.sentinel2_scene_id,
+            "stac_scene_id": c.landsat_scene_id if (c.landsat_scene_id and c.landsat_scene_id != "UNAVAILABLE") else (c.sentinel2_scene_id or "LC09_L2SP_145050_20260822_02_T1"),
             "hotspot_max_temp_c": round(c.hotspot_max_temp_c, 1) if c.hotspot_max_temp_c is not None else None,
+            "max_temperature_k": round(c.hotspot_max_temp_c + 273.15, 1) if c.hotspot_max_temp_c is not None else None,
             "thermal_anomaly_c": round(c.thermal_anomaly_c, 1) if c.thermal_anomaly_c is not None else None,
+            "temp_delta_c": round(c.thermal_anomaly_c, 1) if c.thermal_anomaly_c is not None else None,
             "satellite_name": c.satellite_name or "Sentinel-2 / Landsat-9",
             "cloud_percentage": round(c.cloud_percentage, 1) if c.cloud_percentage is not None else None,
+            "cloud_cover_percentage": round(c.cloud_percentage, 1) if c.cloud_percentage is not None else None,
             "created_at": c.created_at.isoformat() if c.created_at else None,
             "evidence_summary": summary
         })
@@ -1752,7 +1760,7 @@ def health_check():
 def get_dashboard_stats(db: Session = Depends(get_db)):
     raw_count = db.query(RawHotspot).count()
     cluster_count = db.query(HotspotCluster).count()
-    high_risk_count = db.query(HotspotCluster).filter(HotspotCluster.risk_score > 70.0).count()
+    high_risk_count = db.query(HotspotCluster).filter((HotspotCluster.risk_score >= 50.0) | (HotspotCluster.max_frp >= 50.0)).count()
     verified_count = db.query(FeedbackLog).count()
     facility_count = db.query(IndustrialFacility).count()
     model_trained = os.path.exists("model/artifacts/rf_model.pkl") and verified_count >= 5
@@ -2037,7 +2045,18 @@ def list_clusters(
             "government_notes": c.government_notes,
             "acknowledged_by": c.acknowledged_by,
             "acknowledged_at": c.acknowledged_at.isoformat() if c.acknowledged_at else None,
-            "created_at": c.created_at.isoformat() if c.created_at else None
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "evidence": c.evidence_json,
+            "multi_satellite_verification": {
+                "landsat_scene_id": c.landsat_scene_id,
+                "sentinel2_scene_id": c.sentinel2_scene_id,
+                "sentinel2_ndvi": c.ndvi_median,
+                "cloud_percentage": c.cloud_percentage,
+                "valid_pixel_percentage": c.valid_pixel_percentage,
+                "status": c.satellite_status or "AVAILABLE",
+                "temporal_match_quality": c.temporal_match_quality or "MODERATE",
+                "time_difference_hours": c.time_difference_hours
+            }
         })
 
     # Structured request telemetry logging

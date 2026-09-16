@@ -1,10 +1,21 @@
 [build]
   publish = "frontend"
 
+# Uncomment and configure the proxy below if you deploy the FastAPI backend to an external host
+# (e.g. Render, Railway, Fly.io) to proxy all /api/* requests seamlessly:
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-backend-api.onrender.com/api/:splat"
+#   status = 200
+#   force = true
+
+# Ensure API requests are NEVER redirected to /index.html as HTML
 [[redirects]]
   from = "/api/*"
+  to = "/404.html"
   status = 404
 
+# SPA client-side routing fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

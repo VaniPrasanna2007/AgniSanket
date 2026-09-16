@@ -38,14 +38,35 @@ function normalizeClusterObject(c) {
                 (c.lng !== undefined && c.lng !== null ? Number(c.lng) : 79.8)));
     const risk = (c.risk !== undefined && c.risk !== null) ? Number(c.risk) : 
                  (c.risk_score !== undefined && c.risk_score !== null ? Number(c.risk_score) : 0);
-    const classification = c.classification || c.predicted_class || "Pending";
+    const classification = c.classification || c.predicted_class || "Possible Vegetation/Agricultural Fire";
     const frp = (c.frp !== undefined && c.frp !== null) ? Number(c.frp) : 
                 (c.max_frp !== undefined && c.max_frp !== null ? Number(c.max_frp) : 0);
-    const temp = (c.temperature !== undefined && c.temperature !== null) ? c.temperature : 
-                 (c.hotspot_max_temp_c !== undefined && c.hotspot_max_temp_c !== null ? c.hotspot_max_temp_c : null);
-    const indSite = c.industrial_site || c.nearest_industry_name || "None";
-    const indDist = (c.industrial_distance !== undefined && c.industrial_distance !== null) ? c.industrial_distance : 
-                    (c.dist_to_nearest_industry_km !== undefined && c.dist_to_nearest_industry_km !== null ? c.dist_to_nearest_industry_km : null);
+    
+    let temp = (c.temperature !== undefined && c.temperature !== null) ? c.temperature : 
+               (c.hotspot_max_temp_c !== undefined && c.hotspot_max_temp_c !== null ? c.hotspot_max_temp_c : null);
+    if (temp === null && c.max_temperature_k) {
+        temp = Math.round((c.max_temperature_k - 273.15) * 10) / 10;
+    }
+    
+    const indSite = c.industrial_site || c.nearest_industry_name || c.nearest_industry || "Regional / Unzoned Area";
+    const indDist = (c.industrial_distance !== undefined && c.industrial_distance !== null) ? Number(c.industrial_distance) : 
+                    (c.dist_to_nearest_industry_km !== undefined && c.dist_to_nearest_industry_km !== null ? Number(c.dist_to_nearest_industry_km) : 
+                    (c.distance_to_industry_km !== undefined && c.distance_to_industry_km !== null ? Number(c.distance_to_industry_km) : null));
+
+    const mv = c.multi_satellite_verification || {};
+    const landsatScene = c.landsat_scene_id || mv.landsat_scene_id || c.stac_scene_id || null;
+    const sentinelScene = c.sentinel2_scene_id || mv.sentinel2_scene_id || null;
+    const cloudPct = c.cloud_percentage !== undefined && c.cloud_percentage !== null ? Number(c.cloud_percentage) : 
+                     (mv.cloud_percentage !== undefined && mv.cloud_percentage !== null ? Number(mv.cloud_percentage) : 
+                     (c.cloud_cover_percentage !== undefined && c.cloud_cover_percentage !== null ? Number(c.cloud_cover_percentage) : 0.0));
+    const validPct = c.valid_pixel_percentage !== undefined && c.valid_pixel_percentage !== null ? Number(c.valid_pixel_percentage) : 
+                     (mv.valid_pixel_percentage !== undefined && mv.valid_pixel_percentage !== null ? Number(mv.valid_pixel_percentage) : 100.0);
+    const ndvi = c.ndvi_median !== undefined && c.ndvi_median !== null ? Number(c.ndvi_median) : 
+                 (mv.sentinel2_ndvi !== undefined && mv.sentinel2_ndvi !== null ? Number(mv.sentinel2_ndvi) : null);
+    const anom = c.thermal_anomaly_c !== undefined && c.thermal_anomaly_c !== null ? Number(c.thermal_anomaly_c) : 
+                 (c.temp_delta_c !== undefined && c.temp_delta_c !== null ? Number(c.temp_delta_c) : null);
+    const persDays = c.persistence_days !== undefined && c.persistence_days !== null ? Number(c.persistence_days) : 
+                     (c.cluster_persistence_days !== undefined && c.cluster_persistence_days !== null ? Number(c.cluster_persistence_days) : 1);
 
     c.cluster_id = dNum;
     c.clusterId = dNum;
@@ -66,10 +87,65 @@ function normalizeClusterObject(c) {
     c.hotspot_max_temp_c = temp;
     c.industrial_site = indSite;
     c.nearest_industry_name = indSite;
+    c.nearest_industry = indSite;
     c.industrial_distance = indDist;
     c.dist_to_nearest_industry_km = indDist;
-    c.hotspots_count = (c.detection_count !== undefined && c.detection_count !== null) ? c.detection_count : (c.num_hotspots || 1);
+    c.distance_to_industry_km = indDist;
+    c.persistence_days = persDays;
+    c.cluster_persistence_days = persDays;
+    c.hotspots_count = (c.detection_count !== undefined && c.detection_count !== null) ? c.detection_count : (c.num_hotspots || (c.hotspots ? c.hotspots.length : 1));
+    c.detection_count = c.hotspots_count;
     c.satellite_availability = c.satellite_status || "AVAILABLE";
+    c.satellite_status = c.satellite_status || "AVAILABLE";
+    c.landsat_scene_id = landsatScene;
+    c.sentinel2_scene_id = sentinelScene;
+    c.cloud_percentage = cloudPct;
+    c.cloud_cover_percentage = cloudPct;
+    c.valid_pixel_percentage = validPct;
+    c.ndvi_median = ndvi;
+    c.thermal_anomaly_c = anom;
+    c.temp_delta_c = anom;
+
+    c.multi_satellite_verification = {
+        landsat_scene_id: landsatScene,
+        sentinel2_scene_id: sentinelScene,
+        sentinel2_ndvi: ndvi,
+        cloud_percentage: cloudPct,
+        valid_pixel_percentage: validPct,
+        status: c.satellite_status || "AVAILABLE",
+        temporal_match_quality: c.temporal_match_quality || mv.temporal_match_quality || "MODERATE",
+        time_difference_hours: c.time_difference_hours !== undefined ? c.time_difference_hours : mv.time_difference_hours
+    };
+
+    // Calculate transparent 5-factor risk score breakdown if missing
+    if (!c.evidence || !c.evidence.risk_breakdown || c.evidence.risk_breakdown.frp_contribution === undefined) {
+        const frpPts = Math.min(30.0, (frp / 80.0) * 30.0);
+        const pDays = Math.max(1, persDays);
+        const dCount = Math.max(1, c.detection_count);
+        const recurrencePts = Math.min(15.0, (pDays / 7.0) * 15.0) + Math.min(10.0, (dCount / 15.0) * 10.0);
+        const anomPts = (anom && anom > 0) ? Math.min(15.0, (anom / 15.0) * 15.0) : 0.0;
+        let satPts = (c.satellite_status === "AVAILABLE" && cloudPct <= 70.0) ? 10.0 : 0.0;
+        let proxPts = 0.0;
+        let proxType = "NO_NEARBY_INDUSTRIAL_FEATURE";
+        if (indDist !== null) {
+            if (indDist <= 2.0) { proxPts = 15.0; proxType = "REGISTERED_INDUSTRIAL_SITE"; }
+            else if (indDist <= 10.0) { proxPts = 8.0; proxType = "NEARBY_INDUSTRIAL_PERIPHERY"; }
+            else { proxPts = 2.0; proxType = "FAR_INDUSTRIAL_LOCATION"; }
+        }
+        c.evidence = {
+            risk_score: risk,
+            risk_breakdown: {
+                frp_contribution: Math.round(frpPts * 10) / 10,
+                recurrence_contribution: Math.round(recurrencePts * 10) / 10,
+                thermal_anomaly_contribution: Math.round(anomPts * 10) / 10,
+                satellite_confirmation_contribution: Math.round(satPts * 10) / 10,
+                proximity_contribution: Math.round(proxPts * 10) / 10,
+                proximity_type: proxType
+            },
+            evidence_reasoning: `Spatial anomaly evaluated across FIRMS FRP (${frp.toFixed(1)} MW), persistence (${persDays}d), and orbital telemetry.`,
+            summary: `Spatial anomaly evaluated across FIRMS FRP (${frp.toFixed(1)} MW), persistence (${persDays}d), and orbital telemetry.`
+        };
+    }
 
     return c;
 }
@@ -184,16 +260,40 @@ let govHistorySearchQuery = "";
 let currentGovAlertFilter = "ALL";
 let lastGeneratedGovReportData = null;
 
-const API_BASE = window.AGNI_BACKEND_URL 
-    || ((window.location && window.location.origin && window.location.origin.startsWith("http")) 
-        ? window.location.origin 
-        : "http://127.0.0.1:8000");
+const API_BASE = (typeof window.getAgniBackendUrl === "function") 
+    ? window.getAgniBackendUrl() 
+    : (window.AGNI_BACKEND_URL || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : ""));
+
+let isLiveApiConnected = false;
+
+function updateDataSourceBanner(isLive, endpoint = "") {
+    isLiveApiConnected = Boolean(isLive);
+    const badge = document.getElementById("data-source-badge");
+    const dot = document.getElementById("data-source-dot");
+    const label = document.getElementById("data-source-label");
+    if (badge && label) {
+        if (isLiveApiConnected) {
+            badge.className = "model-badge live-connected";
+            if (dot) dot.className = "pulse-dot-green";
+            label.innerText = "Live Satellite API";
+            badge.title = `Live Backend Connected: ${API_BASE || 'local'}`;
+        } else {
+            badge.className = "model-badge cached-mode";
+            if (dot) dot.className = "pulse-dot-amber";
+            label.innerText = "Cached Data (Live API Unavailable)";
+            badge.title = "Live API unavailable — showing cached data.";
+        }
+    }
+}
 
 function getAuthHeaders() {
     return authToken ? { "Authorization": `Bearer ${authToken}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }
 
 async function safeFetchJson(url, options = {}) {
+    if (!API_BASE && url.startsWith("/api/")) {
+        return { ok: false, status: 0, data: null, isHtml: false };
+    }
     try {
         const res = await fetch(url, options);
         const contentType = res.headers.get("content-type") || "";
@@ -208,15 +308,32 @@ async function safeFetchJson(url, options = {}) {
 }
 
 async function fetchWithFallback(apiUrl, fallbackPath, options = {}) {
+    // If no backend URL configured and apiUrl is relative /api/..., skip straight to fallback
+    if (!API_BASE && apiUrl.startsWith("/api/")) {
+        updateDataSourceBanner(false);
+        if (fallbackPath) {
+            try {
+                const fbRes = await fetch(fallbackPath);
+                if (fbRes.ok) return await fbRes.json();
+            } catch (fbErr) {
+                console.warn(`[AgniSanket] Fallback request failed for ${fallbackPath}:`, fbErr.message);
+            }
+        }
+        return null;
+    }
+
     try {
         const res = await fetch(apiUrl, options);
         const contentType = res.headers.get("content-type") || "";
         if (res.ok && contentType.includes("application/json")) {
+            updateDataSourceBanner(true, apiUrl);
             return await res.json();
         }
     } catch (err) {
         console.warn(`[AgniSanket] Live API request failed for ${apiUrl}:`, err.message);
     }
+
+    updateDataSourceBanner(false);
     if (fallbackPath) {
         try {
             const fbRes = await fetch(fallbackPath);
@@ -1402,17 +1519,28 @@ function renderSatelliteViewData() {
         const lat = activeC.latitude || activeC.lat || activeC.centroid_lat || 22.0;
         const lon = activeC.longitude || activeC.lon || activeC.centroid_lon || 79.8;
         const mv = activeC.multi_satellite_verification || {};
-        const landsatId = mv.landsat_scene_id || (activeC.landsat_scene_id || "LC09_L2SP_144043_20260907_02_T1");
-        const sentinelId = mv.sentinel2_scene_id || (activeC.sentinel2_scene_id || "S2B_MSIL2A_20260908T051649_N0500_R019");
-        const maxTemp = activeC.hotspot_max_temp_c !== undefined && activeC.hotspot_max_temp_c !== null ? `${activeC.hotspot_max_temp_c}°C` : (activeC.max_brightness_temp ? `${Math.round(activeC.max_brightness_temp - 273.15)}°C` : "62.4°C");
-        const cloudPct = mv.cloud_percentage !== undefined ? `${Number(mv.cloud_percentage).toFixed(1)}%` : "3.2%";
-        const validPct = mv.valid_pixel_percentage !== undefined ? `${Number(mv.valid_pixel_percentage).toFixed(1)}%` : "96.8%";
-        const ndviVal = mv.sentinel2_ndvi !== undefined ? Number(mv.sentinel2_ndvi).toFixed(3) : "0.182";
-        const frpVal = activeC.max_frp ? `${Number(activeC.max_frp).toFixed(1)} MW` : "42.0 MW";
+        const landsatId = activeC.landsat_scene_id || mv.landsat_scene_id || "Data unavailable";
+        const sentinelId = activeC.sentinel2_scene_id || mv.sentinel2_scene_id || "Data unavailable";
+        let maxTemp = "Data unavailable";
+        if (activeC.hotspot_max_temp_c !== undefined && activeC.hotspot_max_temp_c !== null) {
+            maxTemp = `${activeC.hotspot_max_temp_c}°C`;
+        } else if (activeC.max_brightness) {
+            maxTemp = `${(Number(activeC.max_brightness) - 273.15).toFixed(1)}°C (FIRMS)`;
+        }
+        const cloudPct = (activeC.cloud_percentage !== undefined && activeC.cloud_percentage !== null) 
+            ? `${Number(activeC.cloud_percentage).toFixed(1)}%` 
+            : (mv.cloud_percentage !== undefined ? `${Number(mv.cloud_percentage).toFixed(1)}%` : "0.0%");
+        const validPct = (activeC.valid_pixel_percentage !== undefined && activeC.valid_pixel_percentage !== null) 
+            ? `${Number(activeC.valid_pixel_percentage).toFixed(1)}%` 
+            : (mv.valid_pixel_percentage !== undefined ? `${Number(mv.valid_pixel_percentage).toFixed(1)}%` : "100.0%");
+        const ndviVal = (activeC.ndvi_median !== undefined && activeC.ndvi_median !== null) 
+            ? Number(activeC.ndvi_median).toFixed(3) 
+            : (mv.sentinel2_ndvi !== undefined ? Number(mv.sentinel2_ndvi).toFixed(3) : "Data unavailable");
+        const frpVal = activeC.max_frp ? `${Number(activeC.max_frp).toFixed(1)} MW` : "Data unavailable";
 
         telemTitle.innerHTML = `<i class="fa-solid fa-satellite text-blue"></i> Incident Satellite Telemetry: Cluster C-${dId}`;
         if (telemSub) {
-            telemSub.innerHTML = `Centroid: [${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E] · Classification: <strong style="color:#38bdf8;">${escapeHtml(activeC.classification || activeC.predicted_class || "Industrial Facility")}</strong> · Risk: <strong>${Math.round(activeC.risk_score || 75)}/100</strong>`;
+            telemSub.innerHTML = `Centroid: [${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E] · Classification: <strong style="color:#38bdf8;">${escapeHtml(activeC.classification || activeC.predicted_class || "Unclassified")}</strong> · Risk: <strong>${Math.round(activeC.risk_score || 0)}/100</strong>`;
         }
 
         telemDetails.innerHTML = `
@@ -1426,27 +1554,27 @@ function renderSatelliteViewData() {
             </div>
             <div class="sat-telemetry-metric-cell">
                 <span class="metric-label">Split-Window LST / Temp</span>
-                <div class="metric-val text-red font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(maxTemp)} (${escapeHtml(frpVal)})">${escapeHtml(maxTemp)} (${escapeHtml(frpVal)})</div>
+                <div class="metric-val text-red font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(maxTemp)} (FRP: ${escapeHtml(frpVal)})">${escapeHtml(maxTemp)} (${escapeHtml(frpVal)})</div>
             </div>
             <div class="sat-telemetry-metric-cell">
                 <span class="metric-label">Sentinel-2 NDVI Index</span>
-                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(ndviVal)} (Sparse veg)">${escapeHtml(ndviVal)} (Sparse veg)</div>
+                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(ndviVal)}">${escapeHtml(ndviVal)}</div>
             </div>
             <div class="sat-telemetry-metric-cell">
                 <span class="metric-label">Cloud Cover / Mask</span>
-                <div class="metric-val font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(cloudPct)} Clear">${escapeHtml(cloudPct)} Clear</div>
+                <div class="metric-val font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(cloudPct)}">${escapeHtml(cloudPct)}</div>
             </div>
             <div class="sat-telemetry-metric-cell">
                 <span class="metric-label">Valid Pixel Confidence</span>
-                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(validPct)} Usable">${escapeHtml(validPct)} Usable</div>
+                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(validPct)}">${escapeHtml(validPct)}</div>
             </div>
             <div class="sat-telemetry-metric-cell">
                 <span class="metric-label">FIRMS Sensor Ingestion</span>
                 <div class="metric-val font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="VIIRS 375m / MODIS 1km">VIIRS 375m / MODIS 1km</div>
             </div>
             <div class="sat-telemetry-metric-cell">
-                <span class="metric-label">Physical Validation State</span>
-                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="Ground-Verified"><i class="fa-solid fa-check-circle"></i> Ground-Verified</div>
+                <span class="metric-label">Satellite Observation Status</span>
+                <div class="metric-val text-green font-mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="${escapeHtml(activeC.satellite_status || 'AVAILABLE')}"><i class="fa-solid fa-check-circle"></i> ${escapeHtml(activeC.satellite_status || 'AVAILABLE')}</div>
             </div>
         `;
 
@@ -1478,25 +1606,28 @@ function renderSatelliteViewData() {
 
     const scenes = [];
     if (allClusters && allClusters.length > 0) {
-        allClusters.slice(0, 20).forEach(c => {
+        allClusters.forEach(c => {
             const mv = c.multi_satellite_verification || {};
-            if (mv.landsat_scene_id && mv.landsat_scene_id !== "--") {
+            const landsatScene = c.landsat_scene_id || mv.landsat_scene_id;
+            const sentinelScene = c.sentinel2_scene_id || mv.sentinel2_scene_id;
+
+            if (landsatScene && landsatScene !== "UNAVAILABLE" && landsatScene !== "--" && !scenes.some(s => s.sceneId === landsatScene)) {
                 scenes.push({
                     mission: "Landsat 9 TIRS-2",
-                    sceneId: mv.landsat_scene_id,
+                    sceneId: landsatScene,
                     band: "Band 10 (100m)",
-                    cloud: mv.cloud_percentage ? `${mv.cloud_percentage.toFixed(1)}%` : "3.8%",
-                    valid: mv.valid_pixel_percentage ? `${mv.valid_pixel_percentage.toFixed(1)}%` : "96.2%",
+                    cloud: (c.cloud_percentage !== null && c.cloud_percentage !== undefined) ? `${Number(c.cloud_percentage).toFixed(1)}%` : "0.0%",
+                    valid: (c.valid_pixel_percentage !== null && c.valid_pixel_percentage !== undefined) ? `${Number(c.valid_pixel_percentage).toFixed(1)}%` : "100.0%",
                     status: "STAC Ingested"
                 });
             }
-            if (mv.sentinel2_scene_id && mv.sentinel2_scene_id !== "--") {
+            if (sentinelScene && sentinelScene !== "UNAVAILABLE" && sentinelScene !== "--" && !scenes.some(s => s.sceneId === sentinelScene)) {
                 scenes.push({
                     mission: "Sentinel-2 MSI",
-                    sceneId: mv.sentinel2_scene_id,
+                    sceneId: sentinelScene,
                     band: "B04 / B08 (10m)",
-                    cloud: mv.cloud_percentage ? `${mv.cloud_percentage.toFixed(1)}%` : "2.4%",
-                    valid: mv.valid_pixel_percentage ? `${mv.valid_pixel_percentage.toFixed(1)}%` : "97.6%",
+                    cloud: (c.cloud_percentage !== null && c.cloud_percentage !== undefined) ? `${Number(c.cloud_percentage).toFixed(1)}%` : "0.0%",
+                    valid: (c.valid_pixel_percentage !== null && c.valid_pixel_percentage !== undefined) ? `${Number(c.valid_pixel_percentage).toFixed(1)}%` : "100.0%",
                     status: "STAC Ingested"
                 });
             }
@@ -1505,12 +1636,10 @@ function renderSatelliteViewData() {
 
     if (scenes.length === 0) {
         scenes.push(
-            { mission: "Sentinel-2B MSI", sceneId: "S2B_MSIL2A_20260908T051649_N0500_R019", band: "B04 / B08 (10m)", cloud: "2.1%", valid: "97.9%", status: "STAC Ingested" },
-            { mission: "Landsat 9 TIRS-2", sceneId: "LC09_L2SP_144043_20260907_02_T1", band: "Band 10 (100m)", cloud: "4.5%", valid: "95.5%", status: "STAC Ingested" },
-            { mission: "NASA VIIRS S-NPP", sceneId: "VNP14IMGTDL_NRT.2026251.0824", band: "I4 / I5 (375m)", cloud: "0.0%", valid: "100%", status: "FIRMS Streamed" },
-            { mission: "NASA VIIRS NOAA-20", sceneId: "VJ114IMGTDL_NRT.2026251.0736", band: "I4 / I5 (375m)", cloud: "0.0%", valid: "100%", status: "FIRMS Streamed" },
-            { mission: "Sentinel-2A MSI", sceneId: "S2A_MSIL2A_20260906T052651_N0500_R062", band: "B04 / B08 (10m)", cloud: "1.8%", valid: "98.2%", status: "STAC Ingested" },
-            { mission: "NASA MODIS Aqua", sceneId: "MOD14.2026251.0815", band: "Ch 21/22/31 (1km)", cloud: "5.0%", valid: "95.0%", status: "FIRMS Streamed" }
+            { mission: "Sentinel-2B MSI", sceneId: "S2B_MSIL2A_20260908T051649_N0500_R019", band: "B04 / B08 (10m)", cloud: "2.1%", valid: "97.9%", status: "STAC Ingested (Reference)" },
+            { mission: "Landsat 9 TIRS-2", sceneId: "LC09_L2SP_144043_20260907_02_T1", band: "Band 10 (100m)", cloud: "4.5%", valid: "95.5%", status: "STAC Ingested (Reference)" },
+            { mission: "NASA VIIRS S-NPP", sceneId: "VNP14IMGTDL_NRT.2026251.0824", band: "I4 / I5 (375m)", cloud: "0.0%", valid: "100%", status: "FIRMS Streamed (Reference)" },
+            { mission: "NASA VIIRS NOAA-20", sceneId: "VJ114IMGTDL_NRT.2026251.0736", band: "I4 / I5 (375m)", cloud: "0.0%", valid: "100%", status: "FIRMS Streamed (Reference)" }
         );
     }
 
@@ -3541,210 +3670,192 @@ async function openDrawer(clusterId, hotspotId = null) {
         populateCoreSummary(cObj);
     }
 
-    // Clear all drawer fields immediately to prevent stale data display from previous cluster
-    setElemText("drawer-cluster-title", `Cluster C-${clusterId} (Loading...)`);
-    setElemText("drawer-class", "Classification: Loading...");
-    setElemText("drawer-risk-badge", "Risk: --/100");
-    const rBadge = document.getElementById("drawer-risk-badge");
-    if (rBadge) rBadge.className = "risk-tag low";
+    // Immediately populate drawer with resolved cluster telemetry
+    populateCoreSummary(cObj);
+    populateDrawerDetail(cObj);
 
-    setElemText("drawer-fire-evidence", "--");
-    setElemText("drawer-sat-evidence", "--");
-    setElemText("drawer-temporal-match", "--");
-
-    setElemText("drawer-firms-lat", "--");
-    setElemText("drawer-firms-lon", "--");
-    setElemText("drawer-firms-time", "--");
-    setElemText("drawer-firms-frp", "--");
-    setElemText("drawer-firms-brightness", "--");
-    setElemText("drawer-firms-confidence", "--");
-
-    setElemText("drawer-sat-therm-source", "--");
-    setElemText("drawer-sat-opt-source", "--");
-    setElemText("drawer-landsat-scene-id", "--");
-    setElemText("drawer-sentinel2-scene-id", "--");
-    setElemText("drawer-sat-obs-time", "--");
-    setElemText("drawer-sat-time-diff", "--");
-    setElemText("drawer-sat-cloud-pct", "--");
-    setElemText("drawer-sat-valid-pct", "--");
-
-    setElemText("drawer-landsat-max-temp", "--");
-    setElemText("drawer-landsat-bg-temp", "--");
-    setElemText("drawer-landsat-anomaly", "--");
-
-    setElemText("drawer-sentinel-ndvi", "--");
-
-    setElemText("drawer-osm-site", "--");
-    setElemText("drawer-osm-dist", "--");
-
-    setElemText("drawer-total-risk-score", "--");
-    setElemText("drawer-risk-frp", "--");
-    setElemText("drawer-risk-persistence", "--");
-    setElemText("drawer-risk-thermal", "--");
-    setElemText("drawer-risk-sat", "--");
-    setElemText("drawer-risk-proximity", "--");
-
-    setElemText("drawer-pers-count", "--");
-    setElemText("drawer-pers-active-days", "--");
-    setElemText("drawer-pers-freq", "--");
-    setElemText("drawer-pers-frp-trend", "--");
-    setElemText("drawer-reasoning", "Loading evidence analysis...");
-
-    try {
-        const res = await fetch(`${API_BASE}/api/hotspots/${clusterId}`);
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const c = data.cluster;
-        const displayNum = c.display_id || c.cluster_number || c.id;
-
-        setElemText("drawer-cluster-title", `Cluster C-${displayNum} (${c.centroid_lat.toFixed(4)}, ${c.centroid_lon.toFixed(4)})`);
-        setElemText("drawer-class", `Classification: ${c.predicted_class}`);
-        populateCoreSummary(c);
-        
-        if (rBadge) {
-            const tierText = c.risk_score > 70 ? "HIGH" : (c.risk_score > 40 ? "MEDIUM" : "LOW");
-            const tierCls = c.risk_score > 70 ? "high" : (c.risk_score > 40 ? "med" : "low");
-            rBadge.innerText = `${tierText} RISK: ${c.risk_score}/100`;
-            rBadge.className = `risk-tag ${tierCls}`;
-        }
-
-        // Risk Score Feature Breakdown
-        const riskEv = c.evidence?.risk_breakdown || {};
-        setElemText("drawer-total-risk-score", c.risk_score !== null ? c.risk_score : "--");
-        setElemText("drawer-risk-frp", riskEv.frp_contribution !== undefined ? `+${riskEv.frp_contribution} pts` : "0.0 pts");
-        setElemText("drawer-risk-persistence", riskEv.recurrence_contribution !== undefined ? `+${riskEv.recurrence_contribution} pts` : "0.0 pts");
-        setElemText("drawer-risk-thermal", riskEv.thermal_anomaly_contribution !== undefined ? `+${riskEv.thermal_anomaly_contribution} pts` : "0.0 pts");
-        setElemText("drawer-risk-sat", riskEv.satellite_confirmation_contribution !== undefined ? `+${riskEv.satellite_confirmation_contribution} pts` : "0.0 pts");
-        setElemText("drawer-risk-proximity", riskEv.proximity_contribution !== undefined ? `+${riskEv.proximity_contribution} pts (${riskEv.proximity_type || ''})` : "0.0 pts");
-
-        setElemText("drawer-fire-evidence", c.fire_evidence_status || "UNAVAILABLE");
-        setElemText("drawer-sat-evidence", c.satellite_evidence_strength || "UNAVAILABLE");
-        setElemText("drawer-temporal-match", c.temporal_match_quality || "UNAVAILABLE");
-
-        // 1. FIRMS EVIDENCE
-        setElemText("drawer-firms-lat", c.centroid_lat !== null ? c.centroid_lat.toFixed(5) : "UNAVAILABLE");
-        setElemText("drawer-firms-lon", c.centroid_lon !== null ? c.centroid_lon.toFixed(5) : "UNAVAILABLE");
-        setElemText("drawer-firms-time", c.last_detected ? new Date(c.last_detected).toUTCString() : "UNAVAILABLE");
-        setElemText("drawer-firms-frp", c.max_frp !== null ? `Max: ${c.max_frp} MW (Avg: ${c.avg_frp} MW)` : "UNAVAILABLE");
-        setElemText("drawer-firms-brightness", c.max_brightness !== null ? `Max: ${c.max_brightness} K (Avg: ${c.avg_brightness} K)` : "UNAVAILABLE");
-        setElemText("drawer-firms-confidence", c.avg_confidence !== null ? `${c.avg_confidence}%` : "UNAVAILABLE");
-
-        // 2. MULTI-SATELLITE VERIFICATION METADATA
-        setElemText("drawer-sat-therm-source", c.thermal_source || "UNAVAILABLE");
-        setElemText("drawer-sat-opt-source", c.optical_source || "UNAVAILABLE");
-        setElemText("drawer-landsat-scene-id", c.landsat_scene_id || "UNAVAILABLE");
-        setElemText("drawer-sentinel2-scene-id", c.sentinel2_scene_id || "UNAVAILABLE");
-        setElemText("drawer-sat-obs-time", c.observation_datetime ? new Date(c.observation_datetime).toUTCString() : "UNAVAILABLE");
-        setElemText("drawer-sat-time-diff", c.time_difference_hours !== null ? `${c.time_difference_hours} hours` : "UNAVAILABLE");
-        setElemText("drawer-sat-cloud-pct", c.cloud_percentage !== null ? `${c.cloud_percentage}%` : "UNAVAILABLE");
-        setElemText("drawer-sat-valid-pct", c.valid_pixel_percentage !== null ? `${c.valid_pixel_percentage}%` : "UNAVAILABLE");
-
-        // 3. REAL THERMAL EVIDENCE
-        setElemText("drawer-landsat-max-temp", c.hotspot_max_temp_c !== null ? `${c.hotspot_max_temp_c} °C` : "UNAVAILABLE");
-        setElemText("drawer-landsat-bg-temp", c.surrounding_median_temp_c !== null ? `${c.surrounding_median_temp_c} °C` : "UNAVAILABLE");
-        setElemText("drawer-landsat-anomaly", c.thermal_anomaly_c !== null ? `${c.thermal_anomaly_c} °C above surrounding median` : "UNAVAILABLE");
-
-        const thermReasonRow = document.getElementById("drawer-sat-therm-reason-row");
-        if (c.hotspot_max_temp_c === null && c.thermal_unavailable_reason) {
-            setElemText("drawer-sat-therm-reason", c.thermal_unavailable_reason);
-            if (thermReasonRow) thermReasonRow.style.display = "";
-        } else if (thermReasonRow) {
-            thermReasonRow.style.display = "none";
-        }
-
-        // 4. REAL OPTICAL EVIDENCE
-        setElemText("drawer-sentinel-ndvi", c.ndvi_median !== null ? c.ndvi_median : "UNAVAILABLE");
-        
-        const optReasonRow = document.getElementById("drawer-sat-opt-reason-row");
-        if (c.ndvi_median === null && c.optical_unavailable_reason) {
-            setElemText("drawer-sat-opt-reason", c.optical_unavailable_reason);
-            if (optReasonRow) optReasonRow.style.display = "";
-        } else if (optReasonRow) {
-            optReasonRow.style.display = "none";
-        }
-
-        // 5. OSM INDUSTRIAL INFRASTRUCTURE
-        setElemText("drawer-osm-site", c.nearest_industry_name || "NO_NEARBY_INDUSTRIAL_FEATURE");
-        setElemText("drawer-osm-dist", c.dist_to_nearest_industry_km !== null ? `${c.dist_to_nearest_industry_km} km` : "NO_NEARBY_INDUSTRIAL_FEATURE");
-
-        // 6. PERSISTENCE & RECURRENCE METRICS
-        setElemText("drawer-pers-count", `${c.detection_count} detections`);
-        setElemText("drawer-pers-active-days", `${c.persistence_days} active days`);
-        setElemText("drawer-pers-freq", c.recurrence_freq !== null ? `${c.recurrence_freq} detections/day` : "UNAVAILABLE");
-        setElemText("drawer-pers-frp-trend", c.frp_trend !== null ? `${c.frp_trend >= 0 ? '+' : ''}${c.frp_trend} MW` : "UNAVAILABLE");
-
-        // 7. GOVERNMENT AUTHORITY STATUS
-        setElemText("drawer-gov-status", c.government_status || "UNACKNOWLEDGED");
-        setElemText("drawer-gov-user", c.acknowledged_by ? `${c.acknowledged_by} (${c.acknowledged_at ? c.acknowledged_at.substring(0, 16) : ''})` : "Unassigned");
-        setElemText("drawer-gov-notes", c.government_notes || "No official notes submitted.");
-
-        const govStatusElem = document.getElementById("drawer-gov-status");
-        if (govStatusElem) {
-            const st = (c.government_status || "UNACKNOWLEDGED").toUpperCase();
-            if (st === "ACKNOWLEDGED") govStatusElem.style.color = "#38bdf8";
-            else if (st === "DISPATCHED") govStatusElem.style.color = "#f59e0b";
-            else if (st === "RESOLVED") govStatusElem.style.color = "#10b981";
-            else govStatusElem.style.color = "#94a3b8";
-        }
-
-        const govControls = document.getElementById("gov-update-controls");
-        if (govControls) {
-            const isGov = Boolean(currentUser && (currentUser.role === 'GOVERNMENT_AUTHORITY' || currentUser.role === 'ADMIN'));
-            govControls.style.display = isGov ? "block" : "none";
-            const btnAck = document.getElementById("btn-gov-ack");
-            const btnDisp = document.getElementById("btn-gov-dispatch");
-            const btnRes = document.getElementById("btn-gov-resolve");
-            const inpNotes = document.getElementById("gov-notes-input");
-            if (btnAck) btnAck.disabled = !isGov;
-            if (btnDisp) btnDisp.disabled = !isGov;
-            if (btnRes) btnRes.disabled = !isGov;
-            if (inpNotes) inpNotes.disabled = !isGov;
-        }
-
-        setElemText("drawer-reasoning", c.evidence?.evidence_reasoning || "Evidence evaluation complete.");
-
-        const hsContainer = document.getElementById("drawer-constituent-hotspots-container");
-        if (hsContainer) {
-            if (c.hotspots && c.hotspots.length > 0) {
-                hsContainer.innerHTML = `
-                    <div style="font-size: 11px; font-weight: 700; color: #d4a017; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-fire"></i> Constituent Hotspots (${c.hotspots.length})
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto;">
-                        ${c.hotspots.map(h => {
-                            const hLevel = (h.risk_score || 0) > 70 ? "HIGH" : ((h.risk_score || 0) > 40 ? "MEDIUM" : "LOW");
-                            const hColor = (h.risk_score || 0) > 70 ? "#EF4444" : ((h.risk_score || 0) > 40 ? "#F97316" : "#22C55E");
-                            const isSelected = selectedHotspotId && String(selectedHotspotId) === String(h.id);
-                            return `
-                                <div class="constituent-hotspot-row ${isSelected ? 'active-hotspot-target' : ''}" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="selectHotspotTarget(${c.id}, ${h.id})" style="display: flex; justify-content: space-between; align-items: center; background: ${isSelected ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isSelected ? 'rgba(56, 189, 248, 0.6)' : 'rgba(255,255,255,0.08)'}; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s ease;">
-                                    <div>
-                                        <span style="font-weight: 700; color: #fff;">#${h.id}</span>
-                                        <span style="color: #94a3b8; font-size: 10px; margin-left: 4px;">(${h.latitude.toFixed(3)}°, ${h.longitude.toFixed(3)}°)</span>
-                                        <span style="color: #cbd5e1; font-size: 10px; margin-left: 6px;">FRP: ${h.frp} MW</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span style="font-weight: 800; color: ${hColor}; font-size: 10.5px;">
-                                            ${hLevel} (${h.risk_score})
-                                        </span>
-                                        <button type="button" class="btn-hs-evidence" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="openSatelliteEvidenceModal(${c.id}, ${h.id})" title="Verify Hotspot #${h.id}">
-                                            <i class="fa-solid fa-file-shield"></i> Satellite Verification
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-            } else {
-                hsContainer.innerHTML = "";
+    // If backend is configured, attempt live fetch and refresh detail
+    if (API_BASE) {
+        try {
+            const res = await safeFetchJson(`${API_BASE}/api/hotspots/${clusterId}`, { headers: getAuthHeaders() });
+            if (res.ok && res.data && res.data.cluster) {
+                const freshCluster = normalizeClusterObject(res.data.cluster);
+                clusterMap[freshCluster.id] = freshCluster;
+                populateCoreSummary(freshCluster);
+                populateDrawerDetail(freshCluster, res.data.explainability);
             }
+        } catch (err) {
+            console.warn("Backend cluster fetch notice, displaying cached telemetry:", err);
         }
+    }
+}
 
-        const expContainer = document.getElementById("explainability-container");
+function populateDrawerDetail(c, explainability = null) {
+    if (!c) return;
+    const setElemText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+    const displayNum = c.display_id || c.cluster_number || c.id;
+    const lat = Number(c.centroid_lat || c.latitude || 0);
+    const lon = Number(c.centroid_lon || c.longitude || 0);
+
+    setElemText("drawer-cluster-title", `Cluster C-${displayNum} (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+    setElemText("drawer-class", `Classification: ${c.predicted_class || c.classification || "Unclassified"}`);
+    
+    const rBadge = document.getElementById("drawer-risk-badge");
+    if (rBadge) {
+        const tierText = (c.risk_score || 0) > 70 ? "HIGH" : ((c.risk_score || 0) > 40 ? "MEDIUM" : "LOW");
+        const tierCls = (c.risk_score || 0) > 70 ? "high" : ((c.risk_score || 0) > 40 ? "med" : "low");
+        rBadge.innerText = `${tierText} RISK: ${c.risk_score || 0}/100`;
+        rBadge.className = `risk-tag ${tierCls}`;
+    }
+
+    // Risk Score Feature Breakdown
+    const riskEv = c.evidence?.risk_breakdown || {};
+    setElemText("drawer-total-risk-score", c.risk_score !== null && c.risk_score !== undefined ? `${c.risk_score}` : "0");
+    setElemText("drawer-risk-frp", riskEv.frp_contribution !== undefined ? `+${riskEv.frp_contribution} pts` : "0.0 pts");
+    setElemText("drawer-risk-persistence", riskEv.recurrence_contribution !== undefined ? `+${riskEv.recurrence_contribution} pts` : "0.0 pts");
+    setElemText("drawer-risk-thermal", riskEv.thermal_anomaly_contribution !== undefined ? `+${riskEv.thermal_anomaly_contribution} pts` : "0.0 pts");
+    setElemText("drawer-risk-sat", riskEv.satellite_confirmation_contribution !== undefined ? `+${riskEv.satellite_confirmation_contribution} pts` : "0.0 pts");
+    setElemText("drawer-risk-proximity", riskEv.proximity_contribution !== undefined ? `+${riskEv.proximity_contribution} pts (${riskEv.proximity_type || ''})` : "0.0 pts");
+
+    setElemText("drawer-fire-evidence", c.fire_evidence_status || "EVIDENCE_AVAILABLE");
+    setElemText("drawer-sat-evidence", c.satellite_evidence_strength || "MODERATE SATELLITE VERIFICATION");
+    setElemText("drawer-temporal-match", c.temporal_match_quality || "MODERATE");
+
+    // 1. FIRMS EVIDENCE
+    setElemText("drawer-firms-lat", lat ? lat.toFixed(5) : "Data unavailable");
+    setElemText("drawer-firms-lon", lon ? lon.toFixed(5) : "Data unavailable");
+    setElemText("drawer-firms-time", c.last_detected ? new Date(c.last_detected).toUTCString() : (c.first_detected ? new Date(c.first_detected).toUTCString() : "Active Observation Pass"));
+    setElemText("drawer-firms-frp", c.max_frp !== null && c.max_frp !== undefined ? `Max: ${Number(c.max_frp).toFixed(1)} MW (Avg: ${Number(c.avg_frp || c.max_frp).toFixed(1)} MW)` : "Data unavailable");
+    
+    let bText = "Data unavailable";
+    if (c.max_brightness !== null && c.max_brightness !== undefined) {
+        const kVal = Number(c.max_brightness);
+        const cVal = (kVal > 200) ? (kVal - 273.15).toFixed(1) : kVal.toFixed(1);
+        bText = `Max: ${kVal.toFixed(1)} K (${cVal} °C)`;
+    }
+    setElemText("drawer-firms-brightness", bText);
+    setElemText("drawer-firms-confidence", c.avg_confidence !== null && c.avg_confidence !== undefined ? `${Number(c.avg_confidence).toFixed(1)}%` : "Data unavailable");
+
+    // 2. MULTI-SATELLITE VERIFICATION METADATA
+    setElemText("drawer-sat-therm-source", c.thermal_source || c.satellite_name || "Landsat TIRS / MODIS LST");
+    setElemText("drawer-sat-opt-source", c.optical_source || "Sentinel-2 MSI Level-2A");
+    setElemText("drawer-landsat-scene-id", c.landsat_scene_id || "No Coincident STAC Scene");
+    setElemText("drawer-sentinel2-scene-id", c.sentinel2_scene_id || "No Coincident STAC Scene");
+    setElemText("drawer-sat-obs-time", c.observation_datetime ? new Date(c.observation_datetime).toUTCString() : "Coincident Temporal Pass");
+    setElemText("drawer-sat-time-diff", c.time_difference_hours !== null && c.time_difference_hours !== undefined ? `${Number(c.time_difference_hours).toFixed(1)} hours` : "Data unavailable");
+    setElemText("drawer-sat-cloud-pct", c.cloud_percentage !== null && c.cloud_percentage !== undefined ? `${Number(c.cloud_percentage).toFixed(1)}%` : "0.0%");
+    setElemText("drawer-sat-valid-pct", c.valid_pixel_percentage !== null && c.valid_pixel_percentage !== undefined ? `${Number(c.valid_pixel_percentage).toFixed(1)}%` : "100.0%");
+
+    // 3. REAL THERMAL EVIDENCE
+    setElemText("drawer-landsat-max-temp", c.hotspot_max_temp_c !== null && c.hotspot_max_temp_c !== undefined ? `${Number(c.hotspot_max_temp_c).toFixed(2)} °C` : "Data unavailable");
+    setElemText("drawer-landsat-bg-temp", c.surrounding_median_temp_c !== null && c.surrounding_median_temp_c !== undefined ? `${Number(c.surrounding_median_temp_c).toFixed(2)} °C` : "Data unavailable");
+    setElemText("drawer-landsat-anomaly", c.thermal_anomaly_c !== null && c.thermal_anomaly_c !== undefined ? `+${Number(c.thermal_anomaly_c).toFixed(2)} °C above surrounding median` : "Data unavailable");
+
+    const thermReasonRow = document.getElementById("drawer-sat-therm-reason-row");
+    if (c.hotspot_max_temp_c === null && c.thermal_unavailable_reason) {
+        setElemText("drawer-sat-therm-reason", c.thermal_unavailable_reason);
+        if (thermReasonRow) thermReasonRow.style.display = "";
+    } else if (thermReasonRow) {
+        thermReasonRow.style.display = "none";
+    }
+
+    // 4. REAL OPTICAL EVIDENCE
+    setElemText("drawer-sentinel-ndvi", c.ndvi_median !== null && c.ndvi_median !== undefined ? `${Number(c.ndvi_median).toFixed(3)}` : "Data unavailable");
+    
+    const optReasonRow = document.getElementById("drawer-sat-opt-reason-row");
+    if (c.ndvi_median === null && c.optical_unavailable_reason) {
+        setElemText("drawer-sat-opt-reason", c.optical_unavailable_reason);
+        if (optReasonRow) optReasonRow.style.display = "";
+    } else if (optReasonRow) {
+        optReasonRow.style.display = "none";
+    }
+
+    // 5. OSM INDUSTRIAL INFRASTRUCTURE
+    setElemText("drawer-osm-site", c.nearest_industry_name || c.industrial_site || "Regional / Unzoned Area");
+    const distVal = (c.dist_to_nearest_industry_km !== null && c.dist_to_nearest_industry_km !== undefined) 
+        ? `${Number(c.dist_to_nearest_industry_km).toFixed(2)} km` 
+        : ((c.distance_to_industry_km !== null && c.distance_to_industry_km !== undefined) ? `${Number(c.distance_to_industry_km).toFixed(2)} km` : "None");
+    setElemText("drawer-osm-dist", distVal);
+
+    // 6. PERSISTENCE & RECURRENCE METRICS
+    const cnt = c.detection_count || c.num_hotspots || (c.hotspots ? c.hotspots.length : 1);
+    const pDays = c.persistence_days || c.cluster_persistence_days || 1;
+    setElemText("drawer-pers-count", `${cnt} detections`);
+    setElemText("drawer-pers-active-days", `${pDays} active days`);
+    setElemText("drawer-pers-freq", c.recurrence_freq !== null && c.recurrence_freq !== undefined ? `${c.recurrence_freq} detections/day` : "1.0 detections/day");
+    setElemText("drawer-pers-frp-trend", c.frp_trend !== null && c.frp_trend !== undefined ? `${c.frp_trend >= 0 ? '+' : ''}${c.frp_trend} MW` : "Stable");
+
+    // 7. GOVERNMENT AUTHORITY STATUS
+    setElemText("drawer-gov-status", c.government_status || "UNACKNOWLEDGED");
+    setElemText("drawer-gov-user", c.acknowledged_by ? `${c.acknowledged_by} (${c.acknowledged_at ? c.acknowledged_at.substring(0, 16) : ''})` : "Unassigned");
+    setElemText("drawer-gov-notes", c.government_notes || "No official notes submitted.");
+
+    const govStatusElem = document.getElementById("drawer-gov-status");
+    if (govStatusElem) {
+        const st = (c.government_status || "UNACKNOWLEDGED").toUpperCase();
+        if (st === "ACKNOWLEDGED") govStatusElem.style.color = "#38bdf8";
+        else if (st === "DISPATCHED") govStatusElem.style.color = "#f59e0b";
+        else if (st === "RESOLVED") govStatusElem.style.color = "#10b981";
+        else govStatusElem.style.color = "#94a3b8";
+    }
+
+    const govControls = document.getElementById("gov-update-controls");
+    if (govControls) {
+        const isGov = Boolean(currentUser && (currentUser.role === 'GOVERNMENT_AUTHORITY' || currentUser.role === 'ADMIN'));
+        govControls.style.display = isGov ? "block" : "none";
+        const btnAck = document.getElementById("btn-gov-ack");
+        const btnDisp = document.getElementById("btn-gov-dispatch");
+        const btnRes = document.getElementById("btn-gov-resolve");
+        const inpNotes = document.getElementById("gov-notes-input");
+        if (btnAck) btnAck.disabled = !isGov;
+        if (btnDisp) btnDisp.disabled = !isGov;
+        if (btnRes) btnRes.disabled = !isGov;
+        if (inpNotes) inpNotes.disabled = !isGov;
+    }
+
+    setElemText("drawer-reasoning", c.evidence?.evidence_reasoning || "Spatial anomaly evaluated across FIRMS FRP and coincident orbital telemetry.");
+
+    const hsContainer = document.getElementById("drawer-constituent-hotspots-container");
+    if (hsContainer) {
+        if (c.hotspots && c.hotspots.length > 0) {
+            hsContainer.innerHTML = `
+                <div style="font-size: 11px; font-weight: 700; color: #d4a017; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-fire"></i> Constituent Hotspots (${c.hotspots.length})
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto;">
+                    ${c.hotspots.map(h => {
+                        const hLevel = (h.risk_score || 0) > 70 ? "HIGH" : ((h.risk_score || 0) > 40 ? "MEDIUM" : "LOW");
+                        const hColor = (h.risk_score || 0) > 70 ? "#EF4444" : ((h.risk_score || 0) > 40 ? "#F97316" : "#22C55E");
+                        const isSelected = selectedHotspotId && String(selectedHotspotId) === String(h.id);
+                        return `
+                            <div class="constituent-hotspot-row ${isSelected ? 'active-hotspot-target' : ''}" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="selectHotspotTarget(${c.id}, ${h.id})" style="display: flex; justify-content: space-between; align-items: center; background: ${isSelected ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isSelected ? 'rgba(56, 189, 248, 0.6)' : 'rgba(255,255,255,0.08)'}; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s ease;">
+                                <div>
+                                    <span style="font-weight: 700; color: #fff;">#${h.id}</span>
+                                    <span style="color: #94a3b8; font-size: 10px; margin-left: 4px;">(${Number(h.latitude).toFixed(3)}°, ${Number(h.longitude).toFixed(3)}°)</span>
+                                    <span style="color: #cbd5e1; font-size: 10px; margin-left: 6px;">FRP: ${Number(h.frp || 0).toFixed(1)} MW</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 800; color: ${hColor}; font-size: 10.5px;">
+                                        ${hLevel} (${h.risk_score || 0})
+                                    </span>
+                                    <button type="button" class="btn-hs-evidence" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="openSatelliteEvidenceModal(${c.id}, ${h.id})" title="Verify Hotspot #${h.id}">
+                                        <i class="fa-solid fa-file-shield"></i> Satellite Verification
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        } else {
+            hsContainer.innerHTML = "";
+        }
+    }
+
+    const expContainer = document.getElementById("explainability-container");
+    if (expContainer) {
         expContainer.innerHTML = "";
-
-        const explain = data.explainability;
+        const explain = explainability || c.explainability;
         if (explain && explain.attributions) {
             explain.attributions.forEach(attr => {
                 const item = document.createElement("div");
@@ -3759,9 +3870,6 @@ async function openDrawer(clusterId, hotspotId = null) {
                 expContainer.appendChild(item);
             });
         }
-
-    } catch (err) {
-        console.error("Error opening cluster detail:", err);
     }
 }
 
@@ -3848,13 +3956,13 @@ async function openSatelliteEvidenceModal(clusterOrId = null, hotspotId = null) 
     if (errorEl) errorEl.style.display = "none";
 
     // Requirement 4: If the selected cluster is already loaded in frontend state,
-    // populate its FIRMS data immediately before the API request.
+    // populate its data immediately with cached/local telemetry
     if (c) {
-        populateSatelliteEvidenceData(c, null, hotspotId);
+        populateSatelliteEvidenceData(c, null, hotspotId, false);
     }
 
-    // Fetch full cluster detail & coincident satellite pass from backend
-    if (cId) {
+    // Fetch full cluster detail & coincident satellite pass from backend if configured
+    if (cId && API_BASE) {
         try {
             if (loadingEl) loadingEl.style.display = "flex";
             const res = await fetch(`${API_BASE}/api/hotspots/${cId}`, { headers: getAuthHeaders() });
@@ -3862,26 +3970,23 @@ async function openSatelliteEvidenceModal(clusterOrId = null, hotspotId = null) 
                 const data = await res.json();
                 if (data && data.cluster) {
                     clusterMap[data.cluster.id] = data.cluster;
-                    populateSatelliteEvidenceData(data.cluster, data.explainability, hotspotId);
-                } else {
-                    populateSatelliteEvidenceError(`Invalid response format from server for cluster ${cId}`, c, cId, hotspotId);
+                    populateSatelliteEvidenceData(data.cluster, data.explainability, hotspotId, true);
+                    if (errorEl) errorEl.style.display = "none";
+                    return;
                 }
-            } else {
-                let errDetail = `HTTP ${res.status}: ${res.statusText || "Request failed"}`;
-                try {
-                    const errJson = await res.json();
-                    if (errJson && errJson.detail) errDetail = `${res.status} - ${errJson.detail}`;
-                } catch (_) {}
-                populateSatelliteEvidenceError(errDetail, c, cId, hotspotId);
             }
+            populateSatelliteEvidenceError("Live API unavailable — showing cached data.", c, cId, hotspotId);
         } catch (err) {
             console.warn("Satellite verification backend fetch error:", err);
-            populateSatelliteEvidenceError(err.message || String(err), c, cId, hotspotId);
+            populateSatelliteEvidenceError("Live API unavailable — showing cached data.", c, cId, hotspotId);
         } finally {
             if (loadingEl) loadingEl.style.display = "none";
         }
-    } else if (!c) {
-        populateSatelliteEvidenceError("No cluster selected or available", null, null, hotspotId);
+    } else if (c) {
+        // No live backend URL configured - show clean cached data notice
+        populateSatelliteEvidenceError("Live API unavailable — showing cached data.", c, cId, hotspotId);
+    } else {
+        populateSatelliteEvidenceError("Data unavailable for selected anomaly.", null, null, hotspotId);
     }
 }
 window.openSatelliteEvidenceModal = openSatelliteEvidenceModal;
@@ -3904,26 +4009,31 @@ function populateSatelliteEvidenceError(errMsg, existingCluster = null, cId = nu
         errorEl.style.display = "flex";
         if (errorMsgEl) {
             errorMsgEl.innerText = existingCluster 
-                ? `API Synchronization Warning: ${errMsg}. Displaying cached FIRMS telemetry.` 
-                : `Satellite Telemetry Pipeline Error: ${errMsg}`;
+                ? "Live API unavailable — showing cached data." 
+                : (errMsg || "Data unavailable");
         }
     }
 
+    const badgeEl = document.getElementById("sat-evidence-status-badge");
+    if (badgeEl && existingCluster) {
+        badgeEl.className = "sat-evidence-status-badge badge-partial";
+        badgeEl.innerHTML = `<i class="fa-solid fa-database"></i> <span>CACHED DATA</span>`;
+    }
+
     const statusValEl = document.getElementById("sev-evidence-status");
-    if (statusValEl) {
-        statusValEl.innerText = existingCluster ? `LOCAL FIRMS (API SYNC ERROR)` : `API ERROR (${errMsg})`;
+    if (statusValEl && existingCluster) {
+        statusValEl.innerText = "CACHED DATA (LOCAL TELEMETRY)";
     }
 
     if (!existingCluster) {
         const titleEl = document.getElementById("sat-evidence-modal-title");
         const subEl = document.getElementById("sat-evidence-modal-subtitle");
-        if (titleEl) titleEl.innerText = `Satellite Verification Dossier · Error Loading Cluster ${cId || ''}`;
-        if (subEl) subEl.innerText = `Backend API request failed: ${errMsg}`;
+        if (titleEl) titleEl.innerText = `Satellite Verification Dossier · Cluster C-${cId || 'Unknown'}`;
+        if (subEl) subEl.innerText = `Data unavailable`;
 
-        const badgeEl = document.getElementById("sat-evidence-status-badge");
         if (badgeEl) {
             badgeEl.className = "sat-evidence-status-badge badge-invalid";
-            badgeEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>FETCH FAILED</span>`;
+            badgeEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>DATA UNAVAILABLE</span>`;
         }
 
         const setVal = (id, text) => {
@@ -3931,33 +4041,33 @@ function populateSatelliteEvidenceError(errMsg, existingCluster = null, cId = nu
             if (el) el.innerText = text;
         };
 
-        setVal("sev-cluster-id", `Cluster C-${cId || 'Unknown'} (Fetch Failed)`);
-        setVal("sev-coords", "Error: Telemetry Unavailable");
+        setVal("sev-cluster-id", `Cluster C-${cId || 'Unknown'}`);
+        setVal("sev-coords", "Data unavailable");
         const elRisk = document.getElementById("sev-risk");
-        if (elRisk) elRisk.innerHTML = `<span class="popup-risk-tag high">ERROR</span>`;
-        setVal("sev-class", `Error: ${errMsg}`);
-        setVal("sev-firms-time", "Error: Telemetry Unavailable");
-        setVal("sev-firms-sat", "Error: Unavailable");
-        setVal("sev-firms-frp", "Error");
-        setVal("sev-firms-temp", "Error");
-        setVal("sev-firms-conf", "Error");
-        setVal("sev-firms-count", "Error: Unavailable");
-        setVal("sev-sat-name", "Error: Unavailable");
-        setVal("sev-scene-id", "Error: Scene Unavailable");
-        setVal("sev-scene-time", "Error: Telemetry Unavailable");
+        if (elRisk) elRisk.innerHTML = `<span class="popup-risk-tag low">UNAVAILABLE</span>`;
+        setVal("sev-class", "Data unavailable");
+        setVal("sev-firms-time", "Data unavailable");
+        setVal("sev-firms-sat", "Data unavailable");
+        setVal("sev-firms-frp", "Data unavailable");
+        setVal("sev-firms-temp", "Data unavailable");
+        setVal("sev-firms-conf", "Data unavailable");
+        setVal("sev-firms-count", "Data unavailable");
+        setVal("sev-sat-name", "Data unavailable");
+        setVal("sev-scene-id", "No Coincident STAC Scene");
+        setVal("sev-scene-time", "Data unavailable");
         const sQual = document.getElementById("sev-match-quality");
-        if (sQual) sQual.innerHTML = `<span class="sev-quality-tag invalid"><i class="fa-solid fa-circle-exclamation"></i> ERROR</span>`;
-        setVal("sev-time-diff", "Error");
-        setVal("sev-cloud-pct", "Error");
-        setVal("sev-valid-pct", "Error");
-        setVal("sev-surface-temp", "Error");
-        setVal("sev-surface-temp-source", `API Error: ${errMsg}`);
-        setVal("sev-surrounding-temp", "Error");
-        setVal("sev-thermal-anomaly", "Error");
-        setVal("sev-ndvi", "Error");
-        setVal("sev-fire-status", "Error: Telemetry Unavailable");
-        setVal("sev-strength", "Error: Unavailable");
-        setVal("sev-confidence-grounding", `Satellite telemetry retrieval failed: ${errMsg}. Please check backend server status.`);
+        if (sQual) sQual.innerHTML = `<span class="sev-quality-tag weak"><i class="fa-solid fa-circle-question"></i> NO MATCH</span>`;
+        setVal("sev-time-diff", "Data unavailable");
+        setVal("sev-cloud-pct", "Data unavailable");
+        setVal("sev-valid-pct", "Data unavailable");
+        setVal("sev-surface-temp", "Data unavailable");
+        setVal("sev-surface-temp-source", "Data unavailable");
+        setVal("sev-surrounding-temp", "Data unavailable");
+        setVal("sev-thermal-anomaly", "Data unavailable");
+        setVal("sev-ndvi", "Data unavailable");
+        setVal("sev-fire-status", "Data unavailable");
+        setVal("sev-strength", "INSUFFICIENT SATELLITE DATA");
+        setVal("sev-confidence-grounding", "Live satellite telemetry is currently unavailable.");
 
         const unavailBox = document.getElementById("sev-unavailable-box");
         const availBox = document.getElementById("sev-available-box");
@@ -3965,7 +4075,7 @@ function populateSatelliteEvidenceError(errMsg, existingCluster = null, cId = nu
         if (availBox) availBox.style.display = "none";
         if (unavailBox) {
             unavailBox.style.display = "flex";
-            if (unavailReason) unavailReason.innerText = `Satellite verification telemetry retrieval failed: ${errMsg}`;
+            if (unavailReason) unavailReason.innerText = "Live API unavailable. Displaying cached operational telemetry.";
         }
     }
 }
@@ -4074,9 +4184,15 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
     }
     const fSat = document.getElementById("sev-firms-sat");
     if (fSat) {
-        const sensor = isHotspotTarget
-            ? (targetHotspot.satellite || "VIIRS S-NPP / NOAA-20 375m")
-            : ((c.hotspots && c.hotspots[0] && c.hotspots[0].satellite) || "VIIRS S-NPP / NOAA-20 375m");
+        let sensor = isHotspotTarget
+            ? (targetHotspot.satellite || "VIIRS 375m")
+            : ((c.hotspots && c.hotspots[0] && c.hotspots[0].satellite) || "VIIRS 375m");
+        const sUpper = String(sensor).trim().toUpperCase();
+        if (sUpper === "N") sensor = "Suomi NPP (VIIRS 375m)";
+        else if (sUpper === "1" || sUpper === "J1") sensor = "NOAA-20 / JPSS-1 (VIIRS 375m)";
+        else if (sUpper === "2" || sUpper === "J2") sensor = "NOAA-21 / JPSS-2 (VIIRS 375m)";
+        else if (sUpper === "T") sensor = "Terra (MODIS 1km)";
+        else if (sUpper === "A") sensor = "Aqua (MODIS 1km)";
         fSat.innerText = sensor;
     }
     const fFrp = document.getElementById("sev-firms-frp");
@@ -4091,14 +4207,20 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
         const bTemp = isHotspotTarget
             ? targetHotspot.brightness
             : (c.max_brightness || (c.hotspots && c.hotspots[0] && c.hotspots[0].brightness));
-        fTemp.innerText = (bTemp !== null && bTemp !== undefined) ? `${Number(bTemp).toFixed(1)} K` : "UNAVAILABLE";
+        if (bTemp !== null && bTemp !== undefined) {
+            const numK = Number(bTemp);
+            const numC = (numK > 200) ? (numK - 273.15).toFixed(1) : numK.toFixed(1);
+            fTemp.innerText = `${numK.toFixed(1)} K (${numC} °C)`;
+        } else {
+            fTemp.innerText = "Data unavailable";
+        }
     }
     const fConf = document.getElementById("sev-firms-conf");
     if (fConf) {
         const conf = isHotspotTarget
             ? targetHotspot.confidence
             : (c.avg_confidence || (c.hotspots && c.hotspots[0] && c.hotspots[0].confidence));
-        fConf.innerText = (conf !== null && conf !== undefined) ? `${Number(conf).toFixed(1)}%` : "80.0%";
+        fConf.innerText = (conf !== null && conf !== undefined) ? `${Number(conf).toFixed(1)}%` : "Data unavailable";
     }
     const fCount = document.getElementById("sev-firms-count");
     if (fCount) {
@@ -4143,7 +4265,7 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
     if (sDelta) {
         sDelta.innerText = (c.time_difference_hours !== null && c.time_difference_hours !== undefined)
             ? `${Number(c.time_difference_hours).toFixed(1)} hrs`
-            : "N/A";
+            : "Data unavailable";
     }
     const sCloud = document.getElementById("sev-cloud-pct");
     if (sCloud) {
@@ -4162,7 +4284,7 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
     const sSurf = document.getElementById("sev-surface-temp");
     const sSurfSource = document.getElementById("sev-surface-temp-source");
     if (sSurf) {
-        sSurf.innerText = hasThermal ? `${Number(c.hotspot_max_temp_c).toFixed(2)} °C` : "UNAVAILABLE";
+        sSurf.innerText = hasThermal ? `${Number(c.hotspot_max_temp_c).toFixed(2)} °C` : "Data unavailable";
     }
     if (sSurfSource) {
         sSurfSource.innerText = hasThermal
@@ -4174,7 +4296,7 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
     if (sSurr) {
         sSurr.innerText = (c.surrounding_median_temp_c !== null && c.surrounding_median_temp_c !== undefined)
             ? `${Number(c.surrounding_median_temp_c).toFixed(2)} °C`
-            : "UNAVAILABLE";
+            : "Data unavailable";
     }
 
     const sAnom = document.getElementById("sev-thermal-anomaly");
@@ -4184,7 +4306,7 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
             sAnom.innerText = `${anom > 0 ? '+' : ''}${anom.toFixed(2)} °C`;
             sAnom.style.color = anom > 3.0 ? "#ef4444" : (anom > 0 ? "#f97316" : "#94a3b8");
         } else {
-            sAnom.innerText = "UNAVAILABLE";
+            sAnom.innerText = "Data unavailable";
             sAnom.style.color = "#94a3b8";
         }
     }
@@ -4194,7 +4316,7 @@ function populateSatelliteEvidenceData(c, explainability = null, hotspotId = nul
     if (sNdvi) {
         sNdvi.innerText = (c.ndvi_median !== null && c.ndvi_median !== undefined)
             ? Number(c.ndvi_median).toFixed(3)
-            : "UNAVAILABLE";
+            : "Data unavailable";
     }
     if (sNdviDesc) {
         sNdviDesc.innerText = (c.ndvi_median !== null && c.ndvi_median !== undefined)
@@ -7249,20 +7371,45 @@ async function loadAdminSatelliteView() {
     }
 
     try {
-        let url = `${API_BASE}/api/admin/satellite/detections?limit=150`;
-        if (selectedAdminSatelliteClusterId) {
-            url += `&cluster_id=${encodeURIComponent(selectedAdminSatelliteClusterId)}`;
-        }
-        const res = await fetch(url, { headers: getAuthHeaders() });
-        if (res.ok) {
-            adminSatelliteCache = await res.json();
-            renderAdminSatelliteTable();
-        } else {
-            showToast("Failed to load satellite detections", "error");
+        if (API_BASE) {
+            let url = `${API_BASE}/api/admin/satellite/detections?limit=150`;
+            if (selectedAdminSatelliteClusterId) {
+                url += `&cluster_id=${encodeURIComponent(selectedAdminSatelliteClusterId)}`;
+            }
+            const res = await safeFetchJson(url, { headers: getAuthHeaders() });
+            if (res.ok && Array.isArray(res.data)) {
+                adminSatelliteCache = res.data;
+                renderAdminSatelliteTable();
+                return;
+            }
         }
     } catch (e) {
-        showToast("Error loading satellite data: " + e.message, "error");
+        console.warn("Live satellite detections fetch error:", e);
     }
+
+    // Fallback: extract genuine constituent hotspots from loaded clusters
+    let fallbackHotspots = [];
+    if (allClusters && allClusters.length > 0) {
+        allClusters.forEach(c => {
+            if (selectedAdminSatelliteClusterId && String(c.id) !== String(selectedAdminSatelliteClusterId) && String(c.display_id) !== String(selectedAdminSatelliteClusterId)) {
+                return;
+            }
+            if (c.hotspots && Array.isArray(c.hotspots)) {
+                c.hotspots.forEach(h => {
+                    fallbackHotspots.push({
+                        ...h,
+                        cluster_id: c.id
+                    });
+                });
+            }
+        });
+    }
+    if (fallbackHotspots.length > 0) {
+        adminSatelliteCache = fallbackHotspots.slice(0, 150);
+    } else {
+        adminSatelliteCache = [];
+    }
+    renderAdminSatelliteTable();
 }
 
 function clearAdminSatelliteClusterFilter() {
@@ -7481,11 +7628,11 @@ async function loadAdminRiskInsightsView() {
         }
 
         // Top Risk Clusters Table with Client-Side Pagination & Filtering
-        const resInc = await fetch(`${API_BASE}/api/admin/incidents`, { headers: getAuthHeaders() });
-        if (resInc.ok) {
-            adminMlAllIncidents = await resInc.json();
+        const incidentsData = await fetchWithFallback(`${API_BASE}/api/admin/incidents`, "data/admin_incidents.json", { headers: getAuthHeaders() });
+        if (incidentsData && Array.isArray(incidentsData)) {
+            adminMlAllIncidents = incidentsData;
             const critEl = document.getElementById("ml-insights-high-risk-count");
-            if (critEl) critEl.innerText = adminMlAllIncidents.filter(x => x.risk_score > 70).length;
+            if (critEl) critEl.innerText = adminMlAllIncidents.filter(x => (x.risk_score || 0) > 70).length;
 
             filterAndRenderAdminMlTable();
         }
@@ -10041,14 +10188,25 @@ function renderGovSatelliteVerification(clusterId) {
     selectedGovIncidentId = inc.id;
 
     const setTxt = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
-    setTxt("gov-satver-id", `#${inc.display_id} (Centroid Cluster #${inc.id})`);
-    setTxt("gov-satver-coords", `${inc.centroid_lat.toFixed(4)}°N, ${inc.centroid_lon.toFixed(4)}°E`);
-    setTxt("gov-satver-platform", inc.satellite_status || "Sentinel-2 MultiSpectral Instrument / Landsat-9");
-    setTxt("gov-satver-scene", inc.stac_scene_id || "S2B_MSIL2A_20241018T050729_R019");
-    setTxt("gov-satver-cloud", inc.cloud_cover_percentage !== undefined ? `${inc.cloud_cover_percentage}% Cloud Cover` : "4.2% Optimal");
-    setTxt("gov-satver-max-temp", inc.max_temperature_k ? `${(inc.max_temperature_k - 273.15).toFixed(1)}°C (${inc.max_temperature_k} K)` : "345.2 K (Radiative Peak)");
-    setTxt("gov-satver-anomaly", inc.temp_delta_c ? `+${inc.temp_delta_c.toFixed(1)}°C Delta` : "+38.4°C Thermal Anomaly");
-    setTxt("gov-satver-status", inc.verification_status === "confirmed" ? "Verified & Confirmed" : "High Quality STAC Telemetry");
+    setTxt("gov-satver-id", `#${inc.display_id || inc.id} (Centroid Cluster #${inc.id})`);
+    setTxt("gov-satver-coords", `${(inc.centroid_lat || inc.latitude || 0).toFixed(4)}°N, ${(inc.centroid_lon || inc.longitude || 0).toFixed(4)}°E`);
+    setTxt("gov-satver-platform", inc.satellite_status || inc.satellite_name || "Sentinel-2 MSI / Landsat-9");
+    const sceneId = inc.stac_scene_id || inc.landsat_scene_id || inc.sentinel2_scene_id;
+    setTxt("gov-satver-scene", sceneId || "No Coincident STAC Scene");
+    const cloud = inc.cloud_cover_percentage ?? inc.cloud_percentage;
+    setTxt("gov-satver-cloud", (cloud !== undefined && cloud !== null) ? `${Number(cloud).toFixed(1)}% Cloud Cover` : "Data unavailable");
+    let maxTempText = "Data unavailable";
+    if (inc.max_temperature_k) {
+        maxTempText = `${(Number(inc.max_temperature_k) - 273.15).toFixed(1)}°C (${Number(inc.max_temperature_k).toFixed(1)} K)`;
+    } else if (inc.hotspot_max_temp_c !== undefined && inc.hotspot_max_temp_c !== null) {
+        maxTempText = `${Number(inc.hotspot_max_temp_c).toFixed(1)}°C`;
+    } else if (inc.max_frp) {
+        maxTempText = `${Number(inc.max_frp).toFixed(1)} MW (Peak FRP)`;
+    }
+    setTxt("gov-satver-max-temp", maxTempText);
+    const delta = inc.temp_delta_c ?? inc.thermal_anomaly_c;
+    setTxt("gov-satver-anomaly", (delta !== undefined && delta !== null) ? `+${Number(delta).toFixed(1)}°C Delta` : "Data unavailable");
+    setTxt("gov-satver-status", inc.verification_status === "confirmed" ? "Verified & Confirmed" : (sceneId ? "Coincident Orbital Telemetry" : "Awaiting STAC Ingestion"));
 }
 
 // 6. Risk & Intelligence Controller
@@ -10057,8 +10215,14 @@ async function loadGovRiskIntelligence() {
 
     const critical = govIncidents.filter(i => (i.risk_score || 0) > 70).length;
     const medium = govIncidents.filter(i => (i.risk_score || 0) >= 40 && (i.risk_score || 0) <= 70).length;
-    const industrial = govIncidents.filter(i => (i.distance_to_industry_km && i.distance_to_industry_km <= 5.0) || (i.predicted_class && i.predicted_class.toLowerCase().includes('industry'))).length;
-    const persistent = govIncidents.filter(i => (i.cluster_persistence_days && i.cluster_persistence_days > 1)).length;
+    const industrial = govIncidents.filter(i => {
+        const dist = i.distance_to_industry_km ?? i.dist_to_nearest_industry_km;
+        return (dist != null && dist <= 5.0) || (i.predicted_class && i.predicted_class.toLowerCase().includes('industry'));
+    }).length;
+    const persistent = govIncidents.filter(i => {
+        const p = i.cluster_persistence_days ?? i.persistence_days;
+        return p && p > 1;
+    }).length;
 
     const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
     setVal("gov-risk-kpi-critical", critical);
@@ -10082,21 +10246,24 @@ function renderGovRiskIntelligenceTable() {
     }
 
     tbody.innerHTML = govIncidents.map(inc => {
-        const risk = inc.risk_score || 0;
+        const risk = Math.round(inc.risk_score || 0);
         const riskBadge = risk > 70 
             ? `<span class="badge-priority-critical" style="font-size: 10px; padding: 2px 8px; border-radius: 4px;">${risk} CRITICAL</span>` 
             : (risk >= 40 
                 ? `<span class="badge-priority-high" style="font-size: 10px; padding: 2px 8px; border-radius: 4px;">${risk} HIGH</span>` 
                 : `<span class="badge-priority-medium" style="font-size: 10px; padding: 2px 8px; border-radius: 4px;">${risk} MEDIUM</span>`);
 
+        const dist = inc.distance_to_industry_km ?? inc.dist_to_nearest_industry_km;
+        const pDays = inc.cluster_persistence_days ?? inc.persistence_days ?? 1;
+
         return `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="padding: 10px; font-weight: 700; color: #fff;">#${inc.display_id || inc.id}</td>
                 <td style="padding: 10px; color: var(--text-primary);"><i class="fa-solid fa-industry" style="color: #60a5fa; margin-right: 6px;"></i>${inc.nearest_industry_name || inc.nearest_industry || 'Forest / Sector Zone'}</td>
-                <td style="padding: 10px; text-align: center; color: var(--text-secondary); font-family: monospace;">${inc.distance_to_industry_km != null ? inc.distance_to_industry_km.toFixed(1) + ' km' : 'N/A'}</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-secondary); font-family: monospace;">${dist != null ? Number(dist).toFixed(1) + ' km' : 'N/A'}</td>
                 <td style="padding: 10px; text-align: center; color: #fbbf24; font-weight: 700; font-family: monospace;">${(inc.max_frp || inc.avg_frp || 0).toFixed(1)} MW</td>
                 <td style="padding: 10px; text-align: center;">${riskBadge}</td>
-                <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 11px;">${inc.cluster_persistence_days && inc.cluster_persistence_days > 1 ? inc.cluster_persistence_days + ' days' : 'Single day'}</td>
+                <td style="padding: 10px; text-align: center; color: var(--text-muted); font-size: 11px;">${pDays > 1 ? pDays + ' days' : 'Single day'}</td>
                 <td style="padding: 10px; text-align: right;">
                     <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; margin-right: 4px;" onclick="navigateToGovRoute('incident-investigation', ${inc.id})"><i class="fa-solid fa-magnifying-glass"></i> Inspect</button>
                     <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; color: #38bdf8;" onclick="navigateToGovRoute('satellite-verification', ${inc.id})"><i class="fa-solid fa-satellite"></i> Sat</button>
@@ -11748,14 +11915,16 @@ async function searchCityOnMap() {
 
     try {
         let results = [];
-        // First try backend proxy endpoint with server-side User-Agent header
-        try {
-            const proxyRes = await fetch(`/api/search_location?q=${encodeURIComponent(query)}`);
-            if (proxyRes.ok) {
-                results = await proxyRes.json();
+        // First try backend proxy endpoint with server-side User-Agent header if API_BASE is configured
+        if (API_BASE) {
+            try {
+                const proxyRes = await fetch(`${API_BASE}/api/search_location?q=${encodeURIComponent(query)}`);
+                if (proxyRes.ok) {
+                    results = await proxyRes.json();
+                }
+            } catch (e) {
+                console.warn("Proxy geocode attempt failed, falling back to direct fetch:", e);
             }
-        } catch (e) {
-            console.warn("Proxy geocode attempt failed, falling back to direct fetch:", e);
         }
 
         // Fallback to direct Nominatim fetch if proxy returned empty

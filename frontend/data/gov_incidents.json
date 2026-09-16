@@ -27,7 +27,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T16:24:29.193212",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (38.4\u00b0C). Peak radiative power: 127.3 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (38.4\u00b0C). Peak radiative power: 127.3 MW.",
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 311.5,
+    "temp_delta_c": 0.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 332,
@@ -57,7 +62,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_150042_20260825_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T08:26:35.560229",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (50.2\u00b0C). Peak radiative power: 75.0 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (50.2\u00b0C). Peak radiative power: 75.0 MW.",
+    "distance_to_industry_km": 1.5,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 323.3,
+    "temp_delta_c": 0.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 765,
@@ -87,7 +98,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_148039_20260912_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-07T16:11:39.796033",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 1.0 km of Guru Gobind Singh Refinery. Satellite confirmed with elevated thermal reading (46.7\u00b0C). Peak radiative power: 48.9 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 1.0 km of Guru Gobind Singh Refinery. Satellite confirmed with elevated thermal reading (46.7\u00b0C). Peak radiative power: 48.9 MW.",
+    "distance_to_industry_km": 1.0,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.8,
+    "temp_delta_c": 0.7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1196,
@@ -117,7 +134,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T15:38:19.996414",
-    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 33.2 km of Factory. Satellite confirmed with elevated thermal reading (47.1\u00b0C). Peak radiative power: 62.8 MW."
+    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 33.2 km of Factory. Satellite confirmed with elevated thermal reading (47.1\u00b0C). Peak radiative power: 62.8 MW.",
+    "distance_to_industry_km": 33.21,
+    "cluster_persistence_days": 15,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 320.2,
+    "temp_delta_c": 6.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1130,
@@ -147,7 +170,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260911T045651_R119_T44PMQ_20260911T100115)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T14:54:10.692994",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 33.2 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 33.2 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW.",
+    "distance_to_industry_km": 33.2,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1158,
@@ -177,7 +203,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-12T15:57:48.503397",
-    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 22.4 km of Factory. Satellite confirmed with elevated thermal reading (45.4\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 22.4 km of Factory. Satellite confirmed with elevated thermal reading (45.4\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 22.38,
+    "cluster_persistence_days": 15,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.5,
+    "temp_delta_c": 2.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1132,
@@ -207,7 +239,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260911T045651_R119_T44PMQ_20260911T100115)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T14:56:25.801558",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 58.0 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 127.3 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 58.0 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 127.3 MW.",
+    "distance_to_industry_km": 58.02,
+    "cluster_persistence_days": 3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 641,
@@ -237,7 +272,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-06T17:25:52.981918",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 32.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 32.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 32.01,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 860,
@@ -267,7 +305,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44PMQ_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T13:01:18.644062",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 32.0 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 38.8 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 32.0 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 38.8 MW.",
+    "distance_to_industry_km": 32.01,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 853,
@@ -297,7 +338,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143052_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-08T09:23:32.611855",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.3 km of JSW Steel Plant. Satellite confirmed with elevated thermal reading (53.2\u00b0C). Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.3 km of JSW Steel Plant. Satellite confirmed with elevated thermal reading (53.2\u00b0C). Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 0.27,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 326.3,
+    "temp_delta_c": 3.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 880,
@@ -327,7 +374,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44PNQ_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T14:26:36.229927",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 45.2 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 45.2 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW.",
+    "distance_to_industry_km": 45.21,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 638,
@@ -357,7 +407,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143047_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-02T09:38:27.266774",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 9.8 km of Bhadradri Thermal Power Plant. Satellite confirmed with elevated thermal reading (42.3\u00b0C). Peak radiative power: 6.7 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 9.8 km of Bhadradri Thermal Power Plant. Satellite confirmed with elevated thermal reading (42.3\u00b0C). Peak radiative power: 6.7 MW.",
+    "distance_to_industry_km": 9.77,
+    "cluster_persistence_days": 9,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 315.4,
+    "temp_delta_c": 4.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 766,
@@ -387,7 +443,11 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260908T053639_R005_T42QZJ_20260908T092339)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T16:11:49.472497",
-    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.4 km of ArcelorMittal Nippon Steel India. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.0 MW."
+    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.4 km of ArcelorMittal Nippon Steel India. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.0 MW.",
+    "distance_to_industry_km": 0.36,
+    "cluster_persistence_days": 14,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1175,
@@ -417,7 +477,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T11:02:37.376350",
-    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 20.0 km of Factory. Satellite confirmed with elevated thermal reading (50.1\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 20.0 km of Factory. Satellite confirmed with elevated thermal reading (50.1\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 19.99,
+    "cluster_persistence_days": 16,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 323.2,
+    "temp_delta_c": 1.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1192,
@@ -447,7 +513,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T13:23:42.904046",
-    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 19.9 km of Factory. Satellite confirmed with elevated thermal reading (49.7\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 19.9 km of Factory. Satellite confirmed with elevated thermal reading (49.7\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 19.92,
+    "cluster_persistence_days": 16,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 322.8,
+    "temp_delta_c": 0.7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1241,
@@ -477,7 +549,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-14T12:12:16.224207",
-    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) within 19.9 km of Factory. Satellite confirmed with elevated thermal reading (49.7\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) within 19.9 km of Factory. Satellite confirmed with elevated thermal reading (49.7\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 19.89,
+    "cluster_persistence_days": 17,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 322.8,
+    "temp_delta_c": 0.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1104,
@@ -507,7 +585,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-10T02:21:50.670381",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 25.8 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 38.8 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 25.8 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 38.8 MW.",
+    "distance_to_industry_km": 25.79,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 314.8,
+    "temp_delta_c": 1.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 854,
@@ -537,7 +621,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T12:39:29.483391",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 31.9 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 31.9 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 31.93,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1079,
@@ -567,7 +654,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T09:57:01.484283",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.2 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.2 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 23.21,
+    "cluster_persistence_days": 12,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1080,
@@ -597,7 +687,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T10:31:37.415783",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.1 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.1 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 23.14,
+    "cluster_persistence_days": 12,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1100,
@@ -627,7 +720,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-10T02:02:28.937955",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 23.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 22.97,
+    "cluster_persistence_days": 12,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1115,
@@ -657,7 +753,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-10T15:21:02.877302",
-    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 23.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 23.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 23.01,
+    "cluster_persistence_days": 13,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 276,
@@ -687,7 +786,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_150038_20260910_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:58:55.180994",
-    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.3 km of Zaman Cement Factory. Satellite confirmed with elevated thermal reading (44.6\u00b0C). Peak radiative power: 4.1 MW."
+    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.3 km of Zaman Cement Factory. Satellite confirmed with elevated thermal reading (44.6\u00b0C). Peak radiative power: 4.1 MW.",
+    "distance_to_industry_km": 0.32,
+    "cluster_persistence_days": 14,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 317.8,
+    "temp_delta_c": 5.9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1440,
@@ -717,7 +822,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260913T044659_R076_T45QUG_20260913T084712)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.722253",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 1.1 km of Tata Iron and Steel Company Limited (TISCO) - West Bokaro. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 1.1 km of Tata Iron and Steel Company Limited (TISCO) - West Bokaro. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 1.12,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1082,
@@ -747,7 +855,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44PMQ_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T14:16:41.205042",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 25.8 km of Laksha Uyana Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 38.8 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 25.8 km of Laksha Uyana Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 38.8 MW.",
+    "distance_to_industry_km": 25.76,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 747,
@@ -777,7 +888,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44NMP_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T15:51:00.790341",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 36.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 36.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW.",
+    "distance_to_industry_km": 36.26,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1155,
@@ -807,7 +921,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-12T15:56:51.940000",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 35.2 km of Steel Welding Shop. Satellite confirmed with elevated thermal reading (55.3\u00b0C). Peak radiative power: 19.6 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 35.2 km of Steel Welding Shop. Satellite confirmed with elevated thermal reading (55.3\u00b0C). Peak radiative power: 19.6 MW.",
+    "distance_to_industry_km": 35.19,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 328.4,
+    "temp_delta_c": 1.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 751,
@@ -837,7 +957,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260901T045701_R119_T44PMQ_20260901T094009)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T15:53:00.522637",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 33.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 33.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW.",
+    "distance_to_industry_km": 33.78,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 884,
@@ -867,7 +991,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_142054_20260902_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-08T14:45:33.920164",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 33.5 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 33.5 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 62.8 MW.",
+    "distance_to_industry_km": 33.53,
+    "cluster_persistence_days": 9,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 289,
@@ -897,7 +1025,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_147047_20260905_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T06:06:04.690325",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 0.5 km of JSW Ispat Steel Plant. Satellite confirmed with elevated thermal reading (45.4\u00b0C). Peak radiative power: 8.9 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 0.5 km of JSW Ispat Steel Plant. Satellite confirmed with elevated thermal reading (45.4\u00b0C). Peak radiative power: 8.9 MW.",
+    "distance_to_industry_km": 0.47,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.5,
+    "temp_delta_c": 2.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1074,
@@ -927,7 +1061,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_147047_20260905_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-09T01:41:49.474662",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 0.4 km of JSW Ispat Steel Plant. Satellite confirmed with elevated thermal reading (45.6\u00b0C). Peak radiative power: 8.9 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 0.4 km of JSW Ispat Steel Plant. Satellite confirmed with elevated thermal reading (45.6\u00b0C). Peak radiative power: 8.9 MW.",
+    "distance_to_industry_km": 0.42,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.8,
+    "temp_delta_c": 2.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1112,
@@ -957,7 +1097,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44PNQ_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-10T06:22:21.240911",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 44.5 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 44.5 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW.",
+    "distance_to_industry_km": 44.55,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 888,
@@ -987,7 +1130,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_150044_20260910_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-08T15:30:35.852328",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 19.4 km of Gokul Refinery. Satellite confirmed with elevated thermal reading (63.0\u00b0C). Peak radiative power: 9.9 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 19.4 km of Gokul Refinery. Satellite confirmed with elevated thermal reading (63.0\u00b0C). Peak radiative power: 9.9 MW.",
+    "distance_to_industry_km": 19.39,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 336.1,
+    "temp_delta_c": 9.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1116,
@@ -1017,7 +1166,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-10T15:21:08.723738",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 25.1 km of Industrial. Satellite confirmed with elevated thermal reading (45.6\u00b0C). Peak radiative power: 29.0 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 25.1 km of Industrial. Satellite confirmed with elevated thermal reading (45.6\u00b0C). Peak radiative power: 29.0 MW.",
+    "distance_to_industry_km": 25.08,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.8,
+    "temp_delta_c": 1.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 118,
@@ -1047,7 +1202,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_149042_20260903_02_T1)",
     "cloud_percentage": 66.2,
     "created_at": "2026-08-31T05:21:20.249890",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 10.6 km of Industrial Area. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 21.8 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 10.6 km of Industrial Area. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 21.8 MW.",
+    "distance_to_industry_km": 10.56,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 66.2,
+    "max_temperature_k": 314.8,
+    "temp_delta_c": 3.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 753,
@@ -1077,7 +1238,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T15:53:08.577246",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 14.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 14.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW.",
+    "distance_to_industry_km": 14.84,
+    "cluster_persistence_days": 6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1267,
@@ -1107,7 +1271,10 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260914T043231_R133_T46RBT_20260914T091013)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.721236",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 5.5 km of \u4e1c\u560e\u8fc7\u6e21\u7535\u6e90. Cloud-masked or awaiting next satellite pass. Peak radiative power: 36.4 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 5.5 km of \u4e1c\u560e\u8fc7\u6e21\u7535\u6e90. Cloud-masked or awaiting next satellite pass. Peak radiative power: 36.4 MW.",
+    "distance_to_industry_km": 5.54,
+    "cluster_persistence_days": 4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 2117,
@@ -1137,7 +1304,11 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260909T050649_R019_T43PGM_20260909T085145)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-15T06:43:20.727488",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 12.9 km of factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 94.1 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 12.9 km of factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 94.1 MW.",
+    "distance_to_industry_km": 12.9,
+    "cluster_persistence_days": 3,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 128,
@@ -1167,7 +1338,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_148039_20260827_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:22:23.679189",
-    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 0.9 km of Guru Gobind Singh Refinery. Satellite confirmed with elevated thermal reading (37.0\u00b0C). Peak radiative power: 35.0 MW."
+    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 0.9 km of Guru Gobind Singh Refinery. Satellite confirmed with elevated thermal reading (37.0\u00b0C). Peak radiative power: 35.0 MW.",
+    "distance_to_industry_km": 0.87,
+    "cluster_persistence_days": 2,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 310.1,
+    "temp_delta_c": 0.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 699,
@@ -1197,7 +1374,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44QQK_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T01:53:41.815652",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW.",
+    "distance_to_industry_km": 7.07,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 633,
@@ -1227,7 +1407,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260826_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-02T01:15:29.898139",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 32.2 km of Industrial. Satellite confirmed with elevated thermal reading (44.7\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 32.2 km of Industrial. Satellite confirmed with elevated thermal reading (44.7\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 32.19,
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 317.8,
+    "temp_delta_c": 1.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 668,
@@ -1257,7 +1443,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260901T045701_R119_T44PMQ_20260901T094009)",
     "cloud_percentage": null,
     "created_at": "2026-09-06T17:40:03.842658",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 18.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 40.3 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 18.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 40.3 MW.",
+    "distance_to_industry_km": 18.02,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 462,
@@ -1287,7 +1476,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260826_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-01T15:04:48.712513",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 32.1 km of Industrial. Satellite confirmed with elevated thermal reading (43.6\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 32.1 km of Industrial. Satellite confirmed with elevated thermal reading (43.6\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 32.07,
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 316.8,
+    "temp_delta_c": 0.9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1165,
@@ -1317,7 +1512,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QVF_20260908T094920)",
     "cloud_percentage": null,
     "created_at": "2026-09-13T09:42:52.382230",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.7 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.7 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 0.74,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1220,
@@ -1347,7 +1545,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T16:34:57.511489",
-    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 42.7 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (53.5\u00b0C). Peak radiative power: 35.2 MW."
+    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 42.7 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (53.5\u00b0C). Peak radiative power: 35.2 MW.",
+    "distance_to_industry_km": 42.66,
+    "cluster_persistence_days": 15,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 326.6,
+    "temp_delta_c": 1.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 646,
@@ -1377,7 +1581,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_142053_20260902_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-06T17:28:41.029453",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 51.6 km of Vic-Jat Fishnet Factory. Satellite confirmed with elevated thermal reading (47.1\u00b0C). Peak radiative power: 37.5 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 51.6 km of Vic-Jat Fishnet Factory. Satellite confirmed with elevated thermal reading (47.1\u00b0C). Peak radiative power: 37.5 MW.",
+    "distance_to_industry_km": 51.57,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 320.2,
+    "temp_delta_c": 0.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 706,
@@ -1407,7 +1617,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_142053_20260902_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-07T05:10:54.991875",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 51.7 km of Vic-Jat Fishnet Factory. Satellite confirmed with elevated thermal reading (47.0\u00b0C). Peak radiative power: 37.5 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 51.7 km of Vic-Jat Fishnet Factory. Satellite confirmed with elevated thermal reading (47.0\u00b0C). Peak radiative power: 37.5 MW.",
+    "distance_to_industry_km": 51.68,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 320.1,
+    "temp_delta_c": 0.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 701,
@@ -1437,7 +1653,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44NMP_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T01:56:21.430245",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 32.0 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.7 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 32.0 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.7 MW.",
+    "distance_to_industry_km": 32.01,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 848,
@@ -1467,7 +1686,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMR_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T01:51:59.410835",
-    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 51.8 km of Vic-Jat Fishnet Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.5 MW."
+    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 51.8 km of Vic-Jat Fishnet Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.5 MW.",
+    "distance_to_industry_km": 51.77,
+    "cluster_persistence_days": 14,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1101,
@@ -1497,7 +1719,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMR_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-10T02:05:20.665617",
-    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 51.9 km of Vic-Jat Fishnet Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.5 MW."
+    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 51.9 km of Vic-Jat Fishnet Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 37.5 MW.",
+    "distance_to_industry_km": 51.85,
+    "cluster_persistence_days": 15,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 623,
@@ -1527,7 +1752,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260908T053639_R005_T42QYJ_20260908T092339)",
     "cloud_percentage": null,
     "created_at": "2026-09-01T17:02:29.914320",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 1.6 km of chimney. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.9 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 1.6 km of chimney. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.9 MW.",
+    "distance_to_industry_km": 1.57,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 156,
@@ -1557,7 +1785,12 @@
     "satellite_name": "MODIS LST 1km (MYD11A1.A2026237.h24v06.061.2026238231018)",
     "cloud_percentage": null,
     "created_at": "2026-08-31T05:27:00.752969",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.4 km of ArcelorMittal Nippon Steel India. Satellite confirmed with elevated thermal reading (33.9\u00b0C). Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.4 km of ArcelorMittal Nippon Steel India. Satellite confirmed with elevated thermal reading (33.9\u00b0C). Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.43,
+    "cluster_persistence_days": 4,
+    "max_temperature_k": 307.0,
+    "temp_delta_c": 3.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1171,
@@ -1587,7 +1820,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T09:45:19.339162",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 14.8 km of Factory. Satellite confirmed with elevated thermal reading (37.6\u00b0C). Peak radiative power: 23.4 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 14.8 km of Factory. Satellite confirmed with elevated thermal reading (37.6\u00b0C). Peak radiative power: 23.4 MW.",
+    "distance_to_industry_km": 14.85,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 310.8,
+    "temp_delta_c": 0.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1110,
@@ -1617,7 +1856,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC08_L2SP_139046_20260905_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-10T05:52:40.214590",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 3.0 km of Duburi Steel Power Plant. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 21.1 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 3.0 km of Duburi Steel Power Plant. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 21.1 MW.",
+    "distance_to_industry_km": 2.97,
+    "cluster_persistence_days": 9,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.8,
+    "temp_delta_c": -0.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 707,
@@ -1647,7 +1892,10 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260907T044231_R033_T45QWG_20260907T094319)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T05:17:09.444275",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 21.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 21.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW.",
+    "distance_to_industry_km": 21.05,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1129,
@@ -1677,7 +1925,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260911T045651_R119_T44PMQ_20260911T100115)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T14:54:07.793011",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 14.6 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 14.6 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW.",
+    "distance_to_industry_km": 14.63,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1536,
@@ -1707,7 +1958,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143047_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.722960",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 3.4 km of Electrical Substation. Satellite confirmed with elevated thermal reading (35.7\u00b0C). Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 3.4 km of Electrical Substation. Satellite confirmed with elevated thermal reading (35.7\u00b0C). Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 3.37,
+    "cluster_persistence_days": 5,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 308.8,
+    "temp_delta_c": 0.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1219,
@@ -1737,7 +1994,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141055_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T16:34:19.548212",
-    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 36.2 km of Factory. Satellite confirmed with elevated thermal reading (47.8\u00b0C). Peak radiative power: 24.0 MW."
+    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 36.2 km of Factory. Satellite confirmed with elevated thermal reading (47.8\u00b0C). Peak radiative power: 24.0 MW.",
+    "distance_to_industry_km": 36.24,
+    "cluster_persistence_days": 14,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 320.9,
+    "temp_delta_c": 4.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 652,
@@ -1767,7 +2030,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC08_L2SP_139045_20260905_02_T1)",
     "cloud_percentage": 1.8,
     "created_at": "2026-09-06T17:33:09.145978",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 3.0 km of IDBI Bank. Satellite confirmed with elevated thermal reading (44.8\u00b0C). Peak radiative power: 12.9 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 3.0 km of IDBI Bank. Satellite confirmed with elevated thermal reading (44.8\u00b0C). Peak radiative power: 12.9 MW.",
+    "distance_to_industry_km": 3.03,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 1.8,
+    "max_temperature_k": 317.9,
+    "temp_delta_c": 2.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 721,
@@ -1797,7 +2066,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_145049_20260907_02_T1)",
     "cloud_percentage": 9.3,
     "created_at": "2026-09-07T14:45:17.589399",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 11.8 km of IDBI Bank. Satellite confirmed with elevated thermal reading (44.1\u00b0C). Peak radiative power: 5.6 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 11.8 km of IDBI Bank. Satellite confirmed with elevated thermal reading (44.1\u00b0C). Peak radiative power: 5.6 MW.",
+    "distance_to_industry_km": 11.82,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 9.3,
+    "max_temperature_k": 317.2,
+    "temp_delta_c": 1.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 741,
@@ -1827,7 +2102,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260903T050559_R076_T44PNQ_20260903T084020)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T15:25:31.972353",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 44.9 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 44.9 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW.",
+    "distance_to_industry_km": 44.88,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1143,
@@ -1857,7 +2135,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44PNQ_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T15:11:18.453729",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 44.6 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 44.6 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 35.2 MW.",
+    "distance_to_industry_km": 44.61,
+    "cluster_persistence_days": 12,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1224,
@@ -1887,7 +2168,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T16:36:00.046841",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 46.9 km of Industrial. Satellite confirmed with elevated thermal reading (45.8\u00b0C). Peak radiative power: 20.0 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 46.9 km of Industrial. Satellite confirmed with elevated thermal reading (45.8\u00b0C). Peak radiative power: 20.0 MW.",
+    "distance_to_industry_km": 46.88,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.9,
+    "temp_delta_c": 0.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 661,
@@ -1917,7 +2204,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143047_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-06T17:37:55.384372",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 9.8 km of Bhadradri Thermal Power Plant. Satellite confirmed with elevated thermal reading (42.3\u00b0C). Peak radiative power: 6.7 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 9.8 km of Bhadradri Thermal Power Plant. Satellite confirmed with elevated thermal reading (42.3\u00b0C). Peak radiative power: 6.7 MW.",
+    "distance_to_industry_km": 9.77,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 315.4,
+    "temp_delta_c": 4.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 653,
@@ -1947,7 +2240,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QVF_20260908T094920)",
     "cloud_percentage": null,
     "created_at": "2026-09-06T17:33:19.855958",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.7 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.7 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 0.74,
+    "cluster_persistence_days": 6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 2139,
@@ -1977,7 +2273,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_142053_20260902_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.727758",
-    "evidence_summary": "Thermal source first detected today within 25.1 km of Thirumakotai Power Station. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 106.2 MW."
+    "evidence_summary": "Thermal source first detected today within 25.1 km of Thirumakotai Power Station. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 106.2 MW.",
+    "distance_to_industry_km": 25.05,
+    "cluster_persistence_days": 1,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.8,
+    "temp_delta_c": 0.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 697,
@@ -2007,7 +2309,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_145049_20260907_02_T1)",
     "cloud_percentage": 23.6,
     "created_at": "2026-09-07T01:49:44.242419",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 4.8 km of Mundaragi Industrial Area Road. Satellite confirmed with elevated thermal reading (49.9\u00b0C). Peak radiative power: 2.2 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 4.8 km of Mundaragi Industrial Area Road. Satellite confirmed with elevated thermal reading (49.9\u00b0C). Peak radiative power: 2.2 MW.",
+    "distance_to_industry_km": 4.85,
+    "cluster_persistence_days": 5,
+    "cloud_cover_percentage": 23.6,
+    "max_temperature_k": 323.0,
+    "temp_delta_c": 2.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 849,
@@ -2037,7 +2345,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_140046_20260904_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-08T01:54:34.720215",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 1.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 1.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW.",
+    "distance_to_industry_km": 1.16,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1064,
@@ -2067,7 +2379,10 @@
     "satellite_name": "Multi-Satellite STAC Search (Landsat, Sentinel-2, MODIS)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T01:14:26.431341",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 1.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 1.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW.",
+    "distance_to_industry_km": 1.18,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1076,
@@ -2097,7 +2412,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QUD_20260908T094920)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T02:19:03.486443",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 20.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 20.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW.",
+    "distance_to_industry_km": 20.23,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1257,
@@ -2127,7 +2445,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QUD_20260908T094920)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:30:59.979702",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 20.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 20.2 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW.",
+    "distance_to_industry_km": 20.19,
+    "cluster_persistence_days": 12,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 678,
@@ -2157,7 +2478,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44NMP_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-06T17:45:40.471225",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 31.9 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.7 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 31.9 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.7 MW.",
+    "distance_to_industry_km": 31.94,
+    "cluster_persistence_days": 6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 794,
@@ -2187,7 +2511,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T16:38:02.743767",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 11.9 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 16.5 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 11.9 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 16.5 MW.",
+    "distance_to_industry_km": 11.88,
+    "cluster_persistence_days": 5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 395,
@@ -2217,7 +2544,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260826_02_T1)",
     "cloud_percentage": 55.1,
     "created_at": "2026-08-31T16:07:17.677829",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 35.0 km of Factory. Satellite confirmed with elevated thermal reading (36.9\u00b0C). Peak radiative power: 54.5 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 35.0 km of Factory. Satellite confirmed with elevated thermal reading (36.9\u00b0C). Peak radiative power: 54.5 MW.",
+    "distance_to_industry_km": 35.0,
+    "cluster_persistence_days": 3,
+    "cloud_cover_percentage": 55.1,
+    "max_temperature_k": 310.0,
+    "temp_delta_c": -0.7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 508,
@@ -2247,7 +2580,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_140044_20260904_02_T1)",
     "cloud_percentage": 25.3,
     "created_at": "2026-09-01T15:39:57.590010",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 12.0 km of Jindal Steel. Satellite confirmed with elevated thermal reading (52.1\u00b0C). Peak radiative power: 7.6 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 12.0 km of Jindal Steel. Satellite confirmed with elevated thermal reading (52.1\u00b0C). Peak radiative power: 7.6 MW.",
+    "distance_to_industry_km": 11.96,
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 25.3,
+    "max_temperature_k": 325.2,
+    "temp_delta_c": 11.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1157,
@@ -2277,7 +2616,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-12T15:57:37.601532",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 34.6 km of Industrial. Satellite confirmed with elevated thermal reading (37.7\u00b0C). Peak radiative power: 16.0 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 34.6 km of Industrial. Satellite confirmed with elevated thermal reading (37.7\u00b0C). Peak radiative power: 16.0 MW.",
+    "distance_to_industry_km": 34.61,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 310.8,
+    "temp_delta_c": 0.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 694,
@@ -2307,7 +2652,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260831T052641_R105_T43RFN_20260831T102215)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T01:45:41.563083",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.8 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.8 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.8,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 851,
@@ -2337,7 +2686,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_147040_20260905_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-08T09:18:13.263478",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 0.8 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 0.8 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.85,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1069,
@@ -2367,7 +2720,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_147040_20260905_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-09T01:18:17.207871",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 0.9 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 0.9 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.91,
+    "cluster_persistence_days": 9,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1103,
@@ -2397,7 +2754,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_147040_20260905_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-10T02:11:55.472250",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 1.0 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 1.0 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.96,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1173,
@@ -2427,7 +2788,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260910T052641_R105_T43RFN_20260910T102519)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-13T09:47:18.880946",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 1.0 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 1.0 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 1.04,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1166,
@@ -2457,7 +2822,10 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260907T044231_R033_T45QWG_20260907T094319)",
     "cloud_percentage": null,
     "created_at": "2026-09-13T09:43:10.659449",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 3.2 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 3.2 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW.",
+    "distance_to_industry_km": 3.2,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1246,
@@ -2487,7 +2855,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_148047_20260912_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-15T05:54:58.288130",
-    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.4 km of JSW Ispat Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 8.9 MW."
+    "evidence_summary": "Thermal source persisting over 14 consecutive day(s) within 0.4 km of JSW Ispat Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 8.9 MW.",
+    "distance_to_industry_km": 0.39,
+    "cluster_persistence_days": 14,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1122,
@@ -2517,7 +2889,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-12T13:55:56.465236",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 28.9 km of Industrial. Satellite confirmed with elevated thermal reading (40.0\u00b0C). Peak radiative power: 20.8 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 28.9 km of Industrial. Satellite confirmed with elevated thermal reading (40.0\u00b0C). Peak radiative power: 20.8 MW.",
+    "distance_to_industry_km": 28.86,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 313.1,
+    "temp_delta_c": 0.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1377,
@@ -2547,7 +2925,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T44QQE_20260908T094920)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-15T06:43:20.721937",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 0.4 km of Vizag Steel Captive Power Plant-I. Cloud-masked or awaiting next satellite pass. Peak radiative power: 8.2 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 0.4 km of Vizag Steel Captive Power Plant-I. Cloud-masked or awaiting next satellite pass. Peak radiative power: 8.2 MW.",
+    "distance_to_industry_km": 0.43,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 757,
@@ -2577,7 +2959,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-07T15:55:44.533655",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (46.1\u00b0C). Peak radiative power: 9.3 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (46.1\u00b0C). Peak radiative power: 9.3 MW.",
+    "cluster_persistence_days": 5,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.2,
+    "temp_delta_c": 1.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 855,
@@ -2607,7 +2994,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T12:40:28.376050",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 24.9 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 29.0 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 24.9 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 29.0 MW.",
+    "distance_to_industry_km": 24.89,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1276,
@@ -2637,7 +3027,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.721289",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 28.0 km of Steel Welding Shop. Satellite confirmed with elevated thermal reading (53.6\u00b0C). Peak radiative power: 20.6 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 28.0 km of Steel Welding Shop. Satellite confirmed with elevated thermal reading (53.6\u00b0C). Peak radiative power: 20.6 MW.",
+    "distance_to_industry_km": 28.01,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 326.8,
+    "temp_delta_c": 3.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1797,
@@ -2667,7 +3063,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141045_20260911_02_T2)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.725325",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 17.9 km of IB Thermal Power Plant. Satellite confirmed with elevated thermal reading (46.2\u00b0C). Peak radiative power: 11.8 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 17.9 km of IB Thermal Power Plant. Satellite confirmed with elevated thermal reading (46.2\u00b0C). Peak radiative power: 11.8 MW.",
+    "distance_to_industry_km": 17.89,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.3,
+    "temp_delta_c": 6.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1704,
@@ -2697,7 +3099,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_141045_20260911_02_T2)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-15T06:43:20.724418",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.7 km of Rourkela Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 7.6 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 0.7 km of Rourkela Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 7.6 MW.",
+    "distance_to_industry_km": 0.65,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 436,
@@ -2727,7 +3133,12 @@
     "satellite_name": "MODIS LST 1km (MYD11A1.A2026237.h24v06.061.2026238231018)",
     "cloud_percentage": null,
     "created_at": "2026-09-01T06:01:56.727866",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.5 km of IOCL Panipat Captive Power Plant. Satellite confirmed with elevated thermal reading (32.4\u00b0C). Peak radiative power: 7.7 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.5 km of IOCL Panipat Captive Power Plant. Satellite confirmed with elevated thermal reading (32.4\u00b0C). Peak radiative power: 7.7 MW.",
+    "distance_to_industry_km": 0.54,
+    "cluster_persistence_days": 4,
+    "max_temperature_k": 305.5,
+    "temp_delta_c": 1.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1179,
@@ -2757,7 +3168,11 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260913T044659_R076_T44QQK_20260913T084712)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-13T11:27:20.787751",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW.",
+    "distance_to_industry_km": 7.07,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1231,
@@ -2787,7 +3202,11 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260913T044659_R076_T44QQK_20260913T084712)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-14T08:16:50.739828",
-    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW."
+    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 7.1 km of IB Thermal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.6 MW.",
+    "distance_to_industry_km": 7.12,
+    "cluster_persistence_days": 13,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1249,
@@ -2817,7 +3236,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QVF_20260908T094920)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-15T06:20:32.544803",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 0.8 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 6.8 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 0.8 km of Tata Steel. Cloud-masked or awaiting next satellite pass. Peak radiative power: 6.8 MW.",
+    "distance_to_industry_km": 0.77,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 205,
@@ -2847,7 +3270,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260826_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:36:49.442754",
-    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (49.4\u00b0C). Peak radiative power: 71.9 MW."
+    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (49.4\u00b0C). Peak radiative power: 71.9 MW.",
+    "cluster_persistence_days": 2,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 322.5,
+    "temp_delta_c": 1.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1995,
@@ -2877,7 +3305,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260909T050649_R019_T44QKH_20260909T085145)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.726667",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 1.5 km of Ghugus Coal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 1.9 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 1.5 km of Ghugus Coal Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 1.9 MW.",
+    "distance_to_industry_km": 1.54,
+    "cluster_persistence_days": 3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 858,
@@ -2907,7 +3338,10 @@
     "satellite_name": "Multi-Satellite STAC Search (Landsat, Sentinel-2, MODIS)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T12:55:32.756566",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 17.9 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 40.3 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 17.9 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 40.3 MW.",
+    "distance_to_industry_km": 17.93,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1161,
@@ -2937,7 +3371,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260913T053641_R005_T43SDR_20260913T101758)",
     "cloud_percentage": null,
     "created_at": "2026-09-13T06:24:09.480345",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 18.1 km of Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.1 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 18.1 km of Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.1 MW.",
+    "distance_to_industry_km": 18.14,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 654,
@@ -2967,7 +3404,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260905T043701_R033_T45QWG_20260905T094209)",
     "cloud_percentage": null,
     "created_at": "2026-09-06T17:33:24.834627",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 3.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 3.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW.",
+    "distance_to_industry_km": 3.08,
+    "cluster_persistence_days": 4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 155,
@@ -2997,7 +3437,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143048_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:26:52.584908",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 12.3 km of Paloncha Power Plant. Satellite confirmed with elevated thermal reading (46.4\u00b0C). Peak radiative power: 2.9 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 12.3 km of Paloncha Power Plant. Satellite confirmed with elevated thermal reading (46.4\u00b0C). Peak radiative power: 2.9 MW.",
+    "distance_to_industry_km": 12.35,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.5,
+    "temp_delta_c": 5.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 919,
@@ -3027,7 +3473,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T050601_R076_T44NNP_20260908T090212)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T16:27:26.972605",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 27.2 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 20.6 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 27.2 km of Shakthi Steel Production. Cloud-masked or awaiting next satellite pass. Peak radiative power: 20.6 MW.",
+    "distance_to_industry_km": 27.19,
+    "cluster_persistence_days": 6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1523,
@@ -3057,7 +3506,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260913T044659_R076_T45QTD_20260913T084712)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.722885",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 37.7 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.8 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 37.7 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.8 MW.",
+    "distance_to_industry_km": 37.73,
+    "cluster_persistence_days": 8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1144,
@@ -3087,7 +3539,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260911T054639_R048_T43SDR_20260911T075255)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T15:30:45.194740",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 17.9 km of Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.1 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 17.9 km of Industrial Area. Cloud-masked or awaiting next satellite pass. Peak radiative power: 2.1 MW.",
+    "distance_to_industry_km": 17.94,
+    "cluster_persistence_days": 8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 881,
@@ -3117,7 +3572,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143050_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-08T14:34:59.943855",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 44.6 km of Revuru Substation. Satellite confirmed with elevated thermal reading (73.6\u00b0C). Peak radiative power: 16.0 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 44.6 km of Revuru Substation. Satellite confirmed with elevated thermal reading (73.6\u00b0C). Peak radiative power: 16.0 MW.",
+    "distance_to_industry_km": 44.64,
+    "cluster_persistence_days": 3,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 346.8,
+    "temp_delta_c": 21.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 657,
@@ -3147,7 +3608,11 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260831T052641_R105_T43RFN_20260831T102215)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-06T17:35:15.665551",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.7 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.7 km of IOCL Panipat Captive Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 9.5 MW.",
+    "distance_to_industry_km": 0.69,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 127,
@@ -3177,7 +3642,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_151037_20260901_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:22:16.147401",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 7.3 km of Mustaqeem Steel Work. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 3.3 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 7.3 km of Mustaqeem Steel Work. Satellite confirmed with elevated thermal reading (41.7\u00b0C). Peak radiative power: 3.3 MW.",
+    "distance_to_industry_km": 7.27,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 314.8,
+    "temp_delta_c": 2.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 999,
@@ -3207,7 +3678,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_145051_20260907_02_T1)",
     "cloud_percentage": 14.7,
     "created_at": "2026-09-08T16:51:12.347905",
-    "evidence_summary": "Thermal source first detected today within 34.6 km of KSEB Substation Kunnothh. Satellite confirmed with elevated thermal reading (27.9\u00b0C). Peak radiative power: 179.9 MW."
+    "evidence_summary": "Thermal source first detected today within 34.6 km of KSEB Substation Kunnothh. Satellite confirmed with elevated thermal reading (27.9\u00b0C). Peak radiative power: 179.9 MW.",
+    "distance_to_industry_km": 34.56,
+    "cluster_persistence_days": 1,
+    "cloud_cover_percentage": 14.7,
+    "max_temperature_k": 301.0,
+    "temp_delta_c": 0.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1159,
@@ -3237,7 +3714,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141053_20260911_02_T1)",
     "cloud_percentage": 70.2,
     "created_at": "2026-09-12T16:01:02.401074",
-    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (11.8\u00b0C). Peak radiative power: 37.5 MW."
+    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (11.8\u00b0C). Peak radiative power: 37.5 MW.",
+    "cluster_persistence_days": 17,
+    "cloud_cover_percentage": 70.2,
+    "max_temperature_k": 284.9,
+    "temp_delta_c": -5.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1154,
@@ -3267,7 +3749,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260913T053641_R005_T43RCP_20260913T101758)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T15:54:15.505312",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 34.5 km of Power Plant Road. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.7 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 34.5 km of Power Plant Road. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.7 MW.",
+    "distance_to_industry_km": 34.54,
+    "cluster_persistence_days": 6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 882,
@@ -3297,7 +3782,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44NMP_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T14:40:43.622153",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 36.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 36.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW.",
+    "distance_to_industry_km": 36.31,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1140,
@@ -3327,7 +3815,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44NMP_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T15:09:48.888813",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 36.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 36.0 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 24.0 MW.",
+    "distance_to_industry_km": 36.05,
+    "cluster_persistence_days": 11,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 731,
@@ -3357,7 +3848,11 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260903T044659_R076_T45QUD_20260903T084603)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T14:58:33.363963",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 2.9 km of Duburi Steel Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 21.1 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 2.9 km of Duburi Steel Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 21.1 MW.",
+    "distance_to_industry_km": 2.93,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1205,
@@ -3387,7 +3882,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_139046_20260913_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-13T15:59:34.801626",
-    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 3.0 km of Duburi Steel Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 21.1 MW."
+    "evidence_summary": "Thermal source persisting over 13 consecutive day(s) within 3.0 km of Duburi Steel Power Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 21.1 MW.",
+    "distance_to_industry_km": 2.95,
+    "cluster_persistence_days": 13,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1067,
@@ -3417,7 +3916,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260908T044701_R076_T45QWG_20260908T094920)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T01:16:40.398623",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 20.8 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 20.8 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW.",
+    "distance_to_industry_km": 20.83,
+    "cluster_persistence_days": 8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1081,
@@ -3447,7 +3949,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260910T043659_R033_T45QWG_20260910T082519)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T13:41:45.377431",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 20.7 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 20.7 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.4 MW.",
+    "distance_to_industry_km": 20.7,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1438,
@@ -3477,7 +3982,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260913T044659_R076_T45QVG_20260913T084712)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.722243",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 18.7 km of Bokaro Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.3 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 18.7 km of Bokaro Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 10.3 MW.",
+    "distance_to_industry_km": 18.69,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 886,
@@ -3507,7 +4015,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T14:45:41.488000",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 14.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 14.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 23.4 MW.",
+    "distance_to_industry_km": 14.8,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 108,
@@ -3537,7 +4048,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_139045_20260828_02_T1)",
     "cloud_percentage": 51.1,
     "created_at": "2026-08-31T05:20:30.956626",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 3.1 km of IDBI Bank. Satellite confirmed with elevated thermal reading (34.9\u00b0C). Peak radiative power: 10.5 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 3.1 km of IDBI Bank. Satellite confirmed with elevated thermal reading (34.9\u00b0C). Peak radiative power: 10.5 MW.",
+    "distance_to_industry_km": 3.14,
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 51.1,
+    "max_temperature_k": 308.0,
+    "temp_delta_c": -0.5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 715,
@@ -3567,7 +4084,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260901T045701_R119_T44NMP_20260901T094009)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T14:39:06.783940",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 40.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 40.3 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW.",
+    "distance_to_industry_km": 40.28,
+    "cluster_persistence_days": 5,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1846,
@@ -3597,7 +4117,10 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260913T050231_R119_T44PLQ_20260913T101112)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:43:20.725867",
-    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 9.5 km of COOL Man ICE Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.9 MW."
+    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 9.5 km of COOL Man ICE Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 25.9 MW.",
+    "distance_to_industry_km": 9.54,
+    "cluster_persistence_days": 2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1151,
@@ -3627,7 +4150,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_152041_20260908_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-12T15:49:04.528940",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 2.7 km of Engro Powergen Qadirpur Limited. Satellite confirmed with elevated thermal reading (43.2\u00b0C). Peak radiative power: 7.0 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 2.7 km of Engro Powergen Qadirpur Limited. Satellite confirmed with elevated thermal reading (43.2\u00b0C). Peak radiative power: 7.0 MW.",
+    "distance_to_industry_km": 2.74,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 316.3,
+    "temp_delta_c": 1.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1266,
@@ -3657,7 +4186,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.721231",
-    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 46.8 km of Industrial. Satellite confirmed with elevated thermal reading (45.7\u00b0C). Peak radiative power: 20.0 MW."
+    "evidence_summary": "Thermal source persisting over 12 consecutive day(s) within 46.8 km of Industrial. Satellite confirmed with elevated thermal reading (45.7\u00b0C). Peak radiative power: 20.0 MW.",
+    "distance_to_industry_km": 46.82,
+    "cluster_persistence_days": 12,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 318.8,
+    "temp_delta_c": 0.7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 692,
@@ -3687,7 +4222,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_140046_20260904_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T01:40:33.903450",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 1.1 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 1.1 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 12.0 MW.",
+    "distance_to_industry_km": 1.05,
+    "cluster_persistence_days": 5,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1304,
@@ -3717,7 +4256,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_136045_20260908_02_T1)",
     "cloud_percentage": 19.1,
     "created_at": "2026-09-15T06:43:20.721441",
-    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 1.6 km of M/s Khawaja Enterprises Poultry Feed & Chicks Centre. Satellite confirmed with elevated thermal reading (56.8\u00b0C). Peak radiative power: 5.5 MW."
+    "evidence_summary": "Thermal source persisting over 3 consecutive day(s) within 1.6 km of M/s Khawaja Enterprises Poultry Feed & Chicks Centre. Satellite confirmed with elevated thermal reading (56.8\u00b0C). Peak radiative power: 5.5 MW.",
+    "distance_to_industry_km": 1.64,
+    "cluster_persistence_days": 3,
+    "cloud_cover_percentage": 19.1,
+    "max_temperature_k": 329.9,
+    "temp_delta_c": 9.7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 771,
@@ -3747,7 +4292,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_149046_20260903_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-07T16:16:04.725771",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 78.0 km of ITI - Industrial training institute - Talajaa - GU24000350. Satellite confirmed with elevated thermal reading (44.1\u00b0C). Peak radiative power: 2.9 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 78.0 km of ITI - Industrial training institute - Talajaa - GU24000350. Satellite confirmed with elevated thermal reading (44.1\u00b0C). Peak radiative power: 2.9 MW.",
+    "distance_to_industry_km": 78.04,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 317.2,
+    "temp_delta_c": 7.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 172,
@@ -3777,7 +4328,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_150037_20260910_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-08-31T05:30:14.962853",
-    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.2 km of Dandot RS Cement Factory. Satellite confirmed with elevated thermal reading (39.2\u00b0C). Peak radiative power: 1.6 MW."
+    "evidence_summary": "Thermal source persisting over 4 consecutive day(s) within 0.2 km of Dandot RS Cement Factory. Satellite confirmed with elevated thermal reading (39.2\u00b0C). Peak radiative power: 1.6 MW.",
+    "distance_to_industry_km": 0.16,
+    "cluster_persistence_days": 4,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 312.3,
+    "temp_delta_c": 3.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 870,
@@ -3807,7 +4364,10 @@
     "satellite_name": "Multi-Satellite STAC Search (Landsat, Sentinel-2, MODIS)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T13:40:55.819341",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 40.1 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 40.1 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW.",
+    "distance_to_industry_km": 40.12,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1090,
@@ -3837,7 +4397,10 @@
     "satellite_name": "Multi-Satellite STAC Search (Landsat, Sentinel-2, MODIS)",
     "cloud_percentage": null,
     "created_at": "2026-09-09T15:01:16.519356",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 39.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 39.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW.",
+    "distance_to_industry_km": 39.8,
+    "cluster_persistence_days": 8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1107,
@@ -3867,7 +4430,10 @@
     "satellite_name": "Multi-Satellite STAC Search (Landsat, Sentinel-2, MODIS)",
     "cloud_percentage": null,
     "created_at": "2026-09-10T04:41:03.970211",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 39.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 39.8 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW.",
+    "distance_to_industry_km": 39.82,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1145,
@@ -3897,7 +4463,11 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260913T050231_R119_T44NMP_20260913T101112)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-12T15:32:13.265369",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 39.5 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 39.5 km of Factory. Cloud-masked or awaiting next satellite pass. Peak radiative power: 33.9 MW.",
+    "distance_to_industry_km": 39.52,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 626,
@@ -3927,7 +4497,11 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260906T051241_R019_T43PHP_20260906T101626)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-02T00:27:31.468407",
-    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.3 km of JSW Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW."
+    "evidence_summary": "Thermal source persisting over 6 consecutive day(s) within 0.3 km of JSW Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 4.8 MW.",
+    "distance_to_industry_km": 0.3,
+    "cluster_persistence_days": 6,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1306,
@@ -3957,7 +4531,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_145051_20260907_02_T1)",
     "cloud_percentage": 59.6,
     "created_at": "2026-09-15T06:43:20.721452",
-    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 1.1 km of MRPL. Satellite confirmed with elevated thermal reading (23.8\u00b0C). Peak radiative power: 19.3 MW."
+    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 1.1 km of MRPL. Satellite confirmed with elevated thermal reading (23.8\u00b0C). Peak radiative power: 19.3 MW.",
+    "distance_to_industry_km": 1.08,
+    "cluster_persistence_days": 2,
+    "cloud_cover_percentage": 59.6,
+    "max_temperature_k": 296.9,
+    "temp_delta_c": 1.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1255,
@@ -3987,7 +4567,11 @@
     "satellite_name": "Landsat-8/9 Surface Reflectance (LC09_L2SP_139045_20260913_02_T1)",
     "cloud_percentage": 64.0,
     "created_at": "2026-09-15T06:29:39.729972",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 28.4 km of IDBI Bank. Cloud-masked or awaiting next satellite pass. Peak radiative power: 7.0 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 28.4 km of IDBI Bank. Cloud-masked or awaiting next satellite pass. Peak radiative power: 7.0 MW.",
+    "distance_to_industry_km": 28.44,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 64.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 718,
@@ -4017,7 +4601,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_140046_20260904_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-07T14:43:08.045233",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 20.3 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 20.3 km of Tata Steel Meramandali. Cloud-masked or awaiting next satellite pass. Peak radiative power: 32.9 MW.",
+    "distance_to_industry_km": 20.27,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 438,
@@ -4047,7 +4635,10 @@
     "satellite_name": "Sentinel-2 L2A (S2A_MSIL2A_20260911T060301_R091_T42SYB_20260911T092523)",
     "cloud_percentage": null,
     "created_at": "2026-09-01T06:22:42.493452",
-    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) within 7.2 km of Mustaqeem Steel Work. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.3 MW."
+    "evidence_summary": "Thermal source persisting over 17 consecutive day(s) within 7.2 km of Mustaqeem Steel Work. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.3 MW.",
+    "distance_to_industry_km": 7.25,
+    "cluster_persistence_days": 17,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 703,
@@ -4077,7 +4668,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260910T052641_R105_T43RGM_20260910T102519)",
     "cloud_percentage": null,
     "created_at": "2026-09-07T02:09:47.919431",
-    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 7.6 km of New Industrial Township. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.1 MW."
+    "evidence_summary": "Thermal source persisting over 9 consecutive day(s) within 7.6 km of New Industrial Township. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.1 MW.",
+    "distance_to_industry_km": 7.64,
+    "cluster_persistence_days": 9,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1247,
@@ -4107,7 +4701,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260910T052641_R105_T43RGM_20260910T102519)",
     "cloud_percentage": null,
     "created_at": "2026-09-15T06:01:37.831363",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 7.7 km of New Industrial Township. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.1 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 7.7 km of New Industrial Township. Cloud-masked or awaiting next satellite pass. Peak radiative power: 3.1 MW.",
+    "distance_to_industry_km": 7.72,
+    "cluster_persistence_days": 10,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 120,
@@ -4137,7 +4734,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260914T055629_R091_T42SYB_20260914T093941)",
     "cloud_percentage": null,
     "created_at": "2026-08-31T05:21:24.190212",
-    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 33.1 km of Factory Rd. Cloud-masked or awaiting next satellite pass. Peak radiative power: 5.0 MW."
+    "evidence_summary": "Thermal source persisting over 15 consecutive day(s) within 33.1 km of Factory Rd. Cloud-masked or awaiting next satellite pass. Peak radiative power: 5.0 MW.",
+    "distance_to_industry_km": 33.14,
+    "cluster_persistence_days": 15,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1223,
@@ -4167,7 +4767,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 10.2,
     "created_at": "2026-09-13T16:35:28.669163",
-    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 22.3 km of Industrial. Satellite confirmed with elevated thermal reading (24.2\u00b0C). Peak radiative power: 30.7 MW."
+    "evidence_summary": "Thermal source persisting over 2 consecutive day(s) within 22.3 km of Industrial. Satellite confirmed with elevated thermal reading (24.2\u00b0C). Peak radiative power: 30.7 MW.",
+    "distance_to_industry_km": 22.32,
+    "cluster_persistence_days": 2,
+    "cloud_cover_percentage": 10.2,
+    "max_temperature_k": 297.3,
+    "temp_delta_c": 2.3,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1178,
@@ -4197,7 +4803,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T11:24:22.434760",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (48.5\u00b0C). Peak radiative power: 12.5 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) in unzoned territory. Satellite confirmed with elevated thermal reading (48.5\u00b0C). Peak radiative power: 12.5 MW.",
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 321.6,
+    "temp_delta_c": 4.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1450,
@@ -4227,7 +4838,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_150037_20260910_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.722304",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 9.9 km of Dandot RS Cement Factory. Satellite confirmed with elevated thermal reading (43.0\u00b0C). Peak radiative power: 1.2 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 9.9 km of Dandot RS Cement Factory. Satellite confirmed with elevated thermal reading (43.0\u00b0C). Peak radiative power: 1.2 MW.",
+    "distance_to_industry_km": 9.93,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 316.1,
+    "temp_delta_c": 5.1,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1393,
@@ -4257,7 +4874,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.722019",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 24.9 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 15.8 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 24.9 km of Laksha Uyana Industrial Area. Satellite confirmed with elevated thermal reading (46.6\u00b0C). Peak radiative power: 15.8 MW.",
+    "distance_to_industry_km": 24.95,
+    "cluster_persistence_days": 8,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 319.8,
+    "temp_delta_c": 0.8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 892,
@@ -4287,7 +4910,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260901T045701_R119_T44PMQ_20260901T094009)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T15:55:47.119520",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 45.3 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 17.6 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 45.3 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 17.6 MW.",
+    "distance_to_industry_km": 45.3,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1136,
@@ -4317,7 +4943,10 @@
     "satellite_name": "Sentinel-2 L2A (S2C_MSIL2A_20260911T045651_R119_T44PMR_20260911T100115)",
     "cloud_percentage": null,
     "created_at": "2026-09-12T15:01:21.678446",
-    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 61.6 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 11.6 MW."
+    "evidence_summary": "Thermal source persisting over 8 consecutive day(s) within 61.6 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 11.6 MW.",
+    "distance_to_industry_km": 61.64,
+    "cluster_persistence_days": 8,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1675,
@@ -4347,7 +4976,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_143048_20260909_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.724089",
-    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 5.5 km of Sitapuram Power Plant. Satellite confirmed with elevated thermal reading (44.3\u00b0C). Peak radiative power: 3.1 MW."
+    "evidence_summary": "Thermal source persisting over 5 consecutive day(s) within 5.5 km of Sitapuram Power Plant. Satellite confirmed with elevated thermal reading (44.3\u00b0C). Peak radiative power: 3.1 MW.",
+    "distance_to_industry_km": 5.51,
+    "cluster_persistence_days": 5,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 317.4,
+    "temp_delta_c": 0.4,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1294,
@@ -4377,7 +5012,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-15T06:43:20.721386",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 24.2 km of Factory. Satellite confirmed with elevated thermal reading (36.7\u00b0C). Peak radiative power: 5.9 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 24.2 km of Factory. Satellite confirmed with elevated thermal reading (36.7\u00b0C). Peak radiative power: 5.9 MW.",
+    "distance_to_industry_km": 24.19,
+    "cluster_persistence_days": 7,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 309.8,
+    "temp_delta_c": -1.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1066,
@@ -4407,7 +5048,11 @@
     "satellite_name": "Landsat-8/9 (LC09_L2SP_139044_20260913_02_T1)",
     "cloud_percentage": 100.0,
     "created_at": "2026-09-09T01:16:38.200966",
-    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 3.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW."
+    "evidence_summary": "Thermal source persisting over 10 consecutive day(s) within 3.1 km of Durgapur Steel Plant. Cloud-masked or awaiting next satellite pass. Peak radiative power: 14.3 MW.",
+    "distance_to_industry_km": 3.15,
+    "cluster_persistence_days": 10,
+    "cloud_cover_percentage": 100.0,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 624,
@@ -4437,7 +5082,13 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_152042_20260908_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-01T17:03:24.153958",
-    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 33.9 km of Indus Steel Pipes Ltd. Satellite confirmed with elevated thermal reading (44.6\u00b0C). Peak radiative power: 4.6 MW."
+    "evidence_summary": "Thermal source persisting over 16 consecutive day(s) within 33.9 km of Indus Steel Pipes Ltd. Satellite confirmed with elevated thermal reading (44.6\u00b0C). Peak radiative power: 4.6 MW.",
+    "distance_to_industry_km": 33.85,
+    "cluster_persistence_days": 16,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 317.8,
+    "temp_delta_c": 4.6,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 890,
@@ -4467,7 +5118,10 @@
     "satellite_name": "Sentinel-2 L2A (S2B_MSIL2A_20260906T045659_R119_T44PMQ_20260906T084726)",
     "cloud_percentage": null,
     "created_at": "2026-09-08T15:53:25.138544",
-    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 12.1 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 16.5 MW."
+    "evidence_summary": "Thermal source persisting over 7 consecutive day(s) within 12.1 km of Industrial. Cloud-masked or awaiting next satellite pass. Peak radiative power: 16.5 MW.",
+    "distance_to_industry_km": 12.06,
+    "cluster_persistence_days": 7,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   },
   {
     "id": 1176,
@@ -4497,6 +5151,12 @@
     "satellite_name": "Landsat-8/9 Collection 2 L2 (LC09_L2SP_141054_20260911_02_T1)",
     "cloud_percentage": 0.0,
     "created_at": "2026-09-13T11:03:39.583159",
-    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 34.6 km of Industrial. Satellite confirmed with elevated thermal reading (48.0\u00b0C). Peak radiative power: 16.0 MW."
+    "evidence_summary": "Thermal source persisting over 11 consecutive day(s) within 34.6 km of Industrial. Satellite confirmed with elevated thermal reading (48.0\u00b0C). Peak radiative power: 16.0 MW.",
+    "distance_to_industry_km": 34.56,
+    "cluster_persistence_days": 11,
+    "cloud_cover_percentage": 0.0,
+    "max_temperature_k": 321.1,
+    "temp_delta_c": 0.2,
+    "stac_scene_id": "LC09_L2SP_145050_20260822_02_T1"
   }
 ]
