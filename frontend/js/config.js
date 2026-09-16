@@ -11,7 +11,7 @@
 window.AGNI_CONFIG = {
     // Set your deployed backend URL here, e.g. "https://agni-sanket-api.onrender.com"
     // Leave as empty string "" for auto-detection and graceful fallback
-    BACKEND_URL: "",
+    BACKEND_URL: "https://agnisanket-1.onrender.com",
 
     // System identification
     APP_NAME: "AgniSanket",
