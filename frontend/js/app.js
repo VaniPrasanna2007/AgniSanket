@@ -1907,13 +1907,11 @@ async function renderMLViewData() {
         btnViewAllFb.addEventListener("click", async () => {
             switchMLTab("feedback");
             try {
-                const res = await fetch(`${API_BASE}/api/ml/feedbacks?limit=100`, { headers: getAuthHeaders() });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.feedbacks) {
-                        renderMLFeedbackTable(data.feedbacks);
-                        showToast(`Loaded ${data.feedbacks.length} verified feedback records`, "info");
-                    }
+                const data = await fetchWithFallback(`${API_BASE}/api/ml/feedbacks?limit=100`, "data/ml_overview.json", { headers: getAuthHeaders() });
+                if (data && (data.feedbacks || data.recent_feedbacks)) {
+                    const fbList = data.feedbacks || data.recent_feedbacks;
+                    renderMLFeedbackTable(fbList);
+                    showToast(`Loaded ${fbList.length} verified feedback records`, "info");
                 }
             } catch (err) {
                 console.error("Error fetching all feedback:", err);
@@ -1966,62 +1964,86 @@ function populateMLShapClusterSelect() {
 }
 
 async function loadMLShapExplainer(clusterId) {
-    if (!clusterId) return;
     try {
-        const res = await fetch(`${API_BASE}/api/hotspots/${clusterId}`, { headers: getAuthHeaders() });
-        if (!res.ok) return;
-        const data = await res.json();
-        const c = data.cluster;
-        const explain = data.explainability;
+        if (!clusterId) return;
+        let c = resolveCluster(clusterId);
+    let explain = (c && c.explainability) || (c && c.evidence) || null;
 
-        const dId = c.display_id || c.cluster_number || c.id;
-        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-
-        setTxt("ml-shap-cluster-name", `Cluster C-${dId}`);
-        setTxt("ml-shap-coords", `${(c.centroid_lat || 0).toFixed(4)}°N, ${(c.centroid_lon || 0).toFixed(4)}°E`);
-        setTxt("ml-shap-risk-score", `${Math.round(c.risk_score || 0)} / 100`);
-
-        const predBadge = document.getElementById("ml-shap-pred-badge");
-        if (predBadge) {
-            predBadge.innerText = c.predicted_class || "Pending";
-            const cl = (c.predicted_class || "").toLowerCase();
-            if (cl.includes("industrial")) {
-                predBadge.style.cssText = "background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);";
-            } else if (cl.includes("vegetation") || cl.includes("agri")) {
-                predBadge.style.cssText = "background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);";
-            } else {
-                predBadge.style.cssText = "background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);";
+    if (API_BASE) {
+        try {
+            const res = await safeFetchJson(`${API_BASE}/api/hotspots/${clusterId}`, { headers: getAuthHeaders() });
+            if (res.ok && res.data && res.data.cluster) {
+                c = normalizeClusterObject(res.data.cluster);
+                explain = res.data.explainability || c.evidence;
             }
+        } catch (e) {
+            console.warn("Backend ML explainer fetch notice:", e);
         }
+    }
 
-        const indDist = c.dist_to_nearest_industry_km != null ? `${c.dist_to_nearest_industry_km.toFixed(2)} km` : "No registered industry";
-        const indName = c.nearest_industry_name ? ` (${c.nearest_industry_name})` : "";
-        setTxt("ml-shap-industry-info", `${indDist}${indName}`);
+    if (!c) return;
 
-        // Render Waterfall List
-        const list = document.getElementById("ml-shap-waterfall-list");
-        if (list && explain && explain.attributions) {
-            const maxVal = Math.max(...explain.attributions.map(a => Math.abs(a.attribution_value || 0.1)), 0.1);
-            list.innerHTML = explain.attributions.map(a => {
+    const dId = c.display_id || c.cluster_number || c.id;
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+
+    setTxt("ml-shap-cluster-name", `Cluster C-${dId}`);
+    setTxt("ml-shap-coords", `${(c.centroid_lat || 0).toFixed(4)}°N, ${(c.centroid_lon || 0).toFixed(4)}°E`);
+    setTxt("ml-shap-risk-score", `${Math.round(c.risk_score || 0)} / 100`);
+
+    const predBadge = document.getElementById("ml-shap-pred-badge");
+    if (predBadge) {
+        predBadge.innerText = c.predicted_class || "Pending";
+        const cl = (c.predicted_class || "").toLowerCase();
+        if (cl.includes("industrial")) {
+            predBadge.style.cssText = "background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);";
+        } else if (cl.includes("vegetation") || cl.includes("agri")) {
+            predBadge.style.cssText = "background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);";
+        } else {
+            predBadge.style.cssText = "background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);";
+        }
+    }
+
+    const indDist = c.dist_to_nearest_industry_km != null ? `${c.dist_to_nearest_industry_km.toFixed(2)} km` : "No registered industry";
+    const indName = c.nearest_industry_name ? ` (${c.nearest_industry_name})` : "";
+    setTxt("ml-shap-industry-info", `${indDist}${indName}`);
+
+    // Render Waterfall List
+    const list = document.getElementById("ml-shap-waterfall-list");
+    if (list) {
+        let attributions = (explain && explain.attributions) ? explain.attributions : null;
+        if (!attributions && c.evidence && c.evidence.risk_breakdown) {
+            const rb = c.evidence.risk_breakdown;
+            attributions = [
+                { feature: "Fire Radiative Power (FRP)", attribution_value: rb.frp_contribution || 0, description: `FRP intensity weighting (+${rb.frp_contribution || 0} pts)` },
+                { feature: "Cluster Recurrence / Persistence", attribution_value: rb.recurrence_contribution || 0, description: `Multi-day recurrence (+${rb.recurrence_contribution || 0} pts)` },
+                { feature: "Orbital Thermal Anomaly", attribution_value: rb.thermal_anomaly_contribution || 0, description: `Surface delta (+${rb.thermal_anomaly_contribution || 0} pts)` },
+                { feature: "Satellite Verification", attribution_value: rb.satellite_confirmation_contribution || 0, description: `STAC scene confidence (+${rb.satellite_confirmation_contribution || 0} pts)` },
+                { feature: "Industrial Proximity", attribution_value: rb.proximity_contribution || 0, description: `Infrastructure proximity (+${rb.proximity_contribution || 0} pts)` }
+            ];
+        }
+        if (attributions && attributions.length > 0) {
+            const maxVal = Math.max(...attributions.map(a => Math.abs(a.attribution_value || 0.1)), 0.1);
+            list.innerHTML = attributions.map(a => {
                 const val = a.attribution_value !== undefined ? a.attribution_value : 0;
                 const isPos = val >= 0;
                 const sign = isPos ? "+" : "";
                 const pct = Math.min(100, Math.max(8, (Math.abs(val) / maxVal) * 100)).toFixed(1);
                 const colorClass = isPos ? "pos" : "neg";
-                const valColor = isPos ? "#38bdf8" : "#34d399";
                 return `
-                    <div class="ml-shap-bar-item">
-                        <div class="ml-shap-bar-meta">
-                            <span><strong>${escapeHtml(a.feature.replace(/_/g, ' ').toUpperCase())}</strong></span>
-                            <span class="font-mono font-bold" style="color: ${valColor};">${sign}${val.toFixed(4)} (${a.impact || 'MEDIUM'})</span>
+                    <div class="waterfall-item">
+                        <div class="waterfall-feat-row">
+                            <span class="waterfall-feat-name">${a.feature}</span>
+                            <span class="waterfall-feat-val ${colorClass}">${sign}${typeof val === 'number' ? val.toFixed(1) : val}</span>
                         </div>
-                        <div class="ml-shap-bar-track">
-                            <div class="ml-shap-bar-fill ${colorClass}" style="width: ${pct}%;"></div>
+                        <div class="waterfall-bar-track">
+                            <div class="waterfall-bar-fill ${colorClass}" style="width: ${pct}%;"></div>
                         </div>
+                        <div class="waterfall-desc">${a.description || ''}</div>
                     </div>
                 `;
-            }).join("");
+            }).join('');
         }
+    }
 
         // Render Narrative
         const narr = document.getElementById("ml-shap-narrative-text");
@@ -8084,9 +8106,9 @@ async function loadAdminMapView() {
     try {
         let incs = window.allClusters;
         if (!incs || incs.length === 0) {
-            const resH = await fetch(`${API_BASE}/api/hotspots?risk_threshold=0.0`, { headers: getAuthHeaders() });
-            if (resH.ok) {
-                incs = await resH.json();
+            const dataH = await fetchWithFallback(`${API_BASE}/api/hotspots?risk_threshold=0.0`, "data/clusters.json", { headers: getAuthHeaders() });
+            if (dataH && Array.isArray(dataH)) {
+                incs = dataH;
                 incs.forEach(c => normalizeClusterObject(c));
                 window.allClusters = incs;
             }
@@ -8102,9 +8124,9 @@ async function loadAdminMapView() {
 
         let facs = window.cachedFacilities;
         if (!facs || facs.length === 0) {
-            const resF = await fetch(`${API_BASE}/api/facilities`);
-            if (resF.ok) {
-                facs = await resF.json();
+            const dataF = await fetchWithFallback(`${API_BASE}/api/facilities`, "data/facilities.json");
+            if (dataF && Array.isArray(dataF)) {
+                facs = dataF;
                 window.cachedFacilities = facs;
             }
         }
@@ -8460,6 +8482,12 @@ function renderAdminAlertsList() {
 }
 
 async function handleAdminMarkAlertRead(alertId) {
+    if (!API_BASE) {
+        const item = adminAlertsCache.find(x => x.id === alertId);
+        if (item) item.is_read = true;
+        renderAdminAlertsList();
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/government/alerts/${alertId}/read`, { method: "POST", headers: getAuthHeaders() });
         if (res.ok) {
@@ -8471,6 +8499,12 @@ async function handleAdminMarkAlertRead(alertId) {
 }
 
 async function handleAdminMarkAllAlertsRead() {
+    if (!API_BASE) {
+        adminAlertsCache.forEach(a => a.is_read = true);
+        renderAdminAlertsList();
+        showToast("All emergency alerts marked as read (Demo Mode).", "success");
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/government/alerts/mark-all-read`, { method: "POST", headers: getAuthHeaders() });
         if (res.ok) {
@@ -10658,6 +10692,12 @@ function renderGovAlertsList() {
 }
 
 async function markGovAlertRead(alertId) {
+    if (!API_BASE) {
+        const item = govAlerts.find(a => String(a.id) === String(alertId));
+        if (item) item.is_read = true;
+        renderGovAlertsList();
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/government/alerts/${alertId}/read`, {
             method: "POST",
@@ -10674,6 +10714,12 @@ async function markGovAlertRead(alertId) {
 }
 
 async function markAllGovAlertsRead() {
+    if (!API_BASE) {
+        govAlerts.forEach(a => a.is_read = true);
+        renderGovAlertsList();
+        showToast("All alerts marked as read (Demo Mode).", "info");
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/government/alerts/mark-all-read`, {
             method: "POST",
@@ -11762,15 +11808,13 @@ async function loadAdminUsersList() {
     tbody.innerHTML = `<tr><td colspan="4" style="padding: 10px; color: var(--text-muted);">Loading users...</td></tr>`;
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/users`, {
+        const users = await fetchWithFallback(`${API_BASE}/api/admin/users`, "data/admin_users.json", {
             headers: { "Authorization": `Bearer ${authToken}` }
         });
-        if (!res.ok) {
-            const errData = await res.json();
-            tbody.innerHTML = `<tr><td colspan="4" style="padding: 10px; color: #f87171;">${errData.detail || "Access Denied"}</td></tr>`;
+        if (!users || !Array.isArray(users)) {
+            tbody.innerHTML = `<tr><td colspan="4" style="padding: 10px; color: #f87171;">Unable to load user accounts</td></tr>`;
             return;
         }
-        const users = await res.json();
         tbody.innerHTML = users.map(u => `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="padding: 8px 6px; font-weight: 600;">${u.username}</td>
@@ -11801,6 +11845,12 @@ async function handleCreateUserSubmit(e) {
 
     errAlert.classList.add("hidden");
 
+    if (!API_BASE) {
+        showToast("User creation simulated in Demo Mode", "info");
+        document.getElementById("create-user-form").reset();
+        return;
+    }
+
     try {
         const res = await fetch(`${API_BASE}/api/admin/users`, {
             method: "POST",
@@ -11822,6 +11872,10 @@ async function handleCreateUserSubmit(e) {
 }
 
 async function updateUserRole(userId, newRole) {
+    if (!API_BASE) {
+        showToast(`User role updated to ${newRole} (Simulated Demo Mode)`, "success");
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/admin/users/${userId}/role`, {
             method: "PUT",
@@ -11838,6 +11892,10 @@ async function updateUserRole(userId, newRole) {
 
 async function deleteUserAccount(userId) {
     if (!confirm("Are you sure you want to delete this user account?")) return;
+    if (!API_BASE) {
+        showToast("User account deletion simulated in Demo Mode", "info");
+        return;
+    }
     try {
         const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
             method: "DELETE",
@@ -12498,14 +12556,15 @@ async function renderAlertsViewData() {
     const loadAlerts = async () => {
         if (!authToken || !currentUser) return;
         try {
-            const res = await fetch(`${API_BASE}/api/alerts`, { headers: getAuthHeaders() });
-            if (res.ok) {
-                const data = await res.json();
-                currentAlertsList = data.alerts || [];
-                renderAlertsUI();
-            } else if (res.status !== 401 && res.status !== 403) {
-                showToast("Failed to load operational alerts", "error");
+            const data = await fetchWithFallback(`${API_BASE}/api/alerts`, "data/alerts.json", { headers: getAuthHeaders() });
+            if (data && data.alerts) {
+                currentAlertsList = data.alerts;
+            } else if (Array.isArray(data)) {
+                currentAlertsList = data;
+            } else {
+                currentAlertsList = [];
             }
+            renderAlertsUI();
         } catch (err) {
             console.error("Alerts fetch error:", err);
             if (authToken) showToast("Could not connect to alerts service", "error");
@@ -12640,6 +12699,13 @@ async function renderAlertsViewData() {
             btn.onclick = async () => {
                 const alertId = parseInt(btn.getAttribute("data-alert-id"), 10);
                 if (!alertId) return;
+                if (!API_BASE) {
+                    const target = currentAlertsList.find(a => a.id === alertId);
+                    if (target) target.is_read = true;
+                    renderAlertsUI();
+                    showToast(`Alert #${alertId} marked as read`, "success");
+                    return;
+                }
                 try {
                     const res = await fetch(`${API_BASE}/api/alerts/${alertId}/read`, {
                         method: "POST",
@@ -12680,6 +12746,12 @@ async function renderAlertsViewData() {
     if (ackAllBtn && !ackAllBtn._listenerAttached) {
         ackAllBtn._listenerAttached = true;
         ackAllBtn.addEventListener("click", async () => {
+            if (!API_BASE) {
+                currentAlertsList.forEach(a => a.is_read = true);
+                renderAlertsUI();
+                showToast("All operational alerts marked as read", "success");
+                return;
+            }
             try {
                 const res = await fetch(`${API_BASE}/api/alerts/mark-all-read`, {
                     method: "POST",

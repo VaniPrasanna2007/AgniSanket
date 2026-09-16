@@ -57,20 +57,12 @@ window.getAgniBackendUrl = function() {
         }
     } catch (_) {}
 
-    // 5. Local development environment detection
-    if (window.location) {
-        const host = window.location.hostname;
-        if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-            const port = window.location.port;
-            // If served directly by FastAPI on port 8000, use origin
-            if (port === "8000") {
-                return window.location.origin.replace(/\/+$/, '');
-            }
-            return "http://127.0.0.1:8000";
-        }
+    // 5. If explicitly hosted by FastAPI backend server on port 8000
+    if (window.location && window.location.port === "8000") {
+        return window.location.origin.replace(/\/+$/, '');
     }
 
-    // 6. On static hosts (e.g. Netlify, GitHub Pages), no backend on origin unless explicitly configured
+    // 6. On static hosts (e.g. Netlify, GitHub Pages, or local static server), default to "" (Cached Mode)
     return "";
 };
 
