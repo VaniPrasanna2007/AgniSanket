@@ -433,22 +433,63 @@
                     <div class="filter-group">
                         <label for="filter-risk" class="filter-label">
                             <i class="fa-solid fa-filter"></i>
-                            <span>Risk Filter:</span>
+                            <span>Risk:</span>
                         </label>
                         <select id="filter-risk" class="filter-select">
-                            <option value="all">All Risk Levels (0-100)</option>
+                            <option value="all">All Risk Levels</option>
                             <option value="high">High Risk (&gt;70)</option>
                             <option value="med">Medium Risk (&gt;40-70)</option>
                             <option value="low">Low Risk (0-40)</option>
                         </select>
                     </div>
 
-                    <!-- 2. Location Search Bar & Search Button -->
+                    <!-- 2. Cluster Status Filter -->
+                    <div class="filter-group">
+                        <label for="filter-status" class="filter-label">
+                            <i class="fa-solid fa-signal"></i>
+                            <span>Status:</span>
+                        </label>
+                        <select id="filter-status" class="filter-select" style="min-width: 125px;">
+                            <option value="all">All Statuses</option>
+                            <option value="unacknowledged">Unacknowledged</option>
+                            <option value="dispatched">Dispatched</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. Facility Proximity Filter -->
+                    <div class="filter-group">
+                        <label for="filter-facility" class="filter-label">
+                            <i class="fa-solid fa-industry"></i>
+                            <span>Facility:</span>
+                        </label>
+                        <select id="filter-facility" class="filter-select" style="min-width: 125px;">
+                            <option value="all">All Facilities</option>
+                            <option value="industrial">Near Industrial Facility</option>
+                            <option value="unzoned">Unzoned / Regional</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Confidence Filter -->
+                    <div class="filter-group">
+                        <label for="filter-confidence" class="filter-label">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Confidence:</span>
+                        </label>
+                        <select id="filter-confidence" class="filter-select" style="min-width: 105px;">
+                            <option value="all">All Conf.</option>
+                            <option value="50">&ge; 50%</option>
+                            <option value="75">&ge; 75%</option>
+                            <option value="90">&ge; 90%</option>
+                        </select>
+                    </div>
+
+                    <!-- 5. Cluster Search Bar & Search Button -->
                     <div class="map-search-container">
                         <div class="map-search-input-wrapper">
-                            <i class="fa-solid fa-location-dot map-search-icon"></i>
-                            <input type="text" id="map-search-input" placeholder="Search city or location..." autocomplete="off">
-                            <button id="btn-map-search" type="button" class="btn-map-search">
+                            <i class="fa-solid fa-magnifying-glass map-search-icon"></i>
+                            <input type="text" id="map-search-input" placeholder="Search cluster ID, location, facility, risk..." autocomplete="off">
+                            <button id="btn-map-search" type="button" class="btn-map-search" title="Search Clusters">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 <span>Search</span>
                             </button>
@@ -456,15 +497,21 @@
                         <span id="map-search-feedback" class="map-search-feedback"></span>
                     </div>
 
-                    <!-- 3. Layer Toggles -->
+                    <!-- 6. Reset Filters Button -->
+                    <button id="btn-analyst-reset-filters" type="button" class="btn btn-secondary" title="Reset All Filters and Search" style="height: 28px; padding: 2px 10px; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Reset</span>
+                    </button>
+
+                    <!-- 7. Layer Toggles -->
                     <div class="filter-checkboxes">
                         <label class="custom-checkbox-label" for="layer-osm">
                             <input type="checkbox" id="layer-osm" checked>
-                            <span class="chk-text"><i class="fa-solid fa-industry"></i> OSM Industrial Sites</span>
+                            <span class="chk-text"><i class="fa-solid fa-industry"></i> OSM Industrial</span>
                         </label>
                         <label class="custom-checkbox-label" for="layer-hotspots">
                             <input type="checkbox" id="layer-hotspots" checked>
-                            <span class="chk-text"><i class="fa-solid fa-fire-flame-curved"></i> Thermal Hotspots</span>
+                            <span class="chk-text"><i class="fa-solid fa-fire-flame-curved"></i> Hotspots</span>
                         </label>
                     </div>
                 </section>

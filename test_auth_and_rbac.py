@@ -16,7 +16,7 @@ def test_health_and_stats():
 
 def test_login_success_and_failure():
     # Valid admin login
-    res = client.post("/api/auth/login", json={"username": "admin", "password": "AdminPassword123!"})
+    res = client.post("/api/auth/login", json={"username": "admin", "password": "AdminPassword123!", "role": "ADMIN"})
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "success"
@@ -24,12 +24,12 @@ def test_login_success_and_failure():
     assert body["user"]["role"] == "ADMIN"
 
     # Invalid login
-    res_bad = client.post("/api/auth/login", json={"username": "admin", "password": "WrongPassword!"})
+    res_bad = client.post("/api/auth/login", json={"username": "admin", "password": "WrongPassword!", "role": "ADMIN"})
     assert res_bad.status_code == 401
 
 def test_auth_me_endpoint():
     # Login as analyst
-    login_res = client.post("/api/auth/login", json={"username": "analyst1", "password": "Analyst123!"})
+    login_res = client.post("/api/auth/login", json={"username": "analyst1", "password": "Analyst123!", "role": "ANALYST"})
     token = login_res.json()["access_token"]
 
     # Call /api/auth/me with Bearer token
@@ -54,7 +54,7 @@ def test_unauthenticated_protected_operations():
 
 def test_role_based_permissions():
     # 1. Login Analyst
-    analyst_token = client.post("/api/auth/login", json={"username": "analyst1", "password": "Analyst123!"}).json()["access_token"]
+    analyst_token = client.post("/api/auth/login", json={"username": "analyst1", "password": "Analyst123!", "role": "ANALYST"}).json()["access_token"]
     analyst_headers = {"Authorization": f"Bearer {analyst_token}"}
 
     # Analyst CAN submit feedback
@@ -70,7 +70,7 @@ def test_role_based_permissions():
     assert res_retrain.status_code == 403
 
     # 2. Login Government Authority
-    gov_token = client.post("/api/auth/login", json={"username": "gov1", "password": "GovAuth123!"}).json()["access_token"]
+    gov_token = client.post("/api/auth/login", json={"username": "gov1", "password": "GovAuth123!", "role": "GOVERNMENT_AUTHORITY"}).json()["access_token"]
     gov_headers = {"Authorization": f"Bearer {gov_token}"}
 
     # Government Authority CAN view incidents
@@ -87,7 +87,7 @@ def test_role_based_permissions():
 
 def test_admin_user_management():
     # Login Admin
-    admin_token = client.post("/api/auth/login", json={"username": "admin", "password": "AdminPassword123!"}).json()["access_token"]
+    admin_token = client.post("/api/auth/login", json={"username": "admin", "password": "AdminPassword123!", "role": "ADMIN"}).json()["access_token"]
     admin_headers = {"Authorization": f"Bearer {admin_token}"}
 
     # List Users

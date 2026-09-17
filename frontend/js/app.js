@@ -17,6 +17,25 @@ let map3dFacilityMarkers = [];
 let map3dSelectionMarker = null;
 let cachedFacilities = [];
 
+// Strict High-Risk Detection: strictly greater than 70.0
+function isClusterHighRisk(cluster) {
+    if (!cluster) return false;
+    const score = Number(cluster.risk_score ?? cluster.risk);
+    return Number.isFinite(score) && score > 70.0;
+}
+window.isClusterHighRisk = isClusterHighRisk;
+
+// Analyst Search & Filter State
+let analystClusterSearchQuery = "";
+let analystActiveFilters = {
+    risk: "all",
+    status: "all",
+    facility: "all",
+    confidence: "all"
+};
+window.analystClusterSearchQuery = analystClusterSearchQuery;
+window.analystActiveFilters = analystActiveFilters;
+
 // Cluster normalization ensuring all required properties are always available:
 // - cluster ID
 // - latitude
@@ -497,6 +516,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnScan) btnScan.addEventListener("click", () => triggerScan(false));
     document.getElementById("btn-retrain")?.addEventListener("click", triggerRetrain);
     document.getElementById("filter-risk")?.addEventListener("change", () => loadHotspotClusters(false));
+    document.getElementById("filter-status")?.addEventListener("change", () => loadHotspotClusters(false));
+    document.getElementById("filter-facility")?.addEventListener("change", () => loadHotspotClusters(false));
+    document.getElementById("filter-confidence")?.addEventListener("change", () => loadHotspotClusters(false));
+    document.getElementById("btn-analyst-reset-filters")?.addEventListener("click", resetAnalystFilters);
     document.getElementById("btn-close-drawer")?.addEventListener("click", closeDrawer);
 
     // Login Form Submission
@@ -565,13 +588,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputSearch = document.getElementById("map-search-input");
 
     if (btnSearch) {
-        btnSearch.addEventListener("click", searchCityOnMap);
+        btnSearch.addEventListener("click", handleAnalystClusterSearch);
     }
     if (inputSearch) {
         inputSearch.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                searchCityOnMap();
+                handleAnalystClusterSearch();
             }
         });
     }
@@ -2626,7 +2649,7 @@ function processCriticalAlertEscalation(clusters) {
     // Filter clusters with critical risk (> 70) and strictly deduplicate by cluster ID
     const uniqueHighMap = new Map();
     clusters.forEach(c => {
-        if ((c.risk_score || 0) > 70 && !uniqueHighMap.has(c.id)) {
+        if (isClusterHighRisk(c) && !uniqueHighMap.has(c.id)) {
             uniqueHighMap.set(c.id, c);
         }
     });
@@ -2677,7 +2700,7 @@ function getAcknowledgedAlerts() {
 
 function acknowledgeAlert(clusterId) {
     const list = getAcknowledgedAlerts();
-    if (!list.includes(clusterId) && !list.includes(Number(clusterId))) {
+    if (!list.includes(clusterId) && !list.includes(Number(clusterId)) && !list.includes(String(clusterId))) {
         list.push(clusterId);
         localStorage.setItem("agnisanket_acked_alerts", JSON.stringify(list));
         showToast(`Cluster #${clusterId} acknowledged`, "info");
@@ -2696,28 +2719,11 @@ function unacknowledgeAlert(clusterId) {
 window.unacknowledgeAlert = unacknowledgeAlert;
 
 function getPriorityAnomalyClusters() {
-    const uniqueMap = new Map();
-    // 1. High risk clusters (> 70)
-    (allClusters || []).forEach(c => {
-        const r = Math.max(Number(c.risk_score || 0), Number(c.max_hotspot_risk || 0));
-        if (r > 70 && !uniqueMap.has(c.id)) {
-            uniqueMap.set(c.id, c);
-        }
-    });
-
-    // 2. High priority escalated anomalies (elevated risk >= 40 or max_frp >= 50)
-    (allClusters || []).forEach(c => {
-        const r = Math.max(Number(c.risk_score || 0), Number(c.max_hotspot_risk || 0));
-        const frp = Number(c.max_frp || 0);
-        if ((r >= 40 || frp >= 50) && !uniqueMap.has(c.id)) {
-            uniqueMap.set(c.id, c);
-        }
-    });
-
-    const list = Array.from(uniqueMap.values());
+    if (!allClusters || !Array.isArray(allClusters)) return [];
+    const list = allClusters.filter(isClusterHighRisk);
     list.sort((a, b) => {
-        const rA = Math.max(Number(a.risk_score || 0), Number(a.max_hotspot_risk || 0));
-        const rB = Math.max(Number(b.risk_score || 0), Number(b.max_hotspot_risk || 0));
+        const rA = Number(a.risk_score ?? a.risk ?? 0);
+        const rB = Number(b.risk_score ?? b.risk ?? 0);
         if (rB !== rA) return rB - rA;
         return (Number(b.max_frp) || 0) - (Number(a.max_frp) || 0);
     });
@@ -2769,7 +2775,7 @@ function renderAlertsViewData() {
             updateSoundBtnUI();
             showToast(isAlertAudioMuted ? "Critical alert audio muted" : "Critical alert audio unmuted", "info");
             if (!isAlertAudioMuted) {
-                playCriticalAlertBeep(); // Quick audible confirmation
+                playCriticalAlertBeep();
             }
         });
     }
@@ -2780,29 +2786,33 @@ function renderAlertsViewData() {
         btnAckAll._listenerAttached = true;
         btnAckAll.addEventListener("click", () => {
             const currentAcked = getAcknowledgedAlerts();
-            const ackSet = new Set(currentAcked);
+            const ackSet = new Set(currentAcked.map(String));
             const pClusters = getPriorityAnomalyClusters();
-            pClusters.forEach(c => ackSet.add(c.id));
+            pClusters.forEach(c => ackSet.add(String(c.id)));
             localStorage.setItem("agnisanket_acked_alerts", JSON.stringify(Array.from(ackSet)));
             showToast(`All ${pClusters.length} priority anomaly alerts acknowledged`, "info");
             renderAlertsViewData();
         });
     }
 
+    // 4. Wire Search Input if present
+    const searchInput = document.getElementById("alerts-search-input");
+    if (searchInput && !searchInput._listenerAttached) {
+        searchInput._listenerAttached = true;
+        searchInput.addEventListener("input", () => renderAlertsViewData());
+    }
+
     const ackedList = getAcknowledgedAlerts();
-    const ackSet = new Set(ackedList);
+    const ackSet = new Set(ackedList.map(String));
     const priorityClusters = getPriorityAnomalyClusters();
 
-    // Critical cluster count (risk > 70)
-    const criticalClusters = (allClusters || []).filter(c => {
-        const r = Math.max(Number(c.risk_score || 0), Number(c.max_hotspot_risk || 0));
-        return r > 70;
-    });
+    // Critical cluster count (strictly risk_score > 70.0)
+    const criticalClusters = (allClusters || []).filter(isClusterHighRisk);
 
     // Counts for tabs & KPIs
     const totalPriority = priorityClusters.length;
-    const unackedClusters = priorityClusters.filter(c => !ackSet.has(c.id));
-    const ackedClusters = priorityClusters.filter(c => ackSet.has(c.id));
+    const unackedClusters = priorityClusters.filter(c => !ackSet.has(String(c.id)));
+    const ackedClusters = priorityClusters.filter(c => ackSet.has(String(c.id)));
     const unackedCount = unackedClusters.length;
     const ackedCount = ackedClusters.length;
 
@@ -2834,6 +2844,9 @@ function renderAlertsViewData() {
 
     const countTabAcked = document.getElementById("count-tab-acked");
     if (countTabAcked) countTabAcked.innerText = String(ackedCount);
+
+    const countTabCrit = document.getElementById("count-tab-critical");
+    if (countTabCrit) countTabCrit.innerText = String(criticalClusters.length);
 
     // Sync active tab styling
     document.querySelectorAll(".btn-alert-tab").forEach(btn => {
@@ -2879,6 +2892,16 @@ function renderAlertsViewData() {
         filteredClusters = ackedClusters;
     }
 
+    const alertSearchText = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    if (alertSearchText) {
+        filteredClusters = filteredClusters.filter(c => {
+            const dId = String(c.display_id || c.cluster_number || c.id).toLowerCase();
+            const ind = (c.nearest_industry_name || c.industrial_site || "").toLowerCase();
+            const cls = (c.classification || c.predicted_class || "").toLowerCase();
+            return dId.includes(alertSearchText) || ind.includes(alertSearchText) || cls.includes(alertSearchText);
+        });
+    }
+
     if (filteredClusters.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="padding: 32px 20px; text-align: center;">
@@ -2890,14 +2913,17 @@ function renderAlertsViewData() {
         return;
     }
 
-    container.innerHTML = filteredClusters.slice(0, 25).map(c => {
-        const isAcked = ackSet.has(c.id) || ackSet.has(Number(c.id));
+    // Render ALL qualifying alerts without truncation or arbitrary slicing
+    container.innerHTML = filteredClusters.map(c => {
+        const isAcked = ackSet.has(String(c.id));
         const lat = c.lat !== undefined ? c.lat : (c.centroid_lat || c.latitude || 22.0);
         const lon = c.lon !== undefined ? c.lon : (c.centroid_lon || c.longitude || 79.8);
         const frp = c.max_frp ? Number(c.max_frp).toFixed(1) + ' MW' : 'Active';
         const dId = c.display_id || c.cluster_number || c.id;
-        const effRisk = Math.round(Math.max(Number(c.risk_score || 0), Number(c.max_hotspot_risk || 0)));
-        const isCritical = effRisk > 70;
+        const score = Number(c.risk_score ?? c.risk ?? 0);
+        const isCritical = isClusterHighRisk(c);
+        const gStatus = (c.government_status || (isAcked ? 'ACKNOWLEDGED' : 'ACTIVE')).toUpperCase();
+        const timeStr = c.acq_date ? `${c.acq_date} ${c.acq_time || ''}`.trim() : 'Live';
 
         const indName = c.nearest_industry_name || c.industrial_site || "";
         const indDist = c.dist_to_nearest_industry_km !== undefined && c.dist_to_nearest_industry_km !== null
@@ -2912,30 +2938,36 @@ function renderAlertsViewData() {
         }
 
         return `
-            <div class="priority-alert-card ${isAcked ? 'acknowledged' : ''}">
+            <div class="priority-alert-card ${isAcked ? 'acknowledged' : ''}" data-cluster-id="${c.id}">
                 <div class="priority-alert-info">
                     <div class="priority-alert-title">
                         <span class="feed-dot ${isAcked ? 'green' : (isCritical ? 'red pulse' : 'amber')}"></span>
                         <span>Cluster C-${escapeHtml(String(dId))}</span>
                         <span class="risk-badge ${isCritical ? 'critical' : 'elevated'}">
-                            ${isCritical ? 'CRITICAL' : 'ELEVATED'}: ${effRisk}/100
+                            ${isCritical ? 'CRITICAL' : 'ELEVATED'}: ${score.toFixed(1)}/100
                         </span>
-                        ${isAcked ? '<span class="service-badge online" style="font-size: 9.5px; padding: 1px 6px;"><i class="fa-solid fa-check"></i> Acknowledged</span>' : ''}
+                        <span class="badge font-mono" style="background: ${isAcked ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color: ${isAcked ? '#34d399' : '#f87171'}; border: 1px solid ${isAcked ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}; font-size: 10px; padding: 1px 6px;">
+                            ${escapeHtml(gStatus)}
+                        </span>
                     </div>
                     <div class="priority-alert-sub">
-                        <span><strong>Coords:</strong> [${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E]</span> · 
+                        <span><strong>Coords:</strong> [${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E]</span> · 
                         <span><strong>FRP:</strong> ${frp}</span> · 
-                        <span class="text-blue">${escapeHtml(c.classification || c.predicted_class || 'Thermal Anomaly')}</span>
+                        <span class="text-blue">${escapeHtml(c.classification || c.predicted_class || 'Thermal Anomaly')}</span> · 
+                        <span><i class="fa-regular fa-clock"></i> ${escapeHtml(timeStr)}</span>
                         ${facilityHtml}
                     </div>
                 </div>
                 <div class="priority-alert-actions">
                     ${isAcked 
-                        ? `<button type="button" class="btn-alert-action acked" onclick="unacknowledgeAlert(${c.id})" title="Click to mark unacknowledged"><i class="fa-solid fa-check-double"></i> Acked</button>`
-                        : `<button type="button" class="btn-alert-action ack" onclick="acknowledgeAlert(${c.id})" title="Mark acknowledged"><i class="fa-solid fa-check"></i> Ack</button>`
+                        ? `<button type="button" class="btn-alert-action acked" onclick="unacknowledgeAlert('${escapeHtml(String(c.id))}')" title="Click to mark unacknowledged"><i class="fa-solid fa-check-double"></i> Acked</button>`
+                        : `<button type="button" class="btn-alert-action ack" onclick="acknowledgeAlert('${escapeHtml(String(c.id))}')" title="Mark acknowledged"><i class="fa-solid fa-check"></i> Ack</button>`
                     }
-                    <button type="button" class="btn-alert-action red" onclick="navigateToInvestigation('${escapeHtml(String(c.id))}')" title="Inspect forensic details in drawer">
-                        <i class="fa-solid fa-magnifying-glass"></i> Inspect
+                    <button type="button" class="btn-alert-action red" onclick="navigateToInvestigation('${escapeHtml(String(c.id))}')" title="Investigate Incident">
+                        <i class="fa-solid fa-fire-flame-curved"></i> Investigate
+                    </button>
+                    <button type="button" class="btn-alert-action" onclick="navigateToSatelliteInspection('${escapeHtml(String(c.id))}')" title="Inspect Satellite Evidence">
+                        <i class="fa-solid fa-satellite"></i> Satellite
                     </button>
                     <button type="button" class="btn-alert-action" onclick="locateOnMap(${lat}, ${lon}, '${escapeHtml(String(c.id))}')" title="Center on geospatial map">
                         <i class="fa-solid fa-location-crosshairs"></i> Map
@@ -2945,6 +2977,7 @@ function renderAlertsViewData() {
         `;
     }).join("");
 }
+window.renderAlertsViewData = renderAlertsViewData;
 
 // (Canonical navigateToInvestigation is defined above)
 
@@ -3047,18 +3080,22 @@ async function loadDashboardStats(silent = false) {
         const data = await fetchWithFallback(`${API_BASE}/api/stats`, "data/stats.json");
         if (data) {
             const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-            setVal("stat-raw-hotspots", data.total_raw_detections);
-            setVal("stat-total-clusters", data.total_clusters);
-            setVal("stat-clusters", data.total_clusters);
-            setVal("stat-high-risk", data.high_risk_anomalies);
-            setVal("stat-osm-facilities", data.industrial_facilities_tracked);
-            setVal("stat-facilities", data.industrial_facilities_tracked);
+            setVal("stat-raw-hotspots", data.total_raw_detections != null ? data.total_raw_detections : 0);
+            setVal("stat-total-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
+            setVal("stat-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
+            
+            const highRiskTotal = (allClusters && allClusters.length > 0)
+                ? allClusters.filter(isClusterHighRisk).length
+                : (data.high_risk_anomalies != null ? data.high_risk_anomalies : 0);
+            setVal("stat-high-risk", highRiskTotal);
+            setVal("stat-osm-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
+            setVal("stat-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
             
             const badge = document.getElementById("ml-model-badge");
             if (badge) {
                 if (data.ml_model_status && data.ml_model_status.includes("TRAINED")) {
                     badge.className = "model-badge trained";
-                    badge.innerHTML = `<i class="fa-solid fa-brain"></i> ML Model Trained (${data.verified_human_labels} labels)`;
+                    badge.innerHTML = `<i class="fa-solid fa-brain"></i> ML Model Trained (${data.verified_human_labels || 0} labels)`;
                 } else {
                     badge.className = "model-badge uninitialized";
                     badge.innerHTML = `<i class="fa-solid fa-list-check"></i> Evidence Rules Mode (${data.verified_human_labels || 0} verified labels)`;
@@ -3071,8 +3108,149 @@ async function loadDashboardStats(silent = false) {
     }
 }
 
+function getFilteredAnalystClusters() {
+    if (!allClusters || !Array.isArray(allClusters)) return [];
+
+    const riskFilter = document.getElementById("filter-risk")?.value || "all";
+    const statusFilter = document.getElementById("filter-status")?.value || "all";
+    const facilityFilter = document.getElementById("filter-facility")?.value || "all";
+    const confFilter = document.getElementById("filter-confidence")?.value || "all";
+    const q = (analystClusterSearchQuery || "").trim().toLowerCase();
+
+    return allClusters.filter(c => {
+        // 1. Strict Risk Filter
+        const rScore = Number(c.risk_score ?? c.risk ?? 0);
+        if (riskFilter === "high") {
+            if (!isClusterHighRisk(c)) return false;
+        } else if (riskFilter === "med") {
+            if (rScore <= 40 || rScore > 70) return false;
+        } else if (riskFilter === "low") {
+            if (rScore > 40) return false;
+        }
+
+        // 2. Status Filter
+        const gStatus = (c.government_status || "UNACKNOWLEDGED").toUpperCase();
+        if (statusFilter === "unacknowledged" && gStatus !== "UNACKNOWLEDGED") return false;
+        if (statusFilter === "dispatched" && gStatus !== "DISPATCHED") return false;
+        if (statusFilter === "resolved" && gStatus !== "RESOLVED") return false;
+
+        // 3. Facility Association Filter
+        const d = (c.dist_to_nearest_industry_km !== null && c.dist_to_nearest_industry_km !== undefined)
+            ? Number(c.dist_to_nearest_industry_km)
+            : (c.industrial_distance !== null && c.industrial_distance !== undefined ? Number(c.industrial_distance) : null);
+        const indName = (c.nearest_industry_name || c.industrial_site || "").toLowerCase();
+        const isNearInd = (d !== null && d <= 5.0) || (indName && !indName.includes("unzoned") && !indName.includes("regional"));
+        if (facilityFilter === "industrial" && !isNearInd) return false;
+        if (facilityFilter === "unzoned" && isNearInd) return false;
+
+        // 4. Confidence Filter
+        const conf = Number(c.avg_confidence || 0);
+        if (confFilter === "50" && conf < 50) return false;
+        if (confFilter === "75" && conf < 75) return false;
+        if (confFilter === "90" && conf < 90) return false;
+
+        // 5. Search Query Matching (Cluster ID, Location, Region, Facility, Risk, Classification)
+        if (q) {
+            const dId = String(c.display_id || c.cluster_number || c.id);
+            const rawId = String(c.id);
+            const matchesId = dId === q || rawId === q || `c-${dId}` === q || `cluster c-${dId}` === q || `cluster ${dId}` === q || `#${dId}` === q;
+            const matchesInd = indName.includes(q);
+            const matchesClass = (c.predicted_class || c.classification || "").toLowerCase().includes(q);
+            const matchesStatus = gStatus.toLowerCase().includes(q);
+            const matchesCoords = (c.centroid_lat != null && String(c.centroid_lat).includes(q)) || (c.centroid_lon != null && String(c.centroid_lon).includes(q));
+            let matchesRiskTier = false;
+            if (q === "high" || q === "critical") matchesRiskTier = isClusterHighRisk(c);
+            else if (q === "med" || q === "medium") matchesRiskTier = (rScore > 40 && rScore <= 70);
+            else if (q === "low") matchesRiskTier = (rScore <= 40);
+
+            if (!matchesId && !matchesInd && !matchesClass && !matchesStatus && !matchesCoords && !matchesRiskTier) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}
+window.getFilteredAnalystClusters = getFilteredAnalystClusters;
+
+async function handleAnalystClusterSearch() {
+    const inputSearch = document.getElementById("map-search-input");
+    const feedback = document.getElementById("map-search-feedback");
+    const query = inputSearch ? inputSearch.value.trim() : "";
+    analystClusterSearchQuery = query;
+
+    if (feedback) {
+        if (query) {
+            feedback.innerText = `Searching clusters for "${query}"...`;
+            feedback.style.color = "#3b82f6";
+        } else {
+            feedback.innerText = "";
+        }
+    }
+
+    await loadHotspotClusters(false);
+
+    const filtered = getFilteredAnalystClusters();
+    if (filtered.length === 1) {
+        const c = filtered[0];
+        const lat = c.centroid_lat ?? c.latitude ?? c.lat;
+        const lon = c.centroid_lon ?? c.longitude ?? c.lon;
+        if (lat != null && lon != null && map) {
+            map.flyTo([lat, lon], 13, { duration: 1.2 });
+        }
+        selectCluster(c.id);
+        if (feedback) {
+            feedback.innerText = `Match: Cluster #${c.display_id || c.cluster_number || c.id}`;
+            feedback.style.color = "#10b981";
+        }
+    } else if (filtered.length > 1) {
+        if (map) {
+            const validCoords = filtered
+                .map(c => [c.centroid_lat ?? c.latitude ?? c.lat, c.centroid_lon ?? c.longitude ?? c.lon])
+                .filter(([lat, lon]) => lat != null && lon != null);
+            if (validCoords.length > 0) {
+                map.fitBounds(validCoords, { padding: [40, 40], maxZoom: 12, animate: true });
+            }
+        }
+        if (feedback) {
+            feedback.innerText = `${filtered.length} clusters matched`;
+            feedback.style.color = "#10b981";
+        }
+    } else if (query) {
+        // Fallback to geographic search if 0 clusters matched
+        if (feedback) {
+            feedback.innerText = `Searching location "${query}"...`;
+            feedback.style.color = "#3b82f6";
+        }
+        await searchCityOnMap();
+    }
+}
+window.handleAnalystClusterSearch = handleAnalystClusterSearch;
+
+function resetAnalystFilters() {
+    const filterRisk = document.getElementById("filter-risk");
+    if (filterRisk) filterRisk.value = "all";
+    const filterStatus = document.getElementById("filter-status");
+    if (filterStatus) filterStatus.value = "all";
+    const filterFacility = document.getElementById("filter-facility");
+    if (filterFacility) filterFacility.value = "all";
+    const filterConf = document.getElementById("filter-confidence");
+    if (filterConf) filterConf.value = "all";
+
+    const searchInput = document.getElementById("map-search-input");
+    if (searchInput) searchInput.value = "";
+    analystClusterSearchQuery = "";
+    const feedback = document.getElementById("map-search-feedback");
+    if (feedback) feedback.innerText = "";
+
+    loadHotspotClusters(false);
+    if (map) {
+        map.setView([22.5, 82.0], 5);
+    }
+}
+window.resetAnalystFilters = resetAnalystFilters;
+
 async function loadHotspotClusters(silent = false) {
-    const filterVal = document.getElementById("filter-risk").value;
     const incidentList = document.getElementById("cluster-list-container") || document.getElementById("incident-list");
     if (!silent && incidentList) {
         incidentList.innerHTML = `<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Fetching clusters...</div>`;
@@ -3089,10 +3267,19 @@ async function loadHotspotClusters(silent = false) {
         const totalNestedHotspots = allClusters.reduce((acc, c) => acc + (c.hotspots ? c.hotspots.length : 0), 0);
         console.log(`[AgniSanket Frontend] Clusters Received: ${allClusters.length} | Nested Hotspots Received: ${totalNestedHotspots}`);
 
+        // Update Total Cluster Counts
         const elStatClusters = document.getElementById("stat-clusters");
         if (elStatClusters) elStatClusters.innerText = allClusters.length;
         const elStatTotalClusters = document.getElementById("stat-total-clusters");
         if (elStatTotalClusters) elStatTotalClusters.innerText = allClusters.length;
+
+        // Update Strict High-Risk Count across all dashboard locations
+        const highRiskClusters = allClusters.filter(isClusterHighRisk);
+        const highRiskCount = highRiskClusters.length;
+        const elStatHighRisk = document.getElementById("stat-high-risk");
+        if (elStatHighRisk) elStatHighRisk.innerText = highRiskCount;
+        const invHighBadge = document.getElementById("investigation-high-risk-count");
+        if (invHighBadge) invHighBadge.innerText = `${highRiskCount} Anomalies`;
 
         // Automated Critical Threat Escalation & Audio Notification Trigger
         processCriticalAlertEscalation(allClusters);
@@ -3102,17 +3289,11 @@ async function loadHotspotClusters(silent = false) {
             checkAndTriggerBoomingAlert(allClusters, "ANALYST");
         }
 
-        let clusters = allClusters;
-        if (filterVal === "high" || filterVal === "red" || filterVal === "70") {
-            clusters = allClusters.filter(c => (c.risk_score || 0) > 70);
-        } else if (filterVal === "med" || filterVal === "yellow") {
-            clusters = allClusters.filter(c => (c.risk_score || 0) > 40 && (c.risk_score || 0) <= 70);
-        } else if (filterVal === "low" || filterVal === "green") {
-            clusters = allClusters.filter(c => (c.risk_score || 0) <= 40);
-        }
+        const clusters = getFilteredAnalystClusters();
 
-        // Check if data actually changed to avoid tearing down map markers and DOM when idle during polling
-        const dataSignature = `${filterVal}_${clusters.length}_${clusters.slice(0, 10).map(c => c.id + ':' + Math.round(c.risk_score || 0)).join(',')}`;
+        // Check if data signature actually changed to avoid unnecessary DOM tear down
+        const riskVal = document.getElementById("filter-risk")?.value || "all";
+        const dataSignature = `${riskVal}_${analystClusterSearchQuery}_${clusters.length}_${clusters.slice(0, 10).map(c => c.id + ':' + Math.round(c.risk_score || 0)).join(',')}`;
         if (silent && window._lastHotspotDataSignature === dataSignature) {
             return;
         }
@@ -3130,14 +3311,17 @@ async function loadHotspotClusters(silent = false) {
         if (countBadge) countBadge.innerText = `${clusters.length} Clusters`;
         const invQueueBadge = document.getElementById("investigation-queue-count");
         if (invQueueBadge) invQueueBadge.innerText = `${allClusters.length} Clusters`;
-        const invHighBadge = document.getElementById("investigation-high-risk-count");
-        if (invHighBadge) {
-            const highCount = allClusters.filter(c => (c.risk_score || 0) > 70).length;
-            invHighBadge.innerText = `${highCount} Anomalies`;
-        }
 
         if (clusters.length === 0) {
-            incidentList.innerHTML = `<div class="empty-state">No hotspot clusters found for selected risk threshold.</div>`;
+            incidentList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 28px; color: #64748b; margin-bottom: 8px;"></i>
+                    <p>No hotspot clusters found matching active filters or search criteria.</p>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetAnalystFilters()" style="margin-top: 8px; font-size: 11px;">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Filters
+                    </button>
+                </div>
+            `;
             return;
         }
 
@@ -10121,17 +10305,22 @@ function renderGovDispatchesTable() {
 
     tbody.innerHTML = govDispatches.map(d => {
         const isComplete = d.status === "COMPLETED" || d.status === "RESOLVED";
+        const unit = d.unit_name || d.assigned_units || "District Quick Response Fire Unit";
+        const officer = d.officer || d.dispatched_by || "Gov Officer";
+        const lat = d.lat ?? d.centroid_lat;
+        const lon = d.lon ?? d.centroid_lon;
+        const loc = (lat != null && lon != null) ? `${Number(lat).toFixed(3)}°N, ${Number(lon).toFixed(3)}°E` : '--';
         return `
             <tr>
-                <td style="padding: 10px; font-weight: 800; color: #fff;">#${d.display_id}</td>
-                <td style="padding: 10px; font-weight: 700; color: #fbbf24;"><i class="fa-solid fa-truck"></i> ${d.unit_name}</td>
+                <td style="padding: 10px; font-weight: 800; color: #fff;">#${d.display_id || d.cluster_id || d.id}</td>
+                <td style="padding: 10px; font-weight: 700; color: #fbbf24;"><i class="fa-solid fa-truck"></i> ${escapeHtml(unit)}</td>
                 <td style="padding: 10px;">
-                    <div style="font-weight: 600; color: var(--text-primary);">${d.nearest_industry_name || 'Incident Sector'}</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">${d.lat ? `${Number(d.lat).toFixed(3)}°N, ${Number(d.lon).toFixed(3)}°E` : '--'}</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(d.nearest_industry_name || 'Incident Sector')}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${loc}</div>
                 </td>
                 <td style="padding: 10px; text-align: center; font-size: 11px; color: var(--text-muted);">${d.dispatched_at ? d.dispatched_at.substring(0, 16).replace('T', ' ') : 'Recent'}</td>
-                <td style="padding: 10px; text-align: center; font-size: 11px; color: #38bdf8;"><i class="fa-solid fa-user-shield"></i> ${d.officer}</td>
-                <td style="padding: 10px; text-align: center;"><span class="${isComplete ? 'badge-gov-resolved' : 'badge-gov-dispatch'}">${d.status}</span></td>
+                <td style="padding: 10px; text-align: center; font-size: 11px; color: #38bdf8;"><i class="fa-solid fa-user-shield"></i> ${escapeHtml(officer)}</td>
+                <td style="padding: 10px; text-align: center;"><span class="${isComplete ? 'badge-gov-resolved' : 'badge-gov-dispatch'}">${escapeHtml(d.status || 'DISPATCHED')}</span></td>
                 <td style="padding: 10px; text-align: right;">
                     ${!isComplete ? `<button onclick="handleCompleteDispatch(${d.id}, ${d.cluster_id})" class="btn btn-secondary" style="font-size: 10.5px; padding: 4px 8px; color: #34d399;"><i class="fa-solid fa-circle-check"></i> Complete Mission</button>` : `<span style="font-size: 11px; color: #34d399;"><i class="fa-solid fa-check"></i> Resolved</span>`}
                 </td>
@@ -10141,6 +10330,7 @@ function renderGovDispatchesTable() {
 }
 
 async function handleGovDispatchDeploy() {
+    if (window._isGovDispatching) return;
     const incSelect = document.getElementById("gov-dispatch-incident-select");
     const unitSelect = document.getElementById("gov-dispatch-unit-select");
     const teamInput = document.getElementById("gov-dispatch-team");
@@ -10152,6 +10342,7 @@ async function handleGovDispatchDeploy() {
         return;
     }
 
+    window._isGovDispatching = true;
     const clusterId = Number(incSelect.value);
     const unitName = unitSelect ? unitSelect.value : "District Quick Response Fire Unit";
     const priority = prioSelect ? prioSelect.value : "HIGH";
@@ -10185,6 +10376,7 @@ async function handleGovDispatchDeploy() {
     } catch (err) {
         showToast("Error creating dispatch: " + err.message, "error");
     } finally {
+        window._isGovDispatching = false;
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = origHtml;
@@ -12091,6 +12283,14 @@ function renderReportsViewData() {
         }).length;
 
         const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+        const rawCount = document.getElementById("stat-raw-hotspots") ? document.getElementById("stat-raw-hotspots").innerText : "8,983";
+        const clusterCount = allClusters.length;
+        const highRiskCount = allClusters.filter(isClusterHighRisk).length;
+        const facCount = document.getElementById("stat-facilities") ? document.getElementById("stat-facilities").innerText : "557";
+        setTxt("report-stat-raw", rawCount);
+        setTxt("report-stat-clusters", clusterCount.toLocaleString());
+        setTxt("report-stat-high", highRiskCount.toLocaleString());
+        setTxt("report-stat-fac", facCount);
         setTxt("report-stat-total", total.toLocaleString());
         setTxt("report-stat-critical", critical.toLocaleString());
         setTxt("report-stat-confirmed", confirmed.toLocaleString());
@@ -12544,258 +12744,9 @@ function renderReportsViewData() {
 window.renderReportsViewData = renderReportsViewData;
 
 // ==========================================================================
-// ALERTS & NOTIFICATIONS MODULE (OPERATIONAL FEED & MULTI-FILTERING)
+// Note: Canonical renderAlertsViewData with strict risk_score > 70.0 high-risk detection
+// and unsliced alert cards is defined and exported as window.renderAlertsViewData above.
 // ==========================================================================
-let currentAlertsList = [];
-let activeAlertFilter = 'all';
-let isAlertSoundEnabled = true;
-
-async function renderAlertsViewData() {
-    const listContainer = document.getElementById("priority-alerts-feed-list");
-    const refreshBtn = document.getElementById("btn-refresh-alerts");
-    const soundBtn = document.getElementById("btn-toggle-alert-sound");
-    const ackAllBtn = document.getElementById("btn-ack-all-alerts");
-    const searchInput = document.getElementById("alerts-search-input");
-    const tabsBar = document.querySelector(".alerts-filter-tabs-bar");
-
-    const loadAlerts = async () => {
-        if (!authToken || !currentUser) return;
-        try {
-            const data = await fetchWithFallback(`${API_BASE}/api/alerts`, "data/alerts.json", { headers: getAuthHeaders() });
-            if (data && data.alerts) {
-                currentAlertsList = data.alerts;
-            } else if (Array.isArray(data)) {
-                currentAlertsList = data;
-            } else {
-                currentAlertsList = [];
-            }
-            renderAlertsUI();
-        } catch (err) {
-            console.error("Alerts fetch error:", err);
-            if (authToken) showToast("Could not connect to alerts service", "error");
-        }
-    };
-
-    const renderAlertsUI = () => {
-        const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-        // 1. KPI Counts
-        const critCount = currentAlertsList.filter(a => a.severity === 'CRITICAL').length;
-        const unreadCount = currentAlertsList.filter(a => !a.is_read).length;
-        const dispCount = currentAlertsList.filter(a => (a.status || '').toUpperCase() === 'DISPATCHED').length;
-        const ackCount = currentAlertsList.filter(a => a.is_read || (a.status || '').toUpperCase() === 'RESOLVED').length;
-
-        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-        setTxt("alert-kpi-active-critical", critCount);
-        setTxt("alert-kpi-unacked", unreadCount);
-        setTxt("alert-kpi-dispatched", dispCount);
-        setTxt("alert-kpi-acked", ackCount);
-
-        const unreadPill = document.getElementById("alerts-unread-count-pill");
-        if (unreadPill) unreadPill.innerText = unreadCount;
-
-        // 2. Tab counts
-        setTxt("count-tab-all", currentAlertsList.length);
-        setTxt("count-tab-unread", unreadCount);
-        setTxt("count-tab-critical", critCount);
-        setTxt("count-tab-action", currentAlertsList.filter(a => !a.is_read && a.severity !== 'LOW').length);
-        setTxt("count-tab-dispatched", dispCount);
-        setTxt("count-tab-resolved", currentAlertsList.filter(a => (a.status || '').toUpperCase() === 'RESOLVED').length);
-
-        // 3. Filter list
-        let filtered = currentAlertsList.filter(a => {
-            if (activeAlertFilter === 'unread' && a.is_read) return false;
-            if (activeAlertFilter === 'critical' && a.severity !== 'CRITICAL') return false;
-            if (activeAlertFilter === 'action_required' && (a.is_read || a.severity === 'LOW')) return false;
-            if (activeAlertFilter === 'dispatched' && (a.status || '').toUpperCase() !== 'DISPATCHED') return false;
-            if (activeAlertFilter === 'resolved' && (a.status || '').toUpperCase() !== 'RESOLVED') return false;
-
-            if (q) {
-                const msg = (a.message || '').toLowerCase();
-                const dId = String(a.cluster_id || '');
-                const cat = (a.category || '').toLowerCase();
-                if (!msg.includes(q) && !dId.includes(q) && !cat.includes(q)) return false;
-            }
-            return true;
-        });
-
-        if (!listContainer) return;
-
-        if (filtered.length === 0) {
-            listContainer.innerHTML = `
-                <div style="text-align: center; padding: 48px 20px; color: #94a3b8;">
-                    <i class="fa-solid fa-bell-slash" style="font-size: 36px; margin-bottom: 12px; color: #64748b;"></i>
-                    <h4 style="color: #f8fafc; margin-bottom: 6px;">No Alerts Matching Filter</h4>
-                    <p style="font-size: 12px;">All thermal anomaly escalations in this category are currently handled.</p>
-                </div>
-            `;
-            return;
-        }
-
-        listContainer.innerHTML = filtered.map(a => {
-            const isUnread = !a.is_read;
-            const sev = a.severity ? a.severity.toLowerCase() : 'medium';
-            const icon = sev === 'critical' ? 'fa-triangle-exclamation' : (sev === 'high' ? 'fa-fire-burner' : 'fa-circle-info');
-            const timeStr = a.created_at ? new Date(a.created_at).toLocaleTimeString() : 'Live';
-            const risk = a.risk_score != null ? Math.round(a.risk_score) : 65;
-            const frp = a.max_frp != null ? Number(a.max_frp).toFixed(1) : '35.0';
-
-            return `
-                <div class="priority-alert-card ${isUnread ? 'unread' : 'read'} ${sev}" data-alert-id="${a.id}">
-                    <div class="alert-card-icon-col ${sev}">
-                        <i class="fa-solid ${icon}"></i>
-                    </div>
-                    <div class="alert-card-body">
-                        <div class="alert-card-title-row">
-                            <span class="alert-card-title">
-                                ${escapeHtml(a.title || `Incident Alert: Cluster C-${a.cluster_id}`)}
-                            </span>
-                            <div style="display: flex; gap: 6px; align-items: center;">
-                                <span class="badge font-mono" style="background: ${sev === 'critical' ? '#ef444422' : '#f59e0b22'}; color: ${sev === 'critical' ? '#ef4444' : '#f59e0b'}; border: 1px solid ${sev === 'critical' ? '#ef444455' : '#f59e0b55'}; font-size: 10px;">
-                                    ${escapeHtml(a.severity || 'MEDIUM')}
-                                </span>
-                                ${isUnread ? '<span class="badge" style="background: rgba(239,68,68,0.25); color:#fca5a5; font-size: 10px;">UNREAD</span>' : ''}
-                            </div>
-                        </div>
-                        <p class="alert-card-msg">${escapeHtml(a.message || 'Thermal anomaly threshold exceeded')}</p>
-                        <div class="alert-card-meta-row">
-                            <span><i class="fa-solid fa-crosshairs"></i> Cluster C-${a.cluster_id}</span>
-                            <span><i class="fa-solid fa-gauge-high"></i> Risk: <strong>${risk}/100</strong></span>
-                            <span><i class="fa-solid fa-fire-flame-curved"></i> FRP: <strong class="text-red">${frp} MW</strong></span>
-                            <span><i class="fa-regular fa-clock"></i> ${timeStr}</span>
-                        </div>
-                    </div>
-                    <div class="alert-card-actions">
-                        <button type="button" class="btn btn-secondary btn-alert-investigate" data-cluster-id="${a.cluster_id}" title="Investigate Incident" style="font-size: 11px; padding: 5px 9px;">
-                            <i class="fa-solid fa-fire-flame-curved"></i> Investigate
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-alert-sat" data-cluster-id="${a.cluster_id}" title="Inspect Satellite Evidence" style="font-size: 11px; padding: 5px 9px;">
-                            <i class="fa-solid fa-satellite"></i> Satellite
-                        </button>
-                        ${isUnread ? `
-                            <button type="button" class="btn btn-secondary btn-alert-mark-read" data-alert-id="${a.id}" title="Mark as Read" style="font-size: 11px; padding: 5px 9px;">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }).join("");
-
-        listContainer.querySelectorAll(".btn-alert-investigate").forEach(btn => {
-            btn.onclick = () => {
-                const cId = parseInt(btn.getAttribute("data-cluster-id"), 10);
-                if (cId) {
-                    navigateToInvestigation(cId);
-                }
-            };
-        });
-
-        listContainer.querySelectorAll(".btn-alert-sat").forEach(btn => {
-            btn.onclick = () => {
-                const cId = parseInt(btn.getAttribute("data-cluster-id"), 10);
-                if (cId) {
-                    navigateToSatelliteInspection(cId);
-                }
-            };
-        });
-
-        listContainer.querySelectorAll(".btn-alert-mark-read").forEach(btn => {
-            btn.onclick = async () => {
-                const alertId = parseInt(btn.getAttribute("data-alert-id"), 10);
-                if (!alertId) return;
-                if (!API_BASE) {
-                    const target = currentAlertsList.find(a => a.id === alertId);
-                    if (target) target.is_read = true;
-                    renderAlertsUI();
-                    showToast(`Alert #${alertId} marked as read`, "success");
-                    return;
-                }
-                try {
-                    const res = await fetch(`${API_BASE}/api/alerts/${alertId}/read`, {
-                        method: "POST",
-                        headers: getAuthHeaders()
-                    });
-                    if (res.ok) {
-                        const target = currentAlertsList.find(a => a.id === alertId);
-                        if (target) target.is_read = true;
-                        renderAlertsUI();
-                        showToast(`Alert #${alertId} marked as read`, "success");
-                    }
-                } catch (e) {
-                    console.error("Mark read error:", e);
-                }
-            };
-        });
-    };
-
-    if (tabsBar && !tabsBar._listenerAttached) {
-        tabsBar._listenerAttached = true;
-        tabsBar.addEventListener("click", (e) => {
-            const btn = e.target.closest(".btn-alert-tab");
-            if (!btn) return;
-            const filterKey = btn.getAttribute("data-alert-filter");
-            if (filterKey) {
-                activeAlertFilter = filterKey;
-                tabsBar.querySelectorAll(".btn-alert-tab").forEach(b => b.classList.toggle("active", b === btn));
-                renderAlertsUI();
-            }
-        });
-    }
-
-    if (searchInput && !searchInput._listenerAttached) {
-        searchInput._listenerAttached = true;
-        searchInput.addEventListener("input", renderAlertsUI);
-    }
-
-    if (ackAllBtn && !ackAllBtn._listenerAttached) {
-        ackAllBtn._listenerAttached = true;
-        ackAllBtn.addEventListener("click", async () => {
-            if (!API_BASE) {
-                currentAlertsList.forEach(a => a.is_read = true);
-                renderAlertsUI();
-                showToast("All operational alerts marked as read", "success");
-                return;
-            }
-            try {
-                const res = await fetch(`${API_BASE}/api/alerts/mark-all-read`, {
-                    method: "POST",
-                    headers: getAuthHeaders()
-                });
-                if (res.ok) {
-                    currentAlertsList.forEach(a => a.is_read = true);
-                    renderAlertsUI();
-                    showToast("All operational alerts marked as read", "success");
-                }
-            } catch (e) {
-                console.error("Error marking all read:", e);
-            }
-        });
-    }
-
-    if (refreshBtn && !refreshBtn._listenerAttached) {
-        refreshBtn._listenerAttached = true;
-        refreshBtn.addEventListener("click", () => {
-            loadAlerts();
-            showToast("Alert feed refreshed from server", "info");
-        });
-    }
-
-    if (soundBtn && !soundBtn._listenerAttached) {
-        soundBtn._listenerAttached = true;
-        soundBtn.addEventListener("click", () => {
-            isAlertSoundEnabled = !isAlertSoundEnabled;
-            const icon = document.getElementById("icon-alert-sound");
-            const lbl = document.getElementById("label-alert-sound");
-            if (icon) icon.className = `fa-solid ${isAlertSoundEnabled ? 'fa-volume-high' : 'fa-volume-xmark'}`;
-            if (lbl) lbl.innerText = isAlertSoundEnabled ? 'Sound On' : 'Muted';
-            showToast(`Alert notifications sound ${isAlertSoundEnabled ? 'enabled' : 'muted'}`, "info");
-        });
-    }
-
-    loadAlerts();
-}
-window.renderAlertsViewData = renderAlertsViewData;
 
 // --- ADMIN GLOBAL EXPORTS ENSURING SEAMLESS BINDINGS ---
 window.handleAdminSidebarNav = handleAdminSidebarNav;
