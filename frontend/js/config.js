@@ -31,20 +31,7 @@ window.getAgniBackendUrl = function() {
         return window.AGNI_BACKEND_URL.trim().replace(/\/+$/, '');
     }
 
-    // 2. Config object override
-    if (window.AGNI_CONFIG && window.AGNI_CONFIG.BACKEND_URL && window.AGNI_CONFIG.BACKEND_URL.trim() !== "") {
-        return window.AGNI_CONFIG.BACKEND_URL.trim().replace(/\/+$/, '');
-    }
-
-    // 3. User-configured localStorage override
-    try {
-        const saved = localStorage.getItem("agni_backend_url");
-        if (saved && saved.trim() !== "") {
-            return saved.trim().replace(/\/+$/, '');
-        }
-    } catch (_) {}
-
-    // 4. URL query parameter (?backend=https://...)
+    // 2. URL query parameter (?backend=https://...)
     try {
         if (window.location && window.location.search) {
             const params = new URLSearchParams(window.location.search);
@@ -57,13 +44,36 @@ window.getAgniBackendUrl = function() {
         }
     } catch (_) {}
 
+    // 3. User-configured localStorage override
+    try {
+        const saved = localStorage.getItem("agni_backend_url");
+        if (saved && saved.trim() !== "") {
+            const clean = saved.trim().replace(/\/+$/, '');
+            const isLocal = window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+            // Discard stale localhost override when deployed on Netlify or remote hosts
+            if (isLocal || (!clean.includes("localhost") && !clean.includes("127.0.0.1"))) {
+                return clean;
+            }
+        }
+    } catch (_) {}
+
+    // 4. Config object override
+    if (window.AGNI_CONFIG && window.AGNI_CONFIG.BACKEND_URL && window.AGNI_CONFIG.BACKEND_URL.trim() !== "") {
+        return window.AGNI_CONFIG.BACKEND_URL.trim().replace(/\/+$/, '');
+    }
+
     // 5. If explicitly hosted by FastAPI backend server on port 8000
     if (window.location && window.location.port === "8000") {
         return window.location.origin.replace(/\/+$/, '');
     }
 
-    // 6. On static hosts (e.g. Netlify, GitHub Pages, or local static server), default to "" (Cached Mode)
-    return "";
+    // 6. Local development default
+    if (window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+        return "http://127.0.0.1:8000";
+    }
+
+    // 7. On static hosts (e.g. Netlify, GitHub Pages), default to production live backend
+    return (window.AGNI_CONFIG && window.AGNI_CONFIG.BACKEND_URL) || "https://agnisanket-1.onrender.com";
 };
 
 window.openBackendConfigModal = function() {

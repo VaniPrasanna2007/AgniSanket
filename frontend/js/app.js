@@ -279,9 +279,10 @@ let govHistorySearchQuery = "";
 let currentGovAlertFilter = "ALL";
 let lastGeneratedGovReportData = null;
 
-const API_BASE = (typeof window.getAgniBackendUrl === "function") 
+const API_BASE = (typeof window.getAgniBackendUrl === "function" && window.getAgniBackendUrl()) 
     ? window.getAgniBackendUrl() 
-    : (window.AGNI_BACKEND_URL || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : ""));
+    : (window.AGNI_BACKEND_URL || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : "https://agnisanket-1.onrender.com"));
+window.API_BASE = API_BASE;
 
 let isLiveApiConnected = false;
 
@@ -3360,7 +3361,11 @@ async function loadHotspotClusters(silent = false) {
             }
 
             // 1. DBSCAN Cluster Centroid Pin - ALWAYS Neutral Golden-Flame #D4A017 (Never Indicates Risk)
-            const clusterMarker = L.marker([c.centroid_lat, c.centroid_lon], {
+            const cLat = Number(c.centroid_lat ?? c.latitude ?? c.lat);
+            const cLon = Number(c.centroid_lon ?? c.longitude ?? c.lon);
+            if (!Number.isFinite(cLat) || !Number.isFinite(cLon)) return;
+
+            const clusterMarker = L.marker([cLat, cLon], {
                 pane: 'thermalHotspotPane',
                 icon: L.divIcon({
                     className: 'hotspot-marker-wrap',
@@ -3396,7 +3401,7 @@ async function loadHotspotClusters(silent = false) {
                     </div>
                     <div class="popup-body">
                         <div class="popup-row"><b>Cluster Identifier:</b> <span class="font-mono" style="color:#D4A017;">C-${displayNum}</span></div>
-                        <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${c.centroid_lat.toFixed(4)}°N, ${c.centroid_lon.toFixed(4)}°E</span></div>
+                        <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${cLat.toFixed(4)}°N, ${cLon.toFixed(4)}°E</span></div>
                         <div class="popup-row"><b>Classification:</b> <span>${c.predicted_class}</span></div>
                         <div class="popup-row"><b>Hotspots in Cluster:</b> <span>${numConstituents}</span></div>
                         <div class="popup-row"><b>Max Hotspot Risk:</b> <span class="popup-risk-tag ${maxRiskClass}">${maxTierLabel} (${maxHotspotRisk}/100)</span></div>
@@ -3409,7 +3414,7 @@ async function loadHotspotClusters(silent = false) {
                             <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" onclick="openSatelliteEvidenceModal(${c.id}, null)">
                                 <i class="fa-solid fa-file-shield"></i> Satellite Verification
                             </button>
-                            <button type="button" class="btn-popup-3d" data-cluster-id="${c.id}" data-display-id="${displayNum}" data-lat="${c.latitude}" data-lon="${c.longitude}" onclick="open3DViewer(${c.id}, ${c.latitude}, ${c.longitude})">
+                            <button type="button" class="btn-popup-3d" data-cluster-id="${c.id}" data-display-id="${displayNum}" data-lat="${cLat}" data-lon="${cLon}" onclick="open3DViewer(${c.id}, ${cLat}, ${cLon})">
                                 <i class="fa-solid fa-cube"></i> 3D View
                             </button>
                             <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id})">
@@ -3424,7 +3429,12 @@ async function loadHotspotClusters(silent = false) {
             hotspotMarkers.push(clusterMarker);
 
             // 2. Individual Constituent FIRMS Hotspots - Rendered in their genuine calculated risk colours
+            const filterVal = riskVal;
             constituentHotspots.forEach(h => {
+                const hLat = Number(h.latitude ?? h.lat);
+                const hLon = Number(h.longitude ?? h.lon);
+                if (!Number.isFinite(hLat) || !Number.isFinite(hLon)) return;
+
                 const hScore = h.risk_score !== undefined && h.risk_score !== null ? Number(h.risk_score) : 0;
                 // Filter individual hotspots based on the active risk filter
                 if (filterVal === "high" && !(hScore > 70)) return;
@@ -3444,7 +3454,7 @@ async function loadHotspotClusters(silent = false) {
                     hLevel = "MEDIUM";
                 }
 
-                const hMarker = L.marker([h.latitude, h.longitude], {
+                const hMarker = L.marker([hLat, hLon], {
                     pane: 'thermalHotspotPane',
                     icon: L.divIcon({
                         className: 'raw-hotspot-marker-wrap',
@@ -3464,7 +3474,7 @@ async function loadHotspotClusters(silent = false) {
                         </div>
                         <div class="popup-body">
                             <div class="popup-row"><b>Parent Cluster:</b> <span class="font-mono" style="color: #D4A017;">Cluster C-${displayNum}</span></div>
-                            <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${h.latitude.toFixed(4)}°N, ${h.longitude.toFixed(4)}°E</span></div>
+                            <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${hLat.toFixed(4)}°N, ${hLon.toFixed(4)}°E</span></div>
                             <div class="popup-row"><b>Individual Risk Score:</b> <span class="popup-risk-tag ${hRiskClass.replace('risk-', '')}">${hLevel} (${hScore}/100)</span></div>
                             <div class="popup-row"><b>FRP:</b> <span>${h.frp} MW</span></div>
                             <div class="popup-row"><b>Brightness Temp:</b> <span>${h.brightness ? h.brightness + ' K' : 'UNAVAILABLE'}</span></div>
@@ -3495,8 +3505,8 @@ async function loadHotspotClusters(silent = false) {
             card.id = `card-${c.id}`;
             card.setAttribute("data-cluster-id", c.id);
             card.setAttribute("data-display-id", displayNum);
-            card.setAttribute("data-lat", c.latitude);
-            card.setAttribute("data-lon", c.longitude);
+            card.setAttribute("data-lat", cLat);
+            card.setAttribute("data-lon", cLon);
 
             card.innerHTML = `
                 <div class="incident-card-header">
@@ -3505,7 +3515,7 @@ async function loadHotspotClusters(silent = false) {
                             <i class="fa-solid fa-fire-flame-curved inc-cluster-icon" style="color: #D4A017;"></i>
                             <span>Cluster C-${displayNum}</span>
                         </div>
-                        <span class="inc-coords font-mono"><i class="fa-solid fa-location-dot"></i> ${c.centroid_lat.toFixed(3)}°N, ${c.centroid_lon.toFixed(3)}°E</span>
+                        <span class="inc-coords font-mono"><i class="fa-solid fa-location-dot"></i> ${cLat.toFixed(3)}°N, ${cLon.toFixed(3)}°E</span>
                     </div>
                     <div class="inc-risk-badge ${maxRiskClass}" title="Max Hotspot Risk: ${maxHotspotRisk}/100 (${maxTierLabel})">
                         <span class="risk-badge-lbl">RISK: ${maxTierLabel}</span>
@@ -8369,7 +8379,11 @@ function renderAdminMapMarkers(incidents) {
         }
 
         // 1. DBSCAN Cluster Centroid Pin - Neutral Golden-Flame #D4A017 with C-${displayNum}
-        const clusterMarker = L.marker([c.centroid_lat, c.centroid_lon], {
+        const cLat = Number(c.centroid_lat ?? c.latitude ?? c.lat);
+        const cLon = Number(c.centroid_lon ?? c.longitude ?? c.lon);
+        if (!Number.isFinite(cLat) || !Number.isFinite(cLon)) return;
+
+        const clusterMarker = L.marker([cLat, cLon], {
             pane: 'thermalHotspotPane',
             icon: L.divIcon({
                 className: 'hotspot-marker-wrap',
@@ -8401,7 +8415,7 @@ function renderAdminMapMarkers(incidents) {
                 </div>
                 <div class="popup-body">
                     <div class="popup-row"><b>Cluster Identifier:</b> <span class="font-mono" style="color:#D4A017;">C-${displayNum}</span></div>
-                    <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${c.centroid_lat.toFixed(4)}°N, ${c.centroid_lon.toFixed(4)}°E</span></div>
+                    <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${cLat.toFixed(4)}°N, ${cLon.toFixed(4)}°E</span></div>
                     <div class="popup-row"><b>Classification:</b> <span>${escapeHtml(c.predicted_class || c.classification || 'Thermal Anomaly')}</span></div>
                     <div class="popup-row"><b>Hotspots in Cluster:</b> <span>${numConstituents}</span></div>
                     <div class="popup-row"><b>Max Hotspot Risk:</b> <span class="popup-risk-tag ${maxRiskClass}">${maxTierLabel} (${roundedRisk}/100)</span></div>
@@ -8423,6 +8437,10 @@ function renderAdminMapMarkers(incidents) {
 
         // 2. Individual Constituent FIRMS Hotspots - Genuine risk colours
         constituentHotspots.forEach(h => {
+            const hLat = Number(h.latitude ?? h.lat);
+            const hLon = Number(h.longitude ?? h.lon);
+            if (!Number.isFinite(hLat) || !Number.isFinite(hLon)) return;
+
             const hScore = h.risk_score !== undefined && h.risk_score !== null ? Number(h.risk_score) : 0;
             let hRiskClass = "risk-low";
             let hColor = "#22C55E";
@@ -8437,7 +8455,7 @@ function renderAdminMapMarkers(incidents) {
                 hLevel = "MEDIUM";
             }
 
-            const hMarker = L.marker([h.latitude, h.longitude], {
+            const hMarker = L.marker([hLat, hLon], {
                 pane: 'thermalHotspotPane',
                 icon: L.divIcon({
                     className: 'raw-hotspot-marker-wrap',
