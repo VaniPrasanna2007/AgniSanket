@@ -315,7 +315,12 @@ async function safeFetchJson(url, options = {}) {
         return { ok: false, status: 0, data: null, isHtml: false };
     }
     try {
-        const res = await fetch(url, options);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), options.timeout || 3000);
+        const fetchOpts = { ...options, signal: options.signal || controller.signal };
+        delete fetchOpts.timeout;
+        const res = await fetch(url, fetchOpts);
+        clearTimeout(timeoutId);
         const contentType = res.headers.get("content-type") || "";
         if (!res.ok || !contentType.includes("application/json")) {
             return { ok: false, status: res.status, data: null, isHtml: contentType.includes("text/html") };
@@ -5426,11 +5431,57 @@ function parseRouteHash(rawHash) {
 }
 window.parseRouteHash = parseRouteHash;
 
+function isValidPageForRole(hashOrRoute, role) {
+    if (!hashOrRoute || !role) return false;
+    const clean = String(hashOrRoute).trim();
+    if (clean === "" || clean === "#" || clean === "#/login" || clean === "login") return false;
+
+    const { mainRoute } = parseRouteHash(clean);
+    if (!mainRoute) return false;
+
+    const analystRoutes = ["dashboard", "investigation", "satellite", "satellite-data", "ml", "reports", "map", "alerts", "analyst"];
+    const govRoutes = [
+        "command-center", "government", "gov-dashboard", "dashboard",
+        "live-incidents",
+        "incident-investigation", "investigation",
+        "dispatch-management", "dispatch",
+        "satellite-verification", "satellite",
+        "risk-intelligence", "risk", "intelligence", "ml",
+        "incident-history", "history", "audit",
+        "official-reports", "reports",
+        "map-explorer", "map",
+        "alerts-notifications", "alerts"
+    ];
+    const adminRoutes = [
+        "admin", "dashboard", "users", "roles", "incidents", "satellite",
+        "risk-insights", "reports", "map", "alerts", "settings", "audit",
+        "operations", "health", "pipelines", "models", "overview", "ml-insights",
+        "map-explorer", "alerts-notifications", "incident-management", "user-management"
+    ];
+
+    const cleanRole = String(role).toUpperCase();
+    if (cleanRole === "ANALYST") {
+        return analystRoutes.includes(mainRoute);
+    } else if (cleanRole === "GOVERNMENT_AUTHORITY") {
+        return govRoutes.includes(mainRoute);
+    } else if (cleanRole === "ADMIN") {
+        return mainRoute === "admin" || adminRoutes.includes(mainRoute) || govRoutes.includes(mainRoute) || analystRoutes.includes(mainRoute);
+    }
+    return false;
+}
+window.isValidPageForRole = isValidPageForRole;
+
 async function checkAuthSession() {
     isCheckingAuth = true;
-    if (!pendingPostAuthHash && window.location.hash && window.location.hash !== "#/login") {
-        pendingPostAuthHash = window.location.hash;
-        sessionStorage.setItem("agnisanket_target_route", window.location.hash);
+    const initialHash = window.location.hash;
+    const storedPage = localStorage.getItem("agnisanket_current_page");
+
+    if (!pendingPostAuthHash && initialHash && initialHash !== "#/login" && initialHash !== "#") {
+        pendingPostAuthHash = initialHash;
+        try {
+            sessionStorage.setItem("agnisanket_target_route", initialHash);
+            localStorage.setItem("agnisanket_current_page", initialHash);
+        } catch (_) {}
     }
 
     if (!authToken) {
@@ -5459,30 +5510,51 @@ async function checkAuthSession() {
             if (res.ok && contentType.includes("application/json")) {
                 currentUser = await res.json();
                 localStorage.setItem("current_user", JSON.stringify(currentUser));
-            } else {
+            } else if (res.status === 401 || res.status === 403) {
                 authToken = null;
                 localStorage.removeItem("auth_token");
                 localStorage.removeItem("token");
                 localStorage.removeItem("current_user");
+                localStorage.removeItem("agnisanket_current_page");
+                sessionStorage.removeItem("agnisanket_target_route");
                 currentUser = null;
+            } else {
+                // Network glitch or offline mode: preserve cached session instead of logging out
+                const savedUser = localStorage.getItem("current_user");
+                if (savedUser) {
+                    try { currentUser = JSON.parse(savedUser); } catch (e) {}
+                }
             }
         } catch (e) {
-            currentUser = null;
+            const savedUser = localStorage.getItem("current_user");
+            if (savedUser) {
+                try { currentUser = JSON.parse(savedUser); } catch (err) {}
+            }
         } finally {
             isCheckingAuth = false;
         }
     }
 
     if (currentUser) {
-        const target = pendingPostAuthHash || sessionStorage.getItem("agnisanket_target_route") || window.location.hash;
+        const sessionRoute = sessionStorage.getItem("agnisanket_target_route");
+        let candidateRoute = pendingPostAuthHash || (initialHash && initialHash !== "#/login" && initialHash !== "#" ? initialHash : null) || storedPage || sessionRoute;
+
         pendingPostAuthHash = null;
         sessionStorage.removeItem("agnisanket_target_route");
-        if (target && target !== "#/login") {
-            if (window.location.hash !== target) {
-                window.location.hash = target;
-            } else {
-                handleHashRouting();
-            }
+
+        let targetRoute = null;
+        if (candidateRoute && isValidPageForRole(candidateRoute, currentUser.role)) {
+            targetRoute = candidateRoute;
+        } else {
+            if (currentUser.role === "ADMIN") targetRoute = "#/admin/dashboard";
+            else if (currentUser.role === "GOVERNMENT_AUTHORITY") targetRoute = "#/command-center";
+            else targetRoute = "#/dashboard";
+        }
+
+        try { localStorage.setItem("agnisanket_current_page", targetRoute); } catch (_) {}
+
+        if (window.location.hash !== targetRoute) {
+            window.location.hash = targetRoute;
         } else {
             handleHashRouting();
         }
@@ -5492,9 +5564,12 @@ async function checkAuthSession() {
 
 function handleHashRouting() {
     if (isCheckingAuth) {
-        if (window.location.hash && window.location.hash !== "#/login") {
+        if (window.location.hash && window.location.hash !== "#/login" && window.location.hash !== "#") {
             pendingPostAuthHash = window.location.hash;
-            sessionStorage.setItem("agnisanket_target_route", window.location.hash);
+            try {
+                sessionStorage.setItem("agnisanket_target_route", window.location.hash);
+                localStorage.setItem("agnisanket_current_page", window.location.hash);
+            } catch (_) {}
         }
         return;
     }
@@ -5502,7 +5577,6 @@ function handleHashRouting() {
     if (!currentUser) {
         if (window.location.hash && !window.location.hash.startsWith("#/login")) {
             sessionStorage.setItem("agnisanket_target_route", window.location.hash);
-            window.location.hash = "#/login";
         }
         updateAuthUI();
         checkLoginUrlParams();
@@ -5515,10 +5589,10 @@ function handleHashRouting() {
         "command-center", "government", "gov-dashboard", "dashboard",
         "live-incidents",
         "incident-investigation", "investigation",
-        "dispatch-management",
+        "dispatch-management", "dispatch",
         "satellite-verification", "satellite",
-        "risk-intelligence", "ml",
-        "incident-history",
+        "risk-intelligence", "risk", "intelligence", "ml",
+        "incident-history", "history", "audit",
         "official-reports", "reports",
         "map-explorer", "map",
         "alerts-notifications", "alerts"
@@ -5545,7 +5619,12 @@ function handleHashRouting() {
         }
     }
 
-    renderDashboardView(cleanHash || window.location.hash);
+    const activeRoute = cleanHash || window.location.hash;
+    if (activeRoute && activeRoute !== "#/login" && activeRoute !== "#") {
+        try { localStorage.setItem("agnisanket_current_page", activeRoute); } catch (_) {}
+    }
+
+    renderDashboardView(activeRoute);
 }
 
 function renderDashboardView(hash) {
@@ -5791,15 +5870,15 @@ function updateAuthUI() {
 
         // Route to appropriate view if on login or empty
         const currentHash = window.location.hash;
-        if (!currentHash || currentHash === "#/login") {
-            const savedRoute = sessionStorage.getItem("agnisanket_target_route");
+        if (!currentHash || currentHash === "#/login" || currentHash === "#") {
+            const savedRoute = localStorage.getItem("agnisanket_current_page") || sessionStorage.getItem("agnisanket_target_route");
             sessionStorage.removeItem("agnisanket_target_route");
-            if (savedRoute && savedRoute !== "#/login") {
+            if (savedRoute && savedRoute !== "#/login" && isValidPageForRole(savedRoute, currentUser.role)) {
                 window.location.hash = savedRoute;
             } else if (currentUser.role === "ANALYST") {
                 window.location.hash = "#/dashboard";
             } else if (currentUser.role === "GOVERNMENT_AUTHORITY") {
-                window.location.hash = "#/government";
+                window.location.hash = "#/command-center";
             } else if (currentUser.role === "ADMIN") {
                 window.location.hash = "#/admin/dashboard";
             }
@@ -5996,6 +6075,7 @@ async function launchDemoSession(role) {
         } else if (targetRole === "ANALYST") {
             targetHash = "#/dashboard";
         }
+        try { localStorage.setItem("agnisanket_current_page", targetHash); } catch (_) {}
         window.location.hash = targetHash;
 
         updateAuthUI();
@@ -6135,6 +6215,9 @@ async function handleLogout() {
     authToken = null;
     localStorage.removeItem("auth_token");
     localStorage.removeItem("token");
+    localStorage.removeItem("current_user");
+    localStorage.removeItem("agnisanket_current_page");
+    sessionStorage.removeItem("agnisanket_target_route");
     currentUser = null;
     activeBoomingIncident = null;
     activeBoomingRole = null;
