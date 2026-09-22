@@ -17,12 +17,11 @@ let map3dFacilityMarkers = [];
 let map3dSelectionMarker = null;
 let cachedFacilities = [];
 
-// High-Risk Anomaly Detection: risk_score > 70.0, max_frp >= 50.0 MW, or composite risk_score >= 50.0
+// Strict High-Risk Detection: strictly greater than 70.0
 function isClusterHighRisk(cluster) {
     if (!cluster) return false;
-    const score = Number(cluster.risk_score ?? cluster.risk ?? 0);
-    const frp = Number(cluster.max_frp ?? cluster.frp ?? 0);
-    return (Number.isFinite(score) && score > 70.0) || (Number.isFinite(frp) && frp >= 50.0) || (Number.isFinite(score) && score >= 50.0);
+    const score = Number(cluster.risk_score ?? cluster.risk);
+    return Number.isFinite(score) && score > 70.0;
 }
 window.isClusterHighRisk = isClusterHighRisk;
 
