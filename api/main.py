@@ -2,6 +2,7 @@ import os
 import time
 import asyncio
 import json
+import gc
 import urllib.request
 import urllib.parse
 from datetime import datetime
@@ -11,7 +12,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, defer
 from pydantic import BaseModel, Field
 
 from db.database import SessionLocal, init_db, engine
@@ -43,6 +44,44 @@ app = FastAPI(
     version="2.1.0"
 )
 
+# --- IN-MEMORY CACHING UTILITIES FOR MEMORY OPTIMIZATION ---
+_display_id_cache = {"timestamp": 0, "id_to_disp": {}, "disp_to_id": {}}
+_api_response_cache = {}  # key -> (timestamp, content_bytes, content_type)
+
+def get_display_id_map(db: Session):
+    global _display_id_cache
+    now = time.time()
+    if now - _display_id_cache["timestamp"] < 30 and _display_id_cache["id_to_disp"]:
+        return _display_id_cache["id_to_disp"], _display_id_cache["disp_to_id"]
+    
+    cluster_ids = db.query(HotspotCluster.id).order_by(HotspotCluster.id.asc()).all()
+    id_to_disp = {c_id[0]: idx + 1 for idx, c_id in enumerate(cluster_ids)}
+    disp_to_id = {idx + 1: c_id[0] for idx, c_id in enumerate(cluster_ids)}
+    
+    _display_id_cache = {
+        "timestamp": now,
+        "id_to_disp": id_to_disp,
+        "disp_to_id": disp_to_id
+    }
+    return id_to_disp, disp_to_id
+
+def invalidate_api_caches():
+    global _display_id_cache, _api_response_cache
+    _display_id_cache = {"timestamp": 0, "id_to_disp": {}, "disp_to_id": {}}
+    _api_response_cache.clear()
+    gc.collect()
+
+def get_cached_response(key: str, ttl: int = 15):
+    now = time.time()
+    if key in _api_response_cache:
+        ts, content, content_type = _api_response_cache[key]
+        if now - ts < ttl:
+            return Response(content=content, media_type=content_type)
+    return None
+
+def set_cached_response(key: str, content: bytes, content_type: str = "application/json"):
+    _api_response_cache[key] = (time.time(), content, content_type)
+
 @app.middleware("http")
 async def add_no_cache_headers(request: Request, call_next):
     response = await call_next(request)
@@ -63,7 +102,7 @@ def run_pipeline_scan_worker():
     is_scan_running = True
     db = SessionLocal()
     try:
-        raw_hotspots = get_real_firms_data(days=10)
+        raw_hotspots = get_real_firms_data(days=3)
         new_inserted = ingest_raw_hotspots(db, raw_hotspots)
         processed_clusters = process_hotspot_features(db)
 
@@ -80,6 +119,7 @@ def run_pipeline_scan_worker():
                 "dist_to_nearest_industry_km": hr.dist_to_nearest_industry_km
             })
 
+        invalidate_api_caches()
         return {
             "status": "success",
             "real_firms_hotspots_retrieved": len(raw_hotspots),
@@ -93,6 +133,7 @@ def run_pipeline_scan_worker():
     finally:
         db.close()
         is_scan_running = False
+        gc.collect()
 
 async def periodic_nasa_firms_scan():
     """Background task: automatically refreshes NASA FIRMS data every 3 minutes (180s) without blocking ASGI loop"""
@@ -695,9 +736,7 @@ def update_role_permissions(role_name: str, req: RolePermissionsUpdateRequest, a
 # --- SATELLITE DATA MANAGEMENT ---
 @app.get("/api/admin/satellite/detections")
 def get_admin_satellite_detections(sensor: Optional[str] = None, min_confidence: Optional[float] = None, limit: int = 150, cluster_id: Optional[str] = None, admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
-    disp_to_id = {idx + 1: c.id for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, disp_to_id = get_display_id_map(db)
 
     q = db.query(RawHotspot)
     target_cluster = None
@@ -748,8 +787,7 @@ def get_admin_satellite_detections(sensor: Optional[str] = None, min_confidence:
 @app.get("/api/admin/satellite/observations")
 def get_admin_satellite_observations(limit: int = 50, admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):
     obs = db.query(SatelliteObservation).order_by(SatelliteObservation.id.desc()).limit(limit).all()
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
 
     return [{
         "id": o.id,
@@ -769,8 +807,8 @@ def get_admin_satellite_observations(limit: int = 50, admin_user: User = Depends
 # --- ADMIN INCIDENTS ENDPOINT ALIAS ---
 @app.get("/api/admin/incidents")
 def list_admin_incidents(status: Optional[str] = None, priority: Optional[str] = None, admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
+    all_clusters_ordered = db.query(HotspotCluster).all()
 
     sorted_clusters = sorted(all_clusters_ordered, key=lambda x: (x.risk_score, x.max_frp), reverse=True)
     results = []
@@ -825,9 +863,10 @@ def list_admin_incidents(status: Optional[str] = None, priority: Optional[str] =
 def update_admin_incident_status(cluster_id: int, req: GovernmentStatusUpdate, admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):
     cluster = db.query(HotspotCluster).filter(HotspotCluster.id == cluster_id).first()
     if not cluster:
-        all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-        if 1 <= cluster_id <= len(all_clusters_ordered):
-            cluster = all_clusters_ordered[cluster_id - 1]
+        id_to_disp, disp_to_id = get_display_id_map(db)
+        if cluster_id in disp_to_id:
+            real_id = disp_to_id[cluster_id]
+            cluster = db.query(HotspotCluster).filter(HotspotCluster.id == real_id).first()
     if not cluster:
         raise HTTPException(status_code=404, detail="Hotspot cluster not found")
 
@@ -838,9 +877,9 @@ def update_admin_incident_status(cluster_id: int, req: GovernmentStatusUpdate, a
     cluster.acknowledged_by = admin_user.username
     cluster.acknowledged_at = datetime.utcnow()
     db.commit()
+    invalidate_api_caches()
 
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
     disp_id = id_to_disp.get(cluster.id, cluster.id)
 
     log_admin_audit_event(
@@ -1104,8 +1143,8 @@ def update_admin_settings(payload: AdminSettingsPayload, admin_user: User = Depe
 # --- GOVERNMENT AUTHORITY ENDPOINTS ---
 @app.get("/api/government/incidents")
 def list_government_incidents(gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
+    all_clusters_ordered = db.query(HotspotCluster).all()
 
     # Sort by priority/severity: high risk first
     sorted_clusters = sorted(all_clusters_ordered, key=lambda x: (x.risk_score, x.max_frp), reverse=True)
@@ -1170,8 +1209,7 @@ def list_government_incidents(gov_user: User = Depends(require_roles(["GOVERNMEN
 
 @app.get("/api/government/audit-history")
 def get_government_audit_history(gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
 
     clusters = db.query(HotspotCluster).filter(
         HotspotCluster.acknowledged_at.isnot(None)
@@ -1201,9 +1239,10 @@ def get_government_audit_history(gov_user: User = Depends(require_roles(["GOVERN
 def update_incident_status(cluster_id: int, req: GovernmentStatusUpdate, gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
     cluster = db.query(HotspotCluster).filter(HotspotCluster.id == cluster_id).first()
     if not cluster:
-        all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-        if 1 <= cluster_id <= len(all_clusters_ordered):
-            cluster = all_clusters_ordered[cluster_id - 1]
+        id_to_disp, disp_to_id = get_display_id_map(db)
+        if cluster_id in disp_to_id:
+            real_id = disp_to_id[cluster_id]
+            cluster = db.query(HotspotCluster).filter(HotspotCluster.id == real_id).first()
     if not cluster:
         raise HTTPException(status_code=404, detail="Hotspot cluster not found")
 
@@ -1213,9 +1252,9 @@ def update_incident_status(cluster_id: int, req: GovernmentStatusUpdate, gov_use
     cluster.acknowledged_by = gov_user.username
     cluster.acknowledged_at = datetime.utcnow()
     db.commit()
+    invalidate_api_caches()
 
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
     disp_id = id_to_disp.get(cluster.id, cluster.id)
 
     return {
@@ -1231,8 +1270,8 @@ def update_incident_status(cluster_id: int, req: GovernmentStatusUpdate, gov_use
 
 @app.get("/api/government/dispatches")
 def list_government_dispatches(gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
+    all_clusters_ordered = db.query(HotspotCluster).all()
 
     dispatched_clusters = [c for c in all_clusters_ordered if c.government_status in ("DISPATCHED", "RESOLVED") or (c.government_notes and "Unit" in c.government_notes)]
     if not dispatched_clusters:
@@ -1271,9 +1310,10 @@ def list_government_dispatches(gov_user: User = Depends(require_roles(["GOVERNME
 def create_government_dispatch(req: GovernmentDispatchCreate, gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
     cluster = db.query(HotspotCluster).filter(HotspotCluster.id == req.cluster_id).first()
     if not cluster:
-        all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-        if 1 <= req.cluster_id <= len(all_clusters_ordered):
-            cluster = all_clusters_ordered[req.cluster_id - 1]
+        id_to_disp, disp_to_id = get_display_id_map(db)
+        if req.cluster_id in disp_to_id:
+            real_id = disp_to_id[req.cluster_id]
+            cluster = db.query(HotspotCluster).filter(HotspotCluster.id == real_id).first()
     if not cluster:
         raise HTTPException(status_code=404, detail="Hotspot cluster not found")
 
@@ -1285,9 +1325,9 @@ def create_government_dispatch(req: GovernmentDispatchCreate, gov_user: User = D
     cluster.acknowledged_by = gov_user.username
     cluster.acknowledged_at = datetime.utcnow()
     db.commit()
+    invalidate_api_caches()
 
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
     disp_id = id_to_disp.get(cluster.id, cluster.id)
 
     return {
@@ -1313,8 +1353,8 @@ class BroadcastAlertRequest(BaseModel):
     channels: Optional[List[str]] = ["IN_APP", "EMAIL"]
 
 def build_system_alerts(db: Session):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
+    all_clusters_ordered = db.query(HotspotCluster).all()
 
     # Top anomalies sorted by risk score
     ranked_clusters = sorted(all_clusters_ordered, key=lambda x: (x.risk_score or 0), reverse=True)
@@ -1484,8 +1524,8 @@ def get_admin_alerts_list(admin_user: User = Depends(require_roles(["ADMIN"])), 
 
 @app.post("/api/government/reports/generate")
 def generate_government_report(req: GovernmentReportFilter, gov_user: User = Depends(require_roles(["GOVERNMENT_AUTHORITY", "ADMIN"])), db: Session = Depends(get_db)):
-    all_clusters_ordered = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters_ordered)}
+    id_to_disp, _ = get_display_id_map(db)
+    all_clusters_ordered = db.query(HotspotCluster).all()
 
     filtered = all_clusters_ordered
     if req.scope == "CRITICAL":
@@ -1758,6 +1798,10 @@ def health_check():
 
 @app.get("/api/stats")
 def get_dashboard_stats(db: Session = Depends(get_db)):
+    cached_resp = get_cached_response("stats", ttl=20)
+    if cached_resp:
+        return cached_resp
+
     raw_count = db.query(RawHotspot).count()
     cluster_count = db.query(HotspotCluster).count()
     high_risk_count = db.query(HotspotCluster).filter((HotspotCluster.risk_score >= 50.0) | (HotspotCluster.max_frp >= 50.0)).count()
@@ -1765,7 +1809,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     facility_count = db.query(IndustrialFacility).count()
     model_trained = os.path.exists("model/artifacts/rf_model.pkl") and verified_count >= 5
 
-    return {
+    res = {
         "total_raw_detections": raw_count,
         "total_clusters": cluster_count,
         "high_risk_anomalies": high_risk_count,
@@ -1773,6 +1817,9 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         "industrial_facilities_tracked": facility_count,
         "ml_model_status": "ML_MODEL_TRAINED" if model_trained else f"UNINITIALIZED_RULES_ONLY (Verified samples in DB: {verified_count})"
     }
+    json_bytes = json.dumps(res).encode("utf-8")
+    set_cached_response("stats", json_bytes, "application/json")
+    return Response(content=json_bytes, media_type="application/json")
 
 
 # --- MACHINE LEARNING INSIGHTS & EXPLAINABILITY TELEMETRY ---
@@ -1817,8 +1864,7 @@ def get_ml_overview(db: Session = Depends(get_db)):
 
     # Recent feedback logs with cluster numbers
     recent_feedbacks_raw = db.query(FeedbackLog).order_by(FeedbackLog.timestamp.desc()).limit(15).all()
-    all_clusters = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters)}
+    id_to_disp, _ = get_display_id_map(db)
 
     recent_feedbacks = []
     for fb in recent_feedbacks_raw:
@@ -1899,8 +1945,7 @@ def get_ml_overview(db: Session = Depends(get_db)):
 
 @app.get("/api/ml/feedbacks")
 def list_ml_feedbacks(limit: int = 50, db: Session = Depends(get_db)):
-    all_clusters = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_disp = {c.id: idx + 1 for idx, c in enumerate(all_clusters)}
+    id_to_disp, _ = get_display_id_map(db)
 
     logs = db.query(FeedbackLog).order_by(FeedbackLog.timestamp.desc()).limit(limit).all()
     results = []
@@ -1931,7 +1976,14 @@ def list_clusters(
     end_date: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots))
+    cache_key = f"hotspots:{risk_threshold}:{limit}:{offset}:{min_lat}:{max_lat}:{min_lon}:{max_lon}:{start_date}:{end_date}"
+    cached_resp = get_cached_response(cache_key, ttl=20)
+    if cached_resp:
+        return cached_resp
+
+    query = db.query(HotspotCluster).options(
+        selectinload(HotspotCluster.hotspots).defer(RawHotspot.raw_json)
+    )
 
     if risk_threshold > 0.0:
         query = query.filter(HotspotCluster.risk_score >= risk_threshold)
@@ -1969,9 +2021,8 @@ def list_clusters(
 
     clusters = query.all()
 
-    # Pre-build display ID mapping
-    all_clusters_total = db.query(HotspotCluster.id).order_by(HotspotCluster.id.asc()).all()
-    id_to_display = {c_id[0]: idx + 1 for idx, c_id in enumerate(all_clusters_total)}
+    # Pre-build display ID mapping using tuple query
+    id_to_display, _ = get_display_id_map(db)
 
     results = []
     for c in clusters:
@@ -2059,37 +2110,22 @@ def list_clusters(
             }
         })
 
-    # Structured request telemetry logging
-    applied_filters = []
-    if risk_threshold > 0.0: applied_filters.append(f"risk_threshold>={risk_threshold}")
-    if min_lat is not None: applied_filters.append(f"lat>={min_lat}")
-    if max_lat is not None: applied_filters.append(f"lat<={max_lat}")
-    if min_lon is not None: applied_filters.append(f"lon>={min_lon}")
-    if max_lon is not None: applied_filters.append(f"lon<={max_lon}")
-    if parsed_start: applied_filters.append(f"from={parsed_start.strftime('%Y-%m-%d')}")
-    if parsed_end: applied_filters.append(f"to={parsed_end.strftime('%Y-%m-%d')}")
-
-    filter_str = ", ".join(applied_filters) if applied_filters else "NONE (All India Records)"
-    print(
-        f"[HOTSPOT API] Returned: {len(results)} clusters | "
-        f"Filters: [{filter_str}] | "
-        f"Limit: {limit if limit is not None else 'None (ALL)'} | "
-        f"Offset: {offset if offset is not None else 0}"
-    )
-    return results
+    json_bytes = json.dumps(results).encode("utf-8")
+    set_cached_response(cache_key, json_bytes, "application/json")
+    return Response(content=json_bytes, media_type="application/json")
 
 @app.get("/api/hotspots/{cluster_id}")
 def get_cluster_detail(cluster_id: int, db: Session = Depends(get_db)):
-    cluster = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots)).filter(HotspotCluster.id == cluster_id).first()
+    cluster = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots).defer(RawHotspot.raw_json)).filter(HotspotCluster.id == cluster_id).first()
     if not cluster:
-        all_clusters_db = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots)).order_by(HotspotCluster.id.asc()).all()
-        if 1 <= cluster_id <= len(all_clusters_db):
-            cluster = all_clusters_db[cluster_id - 1]
+        id_to_disp, disp_to_id = get_display_id_map(db)
+        if cluster_id in disp_to_id:
+            real_id = disp_to_id[cluster_id]
+            cluster = db.query(HotspotCluster).options(selectinload(HotspotCluster.hotspots).defer(RawHotspot.raw_json)).filter(HotspotCluster.id == real_id).first()
     if not cluster:
         raise HTTPException(status_code=404, detail="Hotspot cluster not found")
 
-    all_clusters = db.query(HotspotCluster).order_by(HotspotCluster.id.asc()).all()
-    id_to_display = {c.id: idx + 1 for idx, c in enumerate(all_clusters)}
+    id_to_display, _ = get_display_id_map(db)
     disp_id = id_to_display.get(cluster.id, cluster.id)
 
     hotspot_list = [
@@ -2183,9 +2219,13 @@ def get_cluster_detail(cluster_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/facilities")
 def list_facilities(db: Session = Depends(get_db)):
+    cached_resp = get_cached_response("facilities", ttl=3600)
+    if cached_resp:
+        return cached_resp
+
     facs = db.query(IndustrialFacility).all()
     print(f"[OSM FACILITIES API] Returning {len(facs)} registered industrial facilities from database.")
-    return [{
+    res = [{
         "id": f.id,
         "name": f.name,
         "facility_type": f.facility_type,
@@ -2193,6 +2233,9 @@ def list_facilities(db: Session = Depends(get_db)):
         "longitude": f.longitude,
         "osm_id": f.osm_id
     } for f in facs]
+    json_bytes = json.dumps(res).encode("utf-8")
+    set_cached_response("facilities", json_bytes, "application/json")
+    return Response(content=json_bytes, media_type="application/json")
 
 @app.post("/api/scan")
 async def trigger_pipeline_scan(admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):

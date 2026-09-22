@@ -46,8 +46,9 @@ if raw_db_url and raw_db_url.strip():
             engine = create_engine(
                 DB_URL,
                 pool_pre_ping=True,
-                pool_size=10,
-                max_overflow=20
+                pool_size=5,
+                max_overflow=10,
+                pool_recycle=1800
             )
             # Test connection immediately
             with engine.connect() as conn:

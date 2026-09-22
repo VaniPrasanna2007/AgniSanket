@@ -1,5 +1,44 @@
 [
   {
+    "id": "adm-1790061025100",
+    "type": "USER_DELETED",
+    "timestamp": "2026-09-22T07:10:25.100961",
+    "actor": "admin",
+    "role": "ADMIN",
+    "action": "Permanently deleted user 'temp_test_user_99' (GOVERNMENT_AUTHORITY)",
+    "target": "User #28 (temp_test_user_99)",
+    "notes": "Account destroyed by administrator",
+    "badge_class": "badge-red",
+    "cluster_id": null,
+    "metadata": {}
+  },
+  {
+    "id": "adm-1790061025065",
+    "type": "ROLE_REASSIGNED",
+    "timestamp": "2026-09-22T07:10:25.065626",
+    "actor": "admin",
+    "role": "ADMIN",
+    "action": "Changed role of 'temp_test_user_99' from ANALYST to GOVERNMENT_AUTHORITY",
+    "target": "User #28 (temp_test_user_99)",
+    "notes": "New Role: GOVERNMENT_AUTHORITY (Previous: ANALYST)",
+    "badge_class": "badge-blue",
+    "cluster_id": null,
+    "metadata": {}
+  },
+  {
+    "id": "adm-1790061025025",
+    "type": "USER_PROVISIONED",
+    "timestamp": "2026-09-22T07:10:25.025464",
+    "actor": "admin",
+    "role": "ADMIN",
+    "action": "Created account 'temp_test_user_99' with role 'ANALYST'",
+    "target": "User #28 (temp_test_user_99)",
+    "notes": "Assigned role: ANALYST, Email: N/A",
+    "badge_class": "badge-green",
+    "cluster_id": null,
+    "metadata": {}
+  },
+  {
     "id": "adm-1789361234101",
     "type": "REPORT_GENERATED",
     "timestamp": "2026-09-14T04:47:14.101184",

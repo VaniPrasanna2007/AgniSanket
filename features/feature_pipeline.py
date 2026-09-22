@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -17,24 +18,33 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
     queries live OSM industrial facilities, computes historical persistence, and updates cluster records.
     Uses 0% synthetic/mock data.
     """
-    raw_hotspots = db.query(RawHotspot).all()
-    if not raw_hotspots:
+    raw_tuples = db.query(
+        RawHotspot.id,
+        RawHotspot.latitude,
+        RawHotspot.longitude,
+        RawHotspot.frp,
+        RawHotspot.brightness,
+        RawHotspot.confidence,
+        RawHotspot.acquisition_date
+    ).all()
+    if not raw_tuples:
         print("No raw hotspots found in database to process.")
         return 0
 
-    print(f"Processing spatial DBSCAN clustering and real raster pixel analysis on {len(raw_hotspots)} raw FIRMS hotspots...")
+    print(f"Processing spatial DBSCAN clustering and real raster pixel analysis on {len(raw_tuples)} raw FIRMS hotspots...")
 
-    data = []
-    for h in raw_hotspots:
-        data.append({
-            "id": h.id,
-            "latitude": h.latitude,
-            "longitude": h.longitude,
-            "frp": h.frp,
-            "brightness": h.brightness,
-            "confidence": h.confidence,
-            "acquisition_date": h.acquisition_date
-        })
+    data = [
+        {
+            "id": r[0],
+            "latitude": r[1],
+            "longitude": r[2],
+            "frp": r[3],
+            "brightness": r[4],
+            "confidence": r[5],
+            "acquisition_date": r[6]
+        }
+        for r in raw_tuples
+    ]
 
     df = pd.DataFrame(data)
     coords_rad = np.radians(df[["latitude", "longitude"]].values)
@@ -321,6 +331,7 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
             print(f"[FEATURE ENRICHMENT PROGRESS] Enriched {idx}/{total_groups} clusters ({pct}%)...")
 
     db.commit()
+    gc.collect()
 
     print(f"\n==================== [CLUSTERING & ENRICHMENT COMPLETE] ====================")
     print(f"[PIPELINE SUMMARY] Total Clusters Processed   : {cluster_count}")
