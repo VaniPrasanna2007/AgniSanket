@@ -125,6 +125,16 @@ function normalizeClusterObject(c) {
     c.thermal_anomaly_c = anom;
     c.temp_delta_c = anom;
 
+    // Fast client-side search & filtering cache properties
+    c._rScore = risk;
+    c._isHighRisk = isClusterHighRisk(c);
+    const dIdStr = String(dNum);
+    const rawIdStr = String(c.id || "");
+    const indStr = String(indSite || "").toLowerCase();
+    const classStr = String(classification || "").toLowerCase();
+    const gStatusStr = String(c.government_status || "UNACKNOWLEDGED").toLowerCase();
+    c._searchStr = `${dIdStr} c-${dIdStr} #${dIdStr} cluster ${dIdStr} ${rawIdStr} ${indStr} ${classStr} ${gStatusStr} ${lat} ${lon}`.toLowerCase();
+
     c.multi_satellite_verification = {
         landsat_scene_id: landsatScene,
         sentinel2_scene_id: sentinelScene,
@@ -310,6 +320,41 @@ function getAuthHeaders() {
     return authToken ? { "Authorization": `Bearer ${authToken}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }
 
+const _inFlightRequests = new Map();
+
+// SWR Cache Freshness Policy: 2 hours (7,200,000 ms) maximum cache lifetime
+// Stale cached data older than 2 hours is automatically discarded.
+const AGNI_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+
+function getCachedApiData(cacheKey) {
+    try {
+        const item = localStorage.getItem(cacheKey);
+        if (!item) return null;
+        const parsed = JSON.parse(item);
+        if (!parsed || typeof parsed !== "object" || !parsed.cachedAt || typeof parsed.cachedAt !== "number") {
+            return null;
+        }
+        // Cache Freshness Check: Expire cache if older than AGNI_CACHE_MAX_AGE_MS (2 hours)
+        if (Date.now() - parsed.cachedAt > AGNI_CACHE_MAX_AGE_MS) {
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
+        return parsed;
+    } catch (_) {
+        return null;
+    }
+}
+
+function setCachedApiData(cacheKey, data) {
+    try {
+        if (!data) return;
+        localStorage.setItem(cacheKey, JSON.stringify({
+            data,
+            cachedAt: Date.now()
+        }));
+    } catch (_) {}
+}
+
 async function safeFetchJson(url, options = {}) {
     if (!API_BASE && url.startsWith("/api/")) {
         return { ok: false, status: 0, data: null, isHtml: false };
@@ -333,44 +378,68 @@ async function safeFetchJson(url, options = {}) {
 }
 
 async function fetchWithFallback(apiUrl, fallbackPath, options = {}) {
-    // If no backend URL configured and apiUrl is relative /api/..., skip straight to fallback
-    if (!API_BASE && apiUrl.startsWith("/api/")) {
+    const isGetMethod = !options.method || options.method.toUpperCase() === "GET";
+    const requestKey = isGetMethod ? `agnisanket_req_${apiUrl}` : null;
+
+    if (requestKey && _inFlightRequests.has(requestKey)) {
+        return _inFlightRequests.get(requestKey);
+    }
+
+    const fetchPromise = (async () => {
+        // If no backend URL configured and apiUrl is relative /api/..., skip straight to fallback
+        if (!API_BASE && apiUrl.startsWith("/api/")) {
+            updateDataSourceBanner(false);
+            if (fallbackPath) {
+                try {
+                    const fbRes = await fetch(fallbackPath);
+                    if (fbRes.ok) return await fbRes.json();
+                } catch (fbErr) {
+                    console.warn(`[AgniSanket] Fallback request failed for ${fallbackPath}:`, fbErr.message);
+                }
+            }
+            return null;
+        }
+
+        try {
+            const res = await fetch(apiUrl, options);
+            const contentType = res.headers.get("content-type") || "";
+            if (res.ok && contentType.includes("application/json")) {
+                updateDataSourceBanner(true, apiUrl);
+                const data = await res.json();
+                if (isGetMethod) {
+                    if (apiUrl.includes("/api/hotspots")) setCachedApiData("agnisanket_cache_hotspots", data);
+                    else if (apiUrl.includes("/api/stats")) setCachedApiData("agnisanket_cache_stats", data);
+                    else if (apiUrl.includes("/api/facilities")) setCachedApiData("agnisanket_cache_facilities", data);
+                }
+                return data;
+            }
+        } catch (err) {
+            console.warn(`[AgniSanket] Live API request failed for ${apiUrl}:`, err.message);
+        }
+
         updateDataSourceBanner(false);
         if (fallbackPath) {
             try {
                 const fbRes = await fetch(fallbackPath);
-                if (fbRes.ok) return await fbRes.json();
+                const fbType = fbRes.headers.get("content-type") || "";
+                if (fbRes.ok && (!fbType || fbType.includes("application/json") || fbType.includes("text/plain"))) {
+                    return await fbRes.json();
+                }
             } catch (fbErr) {
                 console.warn(`[AgniSanket] Fallback request failed for ${fallbackPath}:`, fbErr.message);
             }
         }
         return null;
+    })();
+
+    if (requestKey) {
+        _inFlightRequests.set(requestKey, fetchPromise);
+        fetchPromise.finally(() => {
+            _inFlightRequests.delete(requestKey);
+        });
     }
 
-    try {
-        const res = await fetch(apiUrl, options);
-        const contentType = res.headers.get("content-type") || "";
-        if (res.ok && contentType.includes("application/json")) {
-            updateDataSourceBanner(true, apiUrl);
-            return await res.json();
-        }
-    } catch (err) {
-        console.warn(`[AgniSanket] Live API request failed for ${apiUrl}:`, err.message);
-    }
-
-    updateDataSourceBanner(false);
-    if (fallbackPath) {
-        try {
-            const fbRes = await fetch(fallbackPath);
-            const fbType = fbRes.headers.get("content-type") || "";
-            if (fbRes.ok && (!fbType || fbType.includes("application/json") || fbType.includes("text/plain"))) {
-                return await fbRes.json();
-            }
-        } catch (fbErr) {
-            console.warn(`[AgniSanket] Fallback request failed for ${fallbackPath}:`, fbErr.message);
-        }
-    }
-    return null;
+    return fetchPromise;
 }
 
 const ROLE_CONFIGS = {
@@ -3081,33 +3150,48 @@ async function pollUpdates() {
     }
 }
 
+let _statsHasLiveLoaded = false;
+
+function applyDashboardStatsData(data) {
+    if (!data) return;
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+    setVal("stat-raw-hotspots", data.total_raw_detections != null ? data.total_raw_detections : 0);
+    setVal("stat-total-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
+    setVal("stat-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
+
+    const highRiskTotal = (allClusters && allClusters.length > 0)
+        ? allClusters.filter(isClusterHighRisk).length
+        : (data.high_risk_anomalies != null ? data.high_risk_anomalies : 0);
+    setVal("stat-high-risk", highRiskTotal);
+    setVal("stat-osm-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
+    setVal("stat-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
+
+    const badge = document.getElementById("ml-model-badge");
+    if (badge) {
+        if (data.ml_model_status && data.ml_model_status.includes("TRAINED")) {
+            badge.className = "model-badge trained";
+            badge.innerHTML = `<i class="fa-solid fa-brain"></i> ML Model Trained (${data.verified_human_labels || 0} labels)`;
+        } else {
+            badge.className = "model-badge uninitialized";
+            badge.innerHTML = `<i class="fa-solid fa-list-check"></i> Evidence Rules Mode (${data.verified_human_labels || 0} verified labels)`;
+        }
+    }
+    renderReportsViewData();
+}
+
 async function loadDashboardStats(silent = false) {
+    // SWR Hydration: Immediately populate UI with valid cached stats if live stats have not yet arrived
+    if (!_statsHasLiveLoaded) {
+        const cached = getCachedApiData("agnisanket_cache_stats");
+        if (cached && cached.data) {
+            applyDashboardStatsData(cached.data);
+        }
+    }
     try {
         const data = await fetchWithFallback(`${API_BASE}/api/stats`, "data/stats.json");
         if (data) {
-            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-            setVal("stat-raw-hotspots", data.total_raw_detections != null ? data.total_raw_detections : 0);
-            setVal("stat-total-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
-            setVal("stat-clusters", data.total_clusters != null ? data.total_clusters : (allClusters ? allClusters.length : 0));
-            
-            const highRiskTotal = (allClusters && allClusters.length > 0)
-                ? allClusters.filter(isClusterHighRisk).length
-                : (data.high_risk_anomalies != null ? data.high_risk_anomalies : 0);
-            setVal("stat-high-risk", highRiskTotal);
-            setVal("stat-osm-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
-            setVal("stat-facilities", data.industrial_facilities_tracked != null ? data.industrial_facilities_tracked : 0);
-            
-            const badge = document.getElementById("ml-model-badge");
-            if (badge) {
-                if (data.ml_model_status && data.ml_model_status.includes("TRAINED")) {
-                    badge.className = "model-badge trained";
-                    badge.innerHTML = `<i class="fa-solid fa-brain"></i> ML Model Trained (${data.verified_human_labels || 0} labels)`;
-                } else {
-                    badge.className = "model-badge uninitialized";
-                    badge.innerHTML = `<i class="fa-solid fa-list-check"></i> Evidence Rules Mode (${data.verified_human_labels || 0} verified labels)`;
-                }
-            }
-            renderReportsViewData();
+            _statsHasLiveLoaded = true;
+            applyDashboardStatsData(data);
         }
     } catch (err) {
         if (!silent) console.error("Error loading stats:", err);
@@ -3125,9 +3209,9 @@ function getFilteredAnalystClusters() {
 
     return allClusters.filter(c => {
         // 1. Strict Risk Filter
-        const rScore = Number(c.risk_score ?? c.risk ?? 0);
+        const rScore = c._rScore !== undefined ? c._rScore : Number(c.risk_score ?? c.risk ?? 0);
         if (riskFilter === "high") {
-            if (!isClusterHighRisk(c)) return false;
+            if (!(c._isHighRisk !== undefined ? c._isHighRisk : isClusterHighRisk(c))) return false;
         } else if (riskFilter === "med") {
             if (rScore <= 40 || rScore > 70) return false;
         } else if (riskFilter === "low") {
@@ -3155,22 +3239,33 @@ function getFilteredAnalystClusters() {
         if (confFilter === "75" && conf < 75) return false;
         if (confFilter === "90" && conf < 90) return false;
 
-        // 5. Search Query Matching (Cluster ID, Location, Region, Facility, Risk, Classification)
+        // 5. Search Query Matching (Precomputed Search Key match)
         if (q) {
-            const dId = String(c.display_id || c.cluster_number || c.id);
-            const rawId = String(c.id);
-            const matchesId = dId === q || rawId === q || `c-${dId}` === q || `cluster c-${dId}` === q || `cluster ${dId}` === q || `#${dId}` === q;
-            const matchesInd = indName.includes(q);
-            const matchesClass = (c.predicted_class || c.classification || "").toLowerCase().includes(q);
-            const matchesStatus = gStatus.toLowerCase().includes(q);
-            const matchesCoords = (c.centroid_lat != null && String(c.centroid_lat).includes(q)) || (c.centroid_lon != null && String(c.centroid_lon).includes(q));
-            let matchesRiskTier = false;
-            if (q === "high" || q === "critical") matchesRiskTier = isClusterHighRisk(c);
-            else if (q === "med" || q === "medium") matchesRiskTier = (rScore > 40 && rScore <= 70);
-            else if (q === "low") matchesRiskTier = (rScore <= 40);
+            if (c._searchStr) {
+                if (!c._searchStr.includes(q)) {
+                    // Check special risk tier query aliases
+                    let matchesRiskTier = false;
+                    if (q === "high" || q === "critical") matchesRiskTier = (c._isHighRisk !== undefined ? c._isHighRisk : isClusterHighRisk(c));
+                    else if (q === "med" || q === "medium") matchesRiskTier = (rScore > 40 && rScore <= 70);
+                    else if (q === "low") matchesRiskTier = (rScore <= 40);
+                    if (!matchesRiskTier) return false;
+                }
+            } else {
+                const dId = String(c.display_id || c.cluster_number || c.id);
+                const rawId = String(c.id);
+                const matchesId = dId === q || rawId === q || `c-${dId}` === q || `cluster c-${dId}` === q || `cluster ${dId}` === q || `#${dId}` === q;
+                const matchesInd = indName.includes(q);
+                const matchesClass = (c.predicted_class || c.classification || "").toLowerCase().includes(q);
+                const matchesStatus = gStatus.toLowerCase().includes(q);
+                const matchesCoords = (c.centroid_lat != null && String(c.centroid_lat).includes(q)) || (c.centroid_lon != null && String(c.centroid_lon).includes(q));
+                let matchesRiskTier = false;
+                if (q === "high" || q === "critical") matchesRiskTier = isClusterHighRisk(c);
+                else if (q === "med" || q === "medium") matchesRiskTier = (rScore > 40 && rScore <= 70);
+                else if (q === "low") matchesRiskTier = (rScore <= 40);
 
-            if (!matchesId && !matchesInd && !matchesClass && !matchesStatus && !matchesCoords && !matchesRiskTier) {
-                return false;
+                if (!matchesId && !matchesInd && !matchesClass && !matchesStatus && !matchesCoords && !matchesRiskTier) {
+                    return false;
+                }
             }
         }
 
@@ -3256,15 +3351,42 @@ function resetAnalystFilters() {
 }
 window.resetAnalystFilters = resetAnalystFilters;
 
+let _hotspotsHasLiveLoaded = false;
+
 async function loadHotspotClusters(silent = false) {
     const incidentList = document.getElementById("cluster-list-container") || document.getElementById("incident-list");
-    if (!silent && incidentList) {
+
+    // SWR Hydration: Hydrate from valid cached hotspots immediately if live API response has not arrived yet
+    if (!_hotspotsHasLiveLoaded && (!allClusters || allClusters.length === 0)) {
+        const cached = getCachedApiData("agnisanket_cache_hotspots");
+        if (cached && cached.data && Array.isArray(cached.data) && cached.data.length > 0) {
+            allClusters = cached.data;
+            allClusters.forEach(c => normalizeClusterObject(c));
+            window.allClusters = allClusters;
+
+            const elStatClusters = document.getElementById("stat-clusters");
+            if (elStatClusters) elStatClusters.innerText = allClusters.length;
+            const elStatTotalClusters = document.getElementById("stat-total-clusters");
+            if (elStatTotalClusters) elStatTotalClusters.innerText = allClusters.length;
+
+            const highRiskClusters = allClusters.filter(isClusterHighRisk);
+            const highRiskCount = highRiskClusters.length;
+            const elStatHighRisk = document.getElementById("stat-high-risk");
+            if (elStatHighRisk) elStatHighRisk.innerText = highRiskCount;
+            const invHighBadge = document.getElementById("investigation-high-risk-count");
+            if (invHighBadge) invHighBadge.innerText = `${highRiskCount} Anomalies`;
+        }
+    }
+
+    if (!silent && incidentList && (!allClusters || allClusters.length === 0)) {
         incidentList.innerHTML = `<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Fetching clusters...</div>`;
     }
 
     try {
         const clustersData = await fetchWithFallback(`${API_BASE}/api/hotspots?risk_threshold=0.0`, "data/clusters.json");
         if (!clustersData) return;
+
+        _hotspotsHasLiveLoaded = true;
 
         allClusters = clustersData;
         allClusters.forEach(c => normalizeClusterObject(c));
@@ -3587,14 +3709,26 @@ async function loadHotspotClusters(silent = false) {
     }
 }
 
+let _facilitiesHasLiveLoaded = false;
+
 async function loadIndustrialFacilities(force = false) {
     if (cachedFacilities && cachedFacilities.length > 0 && !force) {
         return;
     }
+
+    // SWR Hydration: Hydrate from valid cached facilities immediately if live API response has not arrived yet
+    if (!_facilitiesHasLiveLoaded && (!cachedFacilities || cachedFacilities.length === 0)) {
+        const cached = getCachedApiData("agnisanket_cache_facilities");
+        if (cached && cached.data && Array.isArray(cached.data) && cached.data.length > 0) {
+            cachedFacilities = cached.data;
+        }
+    }
+
     try {
         const facs = await fetchWithFallback(`${API_BASE}/api/facilities`, "data/facilities.json");
         if (!facs) return;
 
+        _facilitiesHasLiveLoaded = true;
         cachedFacilities = facs;
         facilityLayerGroup.clearLayers();
 
