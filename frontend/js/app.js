@@ -401,7 +401,14 @@ async function fetchWithFallback(apiUrl, fallbackPath, options = {}) {
         }
 
         try {
-            const res = await fetch(apiUrl, options);
+            const controller = new AbortController();
+            const timeoutMs = options.timeout || 15000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            const fetchOpts = { ...options, signal: options.signal || controller.signal };
+            delete fetchOpts.timeout;
+
+            const res = await fetch(apiUrl, fetchOpts);
+            clearTimeout(timeoutId);
             const contentType = res.headers.get("content-type") || "";
             if (res.ok && contentType.includes("application/json")) {
                 updateDataSourceBanner(true, apiUrl);
@@ -3352,11 +3359,286 @@ function resetAnalystFilters() {
 window.resetAnalystFilters = resetAnalystFilters;
 
 let _hotspotsHasLiveLoaded = false;
+let _isHotspotFetchInFlight = false;
+
+function renderHotspotsUI(clusters, silent = false) {
+    if (!clusters || !Array.isArray(clusters)) return;
+
+    const riskVal = document.getElementById("filter-risk")?.value || "all";
+    const dataSignature = `${riskVal}_${analystClusterSearchQuery}_${clusters.length}_${clusters.slice(0, 10).map(c => c.id + ':' + Math.round(c.risk_score || 0)).join(',')}`;
+    if (silent && window._lastHotspotDataSignature === dataSignature) {
+        return;
+    }
+    window._lastHotspotDataSignature = dataSignature;
+
+    const incidentList = document.getElementById("cluster-list-container") || document.getElementById("incident-list");
+
+    if (hotspotLayerGroup) hotspotLayerGroup.clearLayers();
+    if (incidentList) incidentList.innerHTML = "";
+    clusterMap = {};
+    displayClusterMap = {};
+    window.clusterMap = clusterMap;
+    window.displayClusterMap = displayClusterMap;
+    clusterCards = {};
+
+    const countBadge = document.getElementById("cluster-count-badge") || document.getElementById("alert-count");
+    if (countBadge) countBadge.innerText = `${clusters.length} Clusters`;
+    const invQueueBadge = document.getElementById("investigation-queue-count");
+    if (invQueueBadge) invQueueBadge.innerText = `${allClusters ? allClusters.length : clusters.length} Clusters`;
+
+    if (clusters.length === 0) {
+        if (incidentList) {
+            incidentList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 28px; color: #64748b; margin-bottom: 8px;"></i>
+                    <p>No hotspot clusters found matching active filters or search criteria.</p>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetAnalystFilters()" style="margin-top: 8px; font-size: 11px;">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Filters
+                    </button>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    const hotspotMarkers = [];
+
+    clusters.forEach(c => {
+        normalizeClusterObject(c);
+        clusterMap[c.id] = c;
+        const displayNum = c.display_id || c.cluster_number || c.id;
+        displayClusterMap[displayNum] = c;
+        displayClusterMap[`${displayNum}`] = c;
+        displayClusterMap[`C-${displayNum}`] = c;
+        displayClusterMap[`c-${displayNum}`] = c;
+
+        const constituentHotspots = c.hotspots || [];
+        const numConstituents = constituentHotspots.length || 1;
+
+        let maxHotspotRisk = 0;
+        constituentHotspots.forEach(h => {
+            if (h.risk_score && h.risk_score > maxHotspotRisk) maxHotspotRisk = h.risk_score;
+        });
+        if (maxHotspotRisk === 0 && c.risk_score) maxHotspotRisk = c.risk_score;
+
+        let maxRiskClass = "low";
+        let maxTierLabel = "LOW";
+        if (maxHotspotRisk > 70) {
+            maxRiskClass = "high";
+            maxTierLabel = "HIGH";
+        } else if (maxHotspotRisk > 40) {
+            maxRiskClass = "med";
+            maxTierLabel = "MEDIUM";
+        } else {
+            maxRiskClass = "low";
+            maxTierLabel = "LOW";
+        }
+
+        const cLat = Number(c.centroid_lat ?? c.latitude ?? c.lat);
+        const cLon = Number(c.centroid_lon ?? c.longitude ?? c.lon);
+        if (!Number.isFinite(cLat) || !Number.isFinite(cLon)) return;
+
+        const clusterMarker = L.marker([cLat, cLon], {
+            pane: 'thermalHotspotPane',
+            icon: L.divIcon({
+                className: 'hotspot-marker-wrap',
+                html: `
+                    <div class="hotspot-tactical-pin" title="Cluster C-${displayNum} (Neutral Gold #D4A017) | Constituent Hotspots: ${numConstituents}">
+                        <span class="hotspot-dot"></span>
+                        <span class="cluster-id-tag">C-${displayNum}</span>
+                    </div>
+                `,
+                iconSize: [44, 16],
+                iconAnchor: [4, 8]
+            })
+        });
+
+        clusterMarker.riskScore = maxHotspotRisk;
+        clusterMarker.clusterId = c.id;
+        clusterMarker.displayId = displayNum;
+
+        const tempFormatted = c.hotspot_max_temp_c ? `${c.hotspot_max_temp_c}°C` : 'UNAVAILABLE';
+        const distFormatted = (c.dist_to_nearest_industry_km !== null && c.dist_to_nearest_industry_km !== undefined)
+            ? `${c.dist_to_nearest_industry_km} km`
+            : 'None';
+        let siteFormatted = c.nearest_industry_name || 'None';
+        if (siteFormatted.startsWith('NO_NEARBY') || siteFormatted === 'None') {
+            siteFormatted = 'No Nearby Facility';
+        }
+
+        clusterMarker.bindPopup(`
+            <div class="map-tactical-popup">
+                <div class="popup-title-bar" style="background: rgba(212, 160, 23, 0.2); border-bottom: 1px solid rgba(212, 160, 23, 0.4);">
+                    <span><i class="fa-solid fa-fire-flame-curved" style="color: #D4A017;"></i> Cluster C-${displayNum}</span>
+                    <span class="popup-risk-tag" style="background: rgba(212, 160, 23, 0.25); color: #FEF08A; border: 1px solid #D4A017;">${numConstituents} Hotspots</span>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-row"><b>Cluster Identifier:</b> <span class="font-mono" style="color:#D4A017;">C-${displayNum}</span></div>
+                    <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${cLat.toFixed(4)}°N, ${cLon.toFixed(4)}°E</span></div>
+                    <div class="popup-row"><b>Classification:</b> <span>${c.predicted_class}</span></div>
+                    <div class="popup-row"><b>Hotspots in Cluster:</b> <span>${numConstituents}</span></div>
+                    <div class="popup-row"><b>Max Hotspot Risk:</b> <span class="popup-risk-tag ${maxRiskClass}">${maxTierLabel} (${maxHotspotRisk}/100)</span></div>
+                    <div class="popup-row"><b>Max FRP:</b> <span>${c.max_frp} MW</span></div>
+                    <div class="popup-row"><b>Max Temp:</b> <span>${tempFormatted}</span></div>
+                    <div class="popup-row"><b>Industrial Site:</b> <span>${siteFormatted}</span></div>
+                    <div class="popup-row"><b>Industrial Distance:</b> <span>${distFormatted}</span></div>
+                    <div class="popup-row"><b>Satellite:</b> <span style="color:#D4A017;">${c.satellite_status}</span></div>
+                    <div class="popup-actions">
+                        <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" onclick="openSatelliteEvidenceModal(${c.id}, null)">
+                            <i class="fa-solid fa-file-shield"></i> Satellite Verification
+                        </button>
+                        <button type="button" class="btn-popup-3d" data-cluster-id="${c.id}" data-display-id="${displayNum}" data-lat="${cLat}" data-lon="${cLon}" onclick="open3DViewer(${c.id}, ${cLat}, ${cLon})">
+                            <i class="fa-solid fa-cube"></i> 3D View
+                        </button>
+                        <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id})">
+                            <i class="fa-solid fa-circle-info"></i> Full Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `, { className: 'custom-tactical-popup-wrap' });
+
+        clusterMarker.on('click', () => openDrawer(c.id));
+        hotspotMarkers.push(clusterMarker);
+
+        const filterVal = riskVal;
+        constituentHotspots.forEach(h => {
+            const hLat = Number(h.latitude ?? h.lat);
+            const hLon = Number(h.longitude ?? h.lon);
+            if (!Number.isFinite(hLat) || !Number.isFinite(hLon)) return;
+
+            const hScore = h.risk_score !== undefined && h.risk_score !== null ? Number(h.risk_score) : 0;
+            if (filterVal === "high" && !(hScore > 70)) return;
+            if (filterVal === "med" && !(hScore > 40 && hScore <= 70)) return;
+            if (filterVal === "low" && !(hScore <= 40)) return;
+
+            let hRiskClass = "risk-low";
+            let hColor = "#22C55E";
+            let hLevel = "LOW";
+            if (hScore > 70) {
+                hRiskClass = "risk-high";
+                hColor = "#EF4444";
+                hLevel = "HIGH";
+            } else if (hScore > 40) {
+                hRiskClass = "risk-med";
+                hColor = "#F97316";
+                hLevel = "MEDIUM";
+            }
+
+            const hMarker = L.marker([hLat, hLon], {
+                pane: 'thermalHotspotPane',
+                icon: L.divIcon({
+                    className: 'raw-hotspot-marker-wrap',
+                    html: `<div class="raw-hotspot-dot ${hRiskClass}" title="FIRMS Hotspot #${h.id} | Risk: ${hScore}/100 (${hLevel}) | FRP: ${h.frp} MW | Temp: ${h.brightness ? h.brightness + 'K' : 'UNAVAILABLE'} | Conf: ${h.confidence}%"></div>`,
+                    iconSize: [8, 8],
+                    iconAnchor: [4, 4]
+                })
+            });
+
+            hMarker.riskScore = hScore;
+            hMarker.on('click', () => openDrawer(c.id, h.id));
+            hMarker.bindPopup(`
+                <div class="map-tactical-popup">
+                    <div class="popup-title-bar ${hRiskClass.replace('risk-', '')}">
+                        <span><i class="fa-solid fa-fire" style="color: ${hColor};"></i> Hotspot #${h.id}</span>
+                        <span class="popup-risk-tag ${hRiskClass.replace('risk-', '')}">${hLevel} (${hScore}/100)</span>
+                    </div>
+                    <div class="popup-body">
+                        <div class="popup-row"><b>Parent Cluster:</b> <span class="font-mono" style="color: #D4A017;">Cluster C-${displayNum}</span></div>
+                        <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${hLat.toFixed(4)}°N, ${hLon.toFixed(4)}°E</span></div>
+                        <div class="popup-row"><b>Individual Risk Score:</b> <span class="popup-risk-tag ${hRiskClass.replace('risk-', '')}">${hLevel} (${hScore}/100)</span></div>
+                        <div class="popup-row"><b>FRP:</b> <span>${h.frp} MW</span></div>
+                        <div class="popup-row"><b>Brightness Temp:</b> <span>${h.brightness ? h.brightness + ' K' : 'UNAVAILABLE'}</span></div>
+                        <div class="popup-row"><b>Confidence:</b> <span>${h.confidence}%</span></div>
+                        <div class="popup-row"><b>Satellite:</b> <span>${h.satellite || 'VIIRS'}</span></div>
+                        <div class="popup-actions">
+                            <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id}, ${h.id})">
+                                <i class="fa-solid fa-circle-info"></i> Hotspot Details
+                            </button>
+                            <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="openSatelliteEvidenceModal(${c.id}, ${h.id})">
+                                <i class="fa-solid fa-file-shield"></i> Satellite Verification
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `, { className: 'custom-tactical-popup-wrap' });
+
+            hotspotMarkers.push(hMarker);
+        });
+
+        const card = document.createElement("div");
+        card.className = "incident-card";
+        if (selectedClusterId === c.id) {
+            card.classList.add("active");
+        }
+
+        card.id = `card-${c.id}`;
+        card.setAttribute("data-cluster-id", c.id);
+        card.setAttribute("data-display-id", displayNum);
+        card.setAttribute("data-lat", cLat);
+        card.setAttribute("data-lon", cLon);
+
+        card.innerHTML = `
+            <div class="incident-card-header">
+                <div class="inc-title-col">
+                    <div class="inc-cluster-id">
+                        <i class="fa-solid fa-fire-flame-curved inc-cluster-icon" style="color: #D4A017;"></i>
+                        <span>Cluster C-${displayNum}</span>
+                    </div>
+                    <span class="inc-coords font-mono"><i class="fa-solid fa-location-dot"></i> ${cLat.toFixed(3)}°N, ${cLon.toFixed(3)}°E</span>
+                </div>
+                <div class="inc-risk-badge ${maxRiskClass}" title="Max Hotspot Risk: ${maxHotspotRisk}/100 (${maxTierLabel})">
+                    <span class="risk-badge-lbl">RISK: ${maxTierLabel}</span>
+                    <span class="risk-badge-num">${maxHotspotRisk}</span>
+                </div>
+            </div>
+            <div class="inc-card-body">
+                <div class="inc-meta-row">
+                    <span class="inc-class-tag">${c.predicted_class}</span>
+                    <span class="inc-frp-tag font-mono"><i class="fa-solid fa-bolt"></i> ${c.max_frp} MW</span>
+                </div>
+            </div>
+            <div class="inc-industry-row">
+                <div class="inc-industry-site" title="Industrial Site: ${siteFormatted}">
+                    <span class="inc-lbl"><i class="fa-solid fa-industry"></i> Site:</span>
+                    <span class="inc-val site-name-text site-truncate">${siteFormatted}</span>
+                </div>
+                <div class="inc-industry-dist">
+                    <span class="inc-lbl">Dist:</span>
+                    <span class="inc-val font-mono">${distFormatted}</span>
+                </div>
+            </div>
+        `;
+        card.addEventListener("click", () => openDrawer(c.id));
+        clusterCards[c.id] = card;
+        if (incidentList) incidentList.appendChild(card);
+    });
+
+    if (hotspotLayerGroup) {
+        if (typeof hotspotLayerGroup.addLayers === 'function') {
+            hotspotLayerGroup.addLayers(hotspotMarkers);
+        } else {
+            hotspotMarkers.forEach(m => hotspotLayerGroup.addLayer(m));
+        }
+    }
+    window.hotspotMarkers = hotspotMarkers;
+    console.log(`[AgniSanket SWR] Map Markers Rendered: ${hotspotMarkers.length} (Tactical Centroid Pins + Risk Dots)`);
+
+    if (is3DMode) {
+        render3DHotspots();
+    }
+
+    renderSatelliteViewData();
+    renderMLViewData();
+    renderAlertsViewData();
+    renderReportsViewData();
+}
 
 async function loadHotspotClusters(silent = false) {
     const incidentList = document.getElementById("cluster-list-container") || document.getElementById("incident-list");
 
-    // SWR Hydration: Hydrate from valid cached hotspots immediately if live API response has not arrived yet
+    // STEP 1: Immediate SWR Hydration & Render from valid local cache
+    let hasRenderedFromCache = false;
     if (!_hotspotsHasLiveLoaded && (!allClusters || allClusters.length === 0)) {
         const cached = getCachedApiData("agnisanket_cache_hotspots");
         if (cached && cached.data && Array.isArray(cached.data) && cached.data.length > 0) {
@@ -3375,16 +3657,24 @@ async function loadHotspotClusters(silent = false) {
             if (elStatHighRisk) elStatHighRisk.innerText = highRiskCount;
             const invHighBadge = document.getElementById("investigation-high-risk-count");
             if (invHighBadge) invHighBadge.innerText = `${highRiskCount} Anomalies`;
+
+            renderHotspotsUI(getFilteredAnalystClusters(), silent);
+            hasRenderedFromCache = true;
         }
     }
 
-    if (!silent && incidentList && (!allClusters || allClusters.length === 0)) {
+    // Show spinner ONLY if no cached cluster data is available to render
+    if (!silent && !hasRenderedFromCache && incidentList && (!allClusters || allClusters.length === 0)) {
         incidentList.innerHTML = `<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Fetching clusters...</div>`;
     }
 
+    if (_isHotspotFetchInFlight) return;
+    _isHotspotFetchInFlight = true;
+
     try {
-        const clustersData = await fetchWithFallback(`${API_BASE}/api/hotspots?risk_threshold=0.0`, "data/clusters.json");
-        if (!clustersData) return;
+        const fetchOpts = hasRenderedFromCache ? { timeout: 12000 } : {};
+        const clustersData = await fetchWithFallback(`${API_BASE}/api/hotspots?risk_threshold=0.0`, "data/clusters.json", fetchOpts);
+        if (!clustersData || !Array.isArray(clustersData)) return;
 
         _hotspotsHasLiveLoaded = true;
 
@@ -3393,15 +3683,13 @@ async function loadHotspotClusters(silent = false) {
         window.allClusters = allClusters;
 
         const totalNestedHotspots = allClusters.reduce((acc, c) => acc + (c.hotspots ? c.hotspots.length : 0), 0);
-        console.log(`[AgniSanket Frontend] Clusters Received: ${allClusters.length} | Nested Hotspots Received: ${totalNestedHotspots}`);
+        console.log(`[AgniSanket SWR] Live Clusters Received: ${allClusters.length} | Nested Hotspots: ${totalNestedHotspots}`);
 
-        // Update Total Cluster Counts
         const elStatClusters = document.getElementById("stat-clusters");
         if (elStatClusters) elStatClusters.innerText = allClusters.length;
         const elStatTotalClusters = document.getElementById("stat-total-clusters");
         if (elStatTotalClusters) elStatTotalClusters.innerText = allClusters.length;
 
-        // Update Strict High-Risk Count across all dashboard locations
         const highRiskClusters = allClusters.filter(isClusterHighRisk);
         const highRiskCount = highRiskClusters.length;
         const elStatHighRisk = document.getElementById("stat-high-risk");
@@ -3409,396 +3697,120 @@ async function loadHotspotClusters(silent = false) {
         const invHighBadge = document.getElementById("investigation-high-risk-count");
         if (invHighBadge) invHighBadge.innerText = `${highRiskCount} Anomalies`;
 
-        // Automated Critical Threat Escalation & Audio Notification Trigger
         processCriticalAlertEscalation(allClusters);
-
-        // Booming Critical Alert Trigger for Analyst Module
         if (typeof checkAndTriggerBoomingAlert === "function") {
             checkAndTriggerBoomingAlert(allClusters, "ANALYST");
         }
 
-        const clusters = getFilteredAnalystClusters();
+        renderHotspotsUI(getFilteredAnalystClusters(), true);
+    } catch (err) {
+        console.warn("[AgniSanket SWR] Live revalidation delayed/failed, operating on cached UI:", err);
+    } finally {
+        _isHotspotFetchInFlight = false;
+    }
+}
 
-        // Check if data signature actually changed to avoid unnecessary DOM tear down
-        const riskVal = document.getElementById("filter-risk")?.value || "all";
-        const dataSignature = `${riskVal}_${analystClusterSearchQuery}_${clusters.length}_${clusters.slice(0, 10).map(c => c.id + ':' + Math.round(c.risk_score || 0)).join(',')}`;
-        if (silent && window._lastHotspotDataSignature === dataSignature) {
-            return;
-        }
-        window._lastHotspotDataSignature = dataSignature;
+function renderFacilitiesUI(facs) {
+    if (!facs || !Array.isArray(facs) || !facilityLayerGroup) return;
 
-        if (hotspotLayerGroup) hotspotLayerGroup.clearLayers();
-        if (incidentList) incidentList.innerHTML = "";
-        clusterMap = {};
-        displayClusterMap = {};
-        window.clusterMap = clusterMap;
-        window.displayClusterMap = displayClusterMap;
-        clusterCards = {};
+    facilityLayerGroup.clearLayers();
 
-        const countBadge = document.getElementById("cluster-count-badge") || document.getElementById("alert-count");
-        if (countBadge) countBadge.innerText = `${clusters.length} Clusters`;
-        const invQueueBadge = document.getElementById("investigation-queue-count");
-        if (invQueueBadge) invQueueBadge.innerText = `${allClusters.length} Clusters`;
-
-        if (clusters.length === 0) {
-            incidentList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-magnifying-glass" style="font-size: 28px; color: #64748b; margin-bottom: 8px;"></i>
-                    <p>No hotspot clusters found matching active filters or search criteria.</p>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetAnalystFilters()" style="margin-top: 8px; font-size: 11px;">
-                        <i class="fa-solid fa-rotate-left"></i> Reset Filters
-                    </button>
-                </div>
-            `;
-            return;
-        }
-
-        const hotspotMarkers = [];
-
-        clusters.forEach(c => {
-            normalizeClusterObject(c);
-            clusterMap[c.id] = c;
-            const displayNum = c.display_id || c.cluster_number || c.id;
-            displayClusterMap[displayNum] = c;
-            displayClusterMap[`${displayNum}`] = c;
-            displayClusterMap[`C-${displayNum}`] = c;
-            displayClusterMap[`c-${displayNum}`] = c;
-
-            const constituentHotspots = c.hotspots || [];
-            const numConstituents = constituentHotspots.length || 1;
-
-            // Highest hotspot risk in cluster
-            let maxHotspotRisk = 0;
-            constituentHotspots.forEach(h => {
-                if (h.risk_score && h.risk_score > maxHotspotRisk) maxHotspotRisk = h.risk_score;
-            });
-            if (maxHotspotRisk === 0 && c.risk_score) maxHotspotRisk = c.risk_score;
-
-            let maxRiskClass = "low";
-            let maxTierLabel = "LOW";
-            if (maxHotspotRisk > 70) {
-                maxRiskClass = "high";
-                maxTierLabel = "HIGH";
-            } else if (maxHotspotRisk > 40) {
-                maxRiskClass = "med";
-                maxTierLabel = "MEDIUM";
-            } else {
-                maxRiskClass = "low";
-                maxTierLabel = "LOW";
-            }
-
-            // 1. DBSCAN Cluster Centroid Pin - ALWAYS Neutral Golden-Flame #D4A017 (Never Indicates Risk)
-            const cLat = Number(c.centroid_lat ?? c.latitude ?? c.lat);
-            const cLon = Number(c.centroid_lon ?? c.longitude ?? c.lon);
-            if (!Number.isFinite(cLat) || !Number.isFinite(cLon)) return;
-
-            const clusterMarker = L.marker([cLat, cLon], {
-                pane: 'thermalHotspotPane',
-                icon: L.divIcon({
-                    className: 'hotspot-marker-wrap',
-                    html: `
-                        <div class="hotspot-tactical-pin" title="Cluster C-${displayNum} (Neutral Gold #D4A017) | Constituent Hotspots: ${numConstituents}">
-                            <span class="hotspot-dot"></span>
-                            <span class="cluster-id-tag">C-${displayNum}</span>
-                        </div>
-                    `,
-                    iconSize: [44, 16],
-                    iconAnchor: [4, 8]
-                })
-            });
-
-            clusterMarker.riskScore = maxHotspotRisk;
-            clusterMarker.clusterId = c.id;
-            clusterMarker.displayId = displayNum;
-
-            const tempFormatted = c.hotspot_max_temp_c ? `${c.hotspot_max_temp_c}°C` : 'UNAVAILABLE';
-            const distFormatted = (c.dist_to_nearest_industry_km !== null && c.dist_to_nearest_industry_km !== undefined)
-                ? `${c.dist_to_nearest_industry_km} km`
-                : 'None';
-            let siteFormatted = c.nearest_industry_name || 'None';
-            if (siteFormatted.startsWith('NO_NEARBY') || siteFormatted === 'None') {
-                siteFormatted = 'No Nearby Facility';
-            }
-
-            clusterMarker.bindPopup(`
-                <div class="map-tactical-popup">
-                    <div class="popup-title-bar" style="background: rgba(212, 160, 23, 0.2); border-bottom: 1px solid rgba(212, 160, 23, 0.4);">
-                        <span><i class="fa-solid fa-fire-flame-curved" style="color: #D4A017;"></i> Cluster C-${displayNum}</span>
-                        <span class="popup-risk-tag" style="background: rgba(212, 160, 23, 0.25); color: #FEF08A; border: 1px solid #D4A017;">${numConstituents} Hotspots</span>
-                    </div>
-                    <div class="popup-body">
-                        <div class="popup-row"><b>Cluster Identifier:</b> <span class="font-mono" style="color:#D4A017;">C-${displayNum}</span></div>
-                        <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${cLat.toFixed(4)}°N, ${cLon.toFixed(4)}°E</span></div>
-                        <div class="popup-row"><b>Classification:</b> <span>${c.predicted_class}</span></div>
-                        <div class="popup-row"><b>Hotspots in Cluster:</b> <span>${numConstituents}</span></div>
-                        <div class="popup-row"><b>Max Hotspot Risk:</b> <span class="popup-risk-tag ${maxRiskClass}">${maxTierLabel} (${maxHotspotRisk}/100)</span></div>
-                        <div class="popup-row"><b>Max FRP:</b> <span>${c.max_frp} MW</span></div>
-                        <div class="popup-row"><b>Max Temp:</b> <span>${tempFormatted}</span></div>
-                        <div class="popup-row"><b>Industrial Site:</b> <span>${siteFormatted}</span></div>
-                        <div class="popup-row"><b>Industrial Distance:</b> <span>${distFormatted}</span></div>
-                        <div class="popup-row"><b>Satellite:</b> <span style="color:#D4A017;">${c.satellite_status}</span></div>
-                        <div class="popup-actions">
-                            <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" onclick="openSatelliteEvidenceModal(${c.id}, null)">
-                                <i class="fa-solid fa-file-shield"></i> Satellite Verification
-                            </button>
-                            <button type="button" class="btn-popup-3d" data-cluster-id="${c.id}" data-display-id="${displayNum}" data-lat="${cLat}" data-lon="${cLon}" onclick="open3DViewer(${c.id}, ${cLat}, ${cLon})">
-                                <i class="fa-solid fa-cube"></i> 3D View
-                            </button>
-                            <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id})">
-                                <i class="fa-solid fa-circle-info"></i> Full Details
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `, { className: 'custom-tactical-popup-wrap' });
-
-            clusterMarker.on('click', () => openDrawer(c.id));
-            hotspotMarkers.push(clusterMarker);
-
-            // 2. Individual Constituent FIRMS Hotspots - Rendered in their genuine calculated risk colours
-            const filterVal = riskVal;
-            constituentHotspots.forEach(h => {
-                const hLat = Number(h.latitude ?? h.lat);
-                const hLon = Number(h.longitude ?? h.lon);
-                if (!Number.isFinite(hLat) || !Number.isFinite(hLon)) return;
-
-                const hScore = h.risk_score !== undefined && h.risk_score !== null ? Number(h.risk_score) : 0;
-                // Filter individual hotspots based on the active risk filter
-                if (filterVal === "high" && !(hScore > 70)) return;
-                if (filterVal === "med" && !(hScore > 40 && hScore <= 70)) return;
-                if (filterVal === "low" && !(hScore <= 40)) return;
-
-                let hRiskClass = "risk-low";
-                let hColor = "#22C55E";
-                let hLevel = "LOW";
-                if (hScore > 70) {
-                    hRiskClass = "risk-high";
-                    hColor = "#EF4444";
-                    hLevel = "HIGH";
-                } else if (hScore > 40) {
-                    hRiskClass = "risk-med";
-                    hColor = "#F97316";
-                    hLevel = "MEDIUM";
-                }
-
-                const hMarker = L.marker([hLat, hLon], {
-                    pane: 'thermalHotspotPane',
-                    icon: L.divIcon({
-                        className: 'raw-hotspot-marker-wrap',
-                        html: `<div class="raw-hotspot-dot ${hRiskClass}" title="FIRMS Hotspot #${h.id} | Risk: ${hScore}/100 (${hLevel}) | FRP: ${h.frp} MW | Temp: ${h.brightness ? h.brightness + 'K' : 'UNAVAILABLE'} | Conf: ${h.confidence}%"></div>`,
-                        iconSize: [8, 8],
-                        iconAnchor: [4, 4]
-                    })
-                });
-
-                hMarker.riskScore = hScore;
-                hMarker.on('click', () => openDrawer(c.id, h.id));
-                hMarker.bindPopup(`
-                    <div class="map-tactical-popup">
-                        <div class="popup-title-bar ${hRiskClass.replace('risk-', '')}">
-                            <span><i class="fa-solid fa-fire" style="color: ${hColor};"></i> Hotspot #${h.id}</span>
-                            <span class="popup-risk-tag ${hRiskClass.replace('risk-', '')}">${hLevel} (${hScore}/100)</span>
-                        </div>
-                        <div class="popup-body">
-                            <div class="popup-row"><b>Parent Cluster:</b> <span class="font-mono" style="color: #D4A017;">Cluster C-${displayNum}</span></div>
-                            <div class="popup-row"><b>Coordinates:</b> <span class="font-mono">${hLat.toFixed(4)}°N, ${hLon.toFixed(4)}°E</span></div>
-                            <div class="popup-row"><b>Individual Risk Score:</b> <span class="popup-risk-tag ${hRiskClass.replace('risk-', '')}">${hLevel} (${hScore}/100)</span></div>
-                            <div class="popup-row"><b>FRP:</b> <span>${h.frp} MW</span></div>
-                            <div class="popup-row"><b>Brightness Temp:</b> <span>${h.brightness ? h.brightness + ' K' : 'UNAVAILABLE'}</span></div>
-                            <div class="popup-row"><b>Confidence:</b> <span>${h.confidence}%</span></div>
-                            <div class="popup-row"><b>Satellite:</b> <span>${h.satellite || 'VIIRS'}</span></div>
-                            <div class="popup-actions">
-                                <button type="button" class="btn-popup-inspect" onclick="openDrawer(${c.id}, ${h.id})">
-                                    <i class="fa-solid fa-circle-info"></i> Hotspot Details
-                                </button>
-                                <button type="button" class="btn-popup-evidence" data-cluster-id="${c.id}" data-hotspot-id="${h.id}" onclick="openSatelliteEvidenceModal(${c.id}, ${h.id})">
-                                    <i class="fa-solid fa-file-shield"></i> Satellite Verification
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `, { className: 'custom-tactical-popup-wrap' });
-
-                hotspotMarkers.push(hMarker);
-            });
-
-            // 3. Create Analyst Sidebar Incident Card
-            const card = document.createElement("div");
-            card.className = "incident-card";
-            if (selectedClusterId === c.id) {
-                card.classList.add("active");
-            }
-
-            card.id = `card-${c.id}`;
-            card.setAttribute("data-cluster-id", c.id);
-            card.setAttribute("data-display-id", displayNum);
-            card.setAttribute("data-lat", cLat);
-            card.setAttribute("data-lon", cLon);
-
-            card.innerHTML = `
-                <div class="incident-card-header">
-                    <div class="inc-title-col">
-                        <div class="inc-cluster-id">
-                            <i class="fa-solid fa-fire-flame-curved inc-cluster-icon" style="color: #D4A017;"></i>
-                            <span>Cluster C-${displayNum}</span>
-                        </div>
-                        <span class="inc-coords font-mono"><i class="fa-solid fa-location-dot"></i> ${cLat.toFixed(3)}°N, ${cLon.toFixed(3)}°E</span>
-                    </div>
-                    <div class="inc-risk-badge ${maxRiskClass}" title="Max Hotspot Risk: ${maxHotspotRisk}/100 (${maxTierLabel})">
-                        <span class="risk-badge-lbl">RISK: ${maxTierLabel}</span>
-                        <span class="risk-badge-num">${maxHotspotRisk}</span>
-                    </div>
-                </div>
-                <div class="inc-class-sat-row">
-                    <span class="inc-class-val highlight ${maxRiskClass}" title="Classification: ${c.predicted_class}">
-                        <i class="fa-solid fa-tag"></i> ${c.predicted_class}
-                    </span>
-                    <span class="inc-sat-val" title="Hotspots in Cluster: ${numConstituents}">
-                        <i class="fa-solid fa-fire"></i> ${numConstituents} Hotspot${numConstituents > 1 ? 's' : ''}
-                    </span>
-                </div>
-                <div class="inc-telemetry-row">
-                    <div class="inc-metric-pair">
-                        <span class="inc-lbl">Max FRP:</span>
-                        <span class="inc-val font-mono">${c.max_frp} MW</span>
-                    </div>
-                    <span class="inc-divider">·</span>
-                    <div class="inc-metric-pair">
-                        <span class="inc-lbl">Max Temp:</span>
-                        <span class="inc-val font-mono">${tempFormatted}</span>
-                    </div>
-                </div>
-                <div class="inc-industry-row">
-                    <div class="inc-industry-site" title="Industrial Site: ${siteFormatted}">
-                        <span class="inc-lbl"><i class="fa-solid fa-industry"></i> Site:</span>
-                        <span class="inc-val site-name-text site-truncate">${siteFormatted}</span>
-                    </div>
-                    <div class="inc-industry-dist">
-                        <span class="inc-lbl">Dist:</span>
-                        <span class="inc-val font-mono">${distFormatted}</span>
-                    </div>
-                </div>
-            `;
-            card.addEventListener("click", () => openDrawer(c.id));
-            clusterCards[c.id] = card;
-            incidentList.appendChild(card);
+    const markers = [];
+    facs.forEach(f => {
+        const safeName = (f.name || 'Industrial Facility').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+        const marker = L.marker([f.latitude, f.longitude], {
+            pane: 'osmFacilityPane',
+            icon: L.divIcon({
+                className: 'osm-facility-div-wrap',
+                html: `<div class="osm-factory-marker" data-osm-id="${f.osm_id || ''}"><i class="fa-solid fa-industry"></i></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            })
         });
 
-        if (hotspotLayerGroup) {
-            if (typeof hotspotLayerGroup.addLayers === 'function') {
-                hotspotLayerGroup.addLayers(hotspotMarkers);
-            } else {
-                hotspotMarkers.forEach(m => hotspotLayerGroup.addLayer(m));
-            }
-        }
-        window.hotspotMarkers = hotspotMarkers;
-        console.log(`[AgniSanket Frontend] Map Markers Rendered: ${hotspotMarkers.length} (Tactical Centroid Pins + Risk Dots)`);
+        marker.bindTooltip(`
+            <div class="osm-facility-hover-tip">
+                <div class="tip-type">Industrial Facility</div>
+                <div class="tip-name">${safeName}</div>
+            </div>
+        `, {
+            direction: 'top',
+            offset: [0, -6],
+            className: 'custom-facility-tooltip',
+            opacity: 1
+        });
 
-        if (is3DMode) {
-            render3DHotspots();
-        }
+        marker.bindPopup(`
+            <div class="map-tactical-popup">
+                <div class="popup-title-bar osm">
+                    <span><i class="fa-solid fa-industry"></i> Industrial Facility</span>
+                    <span class="popup-osm-tag">OSM Verified</span>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-row"><b>Facility:</b> <span>${safeName}</span></div>
+                    <div class="popup-row"><b>Type:</b> <span>${f.facility_type || 'Industrial Area'}</span></div>
+                    <div class="popup-row"><b>OSM ID:</b> <span class="font-mono">${f.osm_id || 'N/A'}</span></div>
+                    <div class="popup-row"><b>Location:</b> <span class="font-mono">${f.latitude.toFixed(3)}°N, ${f.longitude.toFixed(3)}°E</span></div>
+                </div>
+            </div>
+        `, { className: 'custom-tactical-popup-wrap' });
 
-        // Synchronize auxiliary route view data
-        renderSatelliteViewData();
-        renderMLViewData();
-        renderAlertsViewData();
-        renderReportsViewData();
+        marker.on('click', () => {
+            document.querySelectorAll('.osm-factory-marker.selected').forEach(el => el.classList.remove('selected'));
+            const el = marker.getElement()?.querySelector('.osm-factory-marker');
+            if (el) el.classList.add('selected');
+        });
 
-    } catch (err) {
-        console.error("Error loading hotspots:", err);
+        marker.on('popupclose', () => {
+            const el = marker.getElement()?.querySelector('.osm-factory-marker');
+            if (el) el.classList.remove('selected');
+        });
+
+        markers.push(marker);
+    });
+
+    if (typeof facilityLayerGroup.addLayers === 'function') {
+        facilityLayerGroup.addLayers(markers);
+    } else {
+        markers.forEach(m => facilityLayerGroup.addLayer(m));
+    }
+
+    if (is3DMode) {
+        render3DFacilities();
     }
 }
 
 let _facilitiesHasLiveLoaded = false;
+let _isFacilitiesFetchInFlight = false;
 
 async function loadIndustrialFacilities(force = false) {
     if (cachedFacilities && cachedFacilities.length > 0 && !force) {
         return;
     }
 
-    // SWR Hydration: Hydrate from valid cached facilities immediately if live API response has not arrived yet
+    // STEP 1: Immediate SWR Cache Hydration & Render
     if (!_facilitiesHasLiveLoaded && (!cachedFacilities || cachedFacilities.length === 0)) {
         const cached = getCachedApiData("agnisanket_cache_facilities");
         if (cached && cached.data && Array.isArray(cached.data) && cached.data.length > 0) {
             cachedFacilities = cached.data;
+            renderFacilitiesUI(cachedFacilities);
         }
     }
 
+    if (_isFacilitiesFetchInFlight) return;
+    _isFacilitiesFetchInFlight = true;
+
     try {
-        const facs = await fetchWithFallback(`${API_BASE}/api/facilities`, "data/facilities.json");
-        if (!facs) return;
-
-        _facilitiesHasLiveLoaded = true;
-        cachedFacilities = facs;
-        facilityLayerGroup.clearLayers();
-
-        const markers = [];
-        facs.forEach(f => {
-            const safeName = (f.name || 'Industrial Facility').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
-            const marker = L.marker([f.latitude, f.longitude], {
-                pane: 'osmFacilityPane',
-                icon: L.divIcon({
-                    className: 'osm-facility-div-wrap',
-                    html: `<div class="osm-factory-marker" data-osm-id="${f.osm_id || ''}"><i class="fa-solid fa-industry"></i></div>`,
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                })
-            });
-
-            // Hover tooltip: shows "Industrial Facility" + facility name on hover
-            marker.bindTooltip(`
-                <div class="osm-facility-hover-tip">
-                    <div class="tip-type">Industrial Facility</div>
-                    <div class="tip-name">${safeName}</div>
-                </div>
-            `, {
-                direction: 'top',
-                offset: [0, -6],
-                className: 'custom-facility-tooltip',
-                opacity: 1
-            });
-
-            marker.bindPopup(`
-                <div class="map-tactical-popup">
-                    <div class="popup-title-bar osm">
-                        <span><i class="fa-solid fa-industry"></i> Industrial Facility</span>
-                        <span class="popup-osm-tag">OSM Verified</span>
-                    </div>
-                    <div class="popup-body">
-                        <div class="popup-row"><b>Facility:</b> <span>${safeName}</span></div>
-                        <div class="popup-row"><b>Type:</b> <span>${f.facility_type || 'Industrial Area'}</span></div>
-                        <div class="popup-row"><b>OSM ID:</b> <span class="font-mono">${f.osm_id || 'N/A'}</span></div>
-                        <div class="popup-row"><b>Location:</b> <span class="font-mono">${f.latitude.toFixed(3)}°N, ${f.longitude.toFixed(3)}°E</span></div>
-                    </div>
-                </div>
-            `, { className: 'custom-tactical-popup-wrap' });
-
-            // Selected facility subtle outline highlight
-            marker.on('click', () => {
-                document.querySelectorAll('.osm-factory-marker.selected').forEach(el => el.classList.remove('selected'));
-                const el = marker.getElement()?.querySelector('.osm-factory-marker');
-                if (el) el.classList.add('selected');
-            });
-
-            marker.on('popupclose', () => {
-                const el = marker.getElement()?.querySelector('.osm-factory-marker');
-                if (el) el.classList.remove('selected');
-            });
-
-            markers.push(marker);
-        });
-
-        if (typeof facilityLayerGroup.addLayers === 'function') {
-            facilityLayerGroup.addLayers(markers);
-        } else {
-            markers.forEach(m => facilityLayerGroup.addLayer(m));
-        }
-
-        if (is3DMode) {
-            render3DFacilities();
+        const facs = await fetchWithFallback(`${API_BASE}/api/facilities`, "data/facilities.json", { timeout: 12000 });
+        if (facs && Array.isArray(facs)) {
+            _facilitiesHasLiveLoaded = true;
+            cachedFacilities = facs;
+            renderFacilitiesUI(cachedFacilities);
         }
     } catch (err) {
-        console.error("Error loading facilities:", err);
+        console.warn("[AgniSanket SWR] Facilities background revalidation delayed/failed:", err);
+    } finally {
+        _isFacilitiesFetchInFlight = false;
     }
 }
 

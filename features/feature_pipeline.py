@@ -1,8 +1,5 @@
 import gc
-import numpy as np
-import pandas as pd
 from datetime import datetime
-from sklearn.cluster import DBSCAN
 from sqlalchemy.orm import Session
 from db.database import SessionLocal, init_db
 from db.models import RawHotspot, HotspotCluster, SatelliteObservation, IndustrialFacility
@@ -45,6 +42,10 @@ def process_hotspot_features(db: Session, kms_per_radian: float = 6371.0, eps_km
         }
         for r in raw_tuples
     ]
+
+    import numpy as np
+    import pandas as pd
+    from sklearn.cluster import DBSCAN
 
     df = pd.DataFrame(data)
     coords_rad = np.radians(df[["latitude", "longitude"]].values)

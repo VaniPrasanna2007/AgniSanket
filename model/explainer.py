@@ -1,7 +1,4 @@
 import os
-import joblib
-import shap
-import pandas as pd
 from model.classifier import MODEL_PATH, FEATURE_NAMES
 
 EXPLAINER_PATH = "model/artifacts/explainer.pkl"
@@ -16,6 +13,9 @@ def generate_shap_or_evidence_explanation(cluster_features: dict) -> dict:
     if os.path.exists(MODEL_PATH) and os.path.exists(EXPLAINER_PATH):
         try:
             import numpy as np
+            import joblib
+            import shap
+            import pandas as pd
             explainer = joblib.load(EXPLAINER_PATH)
             feature_vector = [float(cluster_features.get(f, 0.0) or 0.0) for f in FEATURE_NAMES]
             shap_vals = explainer.shap_values(np.array([feature_vector]))

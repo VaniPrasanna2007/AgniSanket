@@ -1,11 +1,5 @@
 import os
-import joblib
-import shap
-import pandas as pd
 from datetime import datetime
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix
 from sqlalchemy.orm import Session
 from db.database import SessionLocal, init_db
 from db.models import FeedbackLog, HotspotCluster, ModelVersion
@@ -29,6 +23,13 @@ def train_model_from_human_feedback(db: Session, min_samples_required: int = 5) 
             "message": f"ML model training aborted: Insufficient human-verified training samples (found {sample_count}, minimum {min_samples_required} required). Please submit human verification labels via the dashboard first.",
             "verified_samples_found": sample_count
         }
+
+    import joblib
+    import shap
+    import pandas as pd
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix
 
     print(f"Loading {sample_count} human-verified feedback samples from database...")
 

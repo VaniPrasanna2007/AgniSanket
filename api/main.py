@@ -11,16 +11,13 @@ from fastapi import FastAPI, Depends, HTTPException, Body, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload, defer
 from pydantic import BaseModel, Field
 
 from db.database import SessionLocal, init_db, engine
 from db.models import RawHotspot, HotspotCluster, IndustrialFacility, FeedbackLog, SatelliteObservation, ModelVersion, User
-from ingestion.firms_ingestion import get_real_firms_data, ingest_raw_hotspots
-from features.feature_pipeline import process_hotspot_features
-from model.explainer import generate_shap_or_evidence_explanation
-from model.train import train_model_from_human_feedback
 from api.alerts import send_high_risk_alert
 from api.auth_utils import (
     hash_password, verify_password, create_access_token,
@@ -79,7 +76,16 @@ def get_cached_response(key: str, ttl: int = 15):
             return Response(content=content, media_type=content_type)
     return None
 
+MAX_CACHE_ENTRIES = 10
+
 def set_cached_response(key: str, content: bytes, content_type: str = "application/json"):
+    global _api_response_cache
+    if len(_api_response_cache) >= MAX_CACHE_ENTRIES and key not in _api_response_cache:
+        try:
+            oldest_key = next(iter(_api_response_cache))
+            del _api_response_cache[oldest_key]
+        except Exception:
+            pass
     _api_response_cache[key] = (time.time(), content, content_type)
 
 @app.middleware("http")
@@ -93,12 +99,16 @@ async def add_no_cache_headers(request: Request, call_next):
     return response
 
 is_scan_running = False
+AGNI_ENABLE_BACKGROUND_SCAN = os.getenv("AGNI_ENABLE_BACKGROUND_SCAN", "false").lower() in ("true", "1", "yes")
 
 def run_pipeline_scan_worker():
     global is_scan_running
     if is_scan_running:
         return {"status": "busy", "message": "Pipeline scan already in progress."}
     
+    from ingestion.firms_ingestion import get_real_firms_data, ingest_raw_hotspots
+    from features.feature_pipeline import process_hotspot_features
+
     is_scan_running = True
     db = SessionLocal()
     try:
@@ -136,11 +146,11 @@ def run_pipeline_scan_worker():
         gc.collect()
 
 async def periodic_nasa_firms_scan():
-    """Background task: automatically refreshes NASA FIRMS data every 3 minutes (180s) without blocking ASGI loop"""
-    print("[AUTO-REFRESH SETUP] 3-minute periodic NASA FIRMS pipeline worker initialized.")
+    """Background task: automatically refreshes NASA FIRMS data if enabled without blocking ASGI loop"""
+    print("[AUTO-REFRESH SETUP] Periodic NASA FIRMS pipeline worker initialized.")
     while True:
         await asyncio.sleep(180)  # Wait 3 minutes
-        print("\n[LIVE AUTO-REFRESH] Running scheduled 3-minute NASA FIRMS pipeline refresh...")
+        print("\n[LIVE AUTO-REFRESH] Running scheduled NASA FIRMS pipeline refresh...")
         try:
             res = await asyncio.to_thread(run_pipeline_scan_worker)
             print(f"[LIVE AUTO-REFRESH] Scan finished: {res}")
@@ -149,9 +159,14 @@ async def periodic_nasa_firms_scan():
 
 @app.on_event("startup")
 async def start_background_tasks():
-    asyncio.create_task(periodic_nasa_firms_scan())
+    if AGNI_ENABLE_BACKGROUND_SCAN:
+        print("[AUTO-REFRESH SETUP] Enabling background scan worker (AGNI_ENABLE_BACKGROUND_SCAN=true)...")
+        asyncio.create_task(periodic_nasa_firms_scan())
+    else:
+        print("[AUTO-REFRESH SETUP] Background periodic heavy scan is DISABLED on web worker (AGNI_ENABLE_BACKGROUND_SCAN=false). On-demand /api/scan remains available.")
 
 
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1981,9 +1996,7 @@ def list_clusters(
     if cached_resp:
         return cached_resp
 
-    query = db.query(HotspotCluster).options(
-        selectinload(HotspotCluster.hotspots).defer(RawHotspot.raw_json)
-    )
+    query = db.query(HotspotCluster).options(defer(HotspotCluster.evidence_json))
 
     if risk_threshold > 0.0:
         query = query.filter(HotspotCluster.risk_score >= risk_threshold)
@@ -2021,28 +2034,57 @@ def list_clusters(
 
     clusters = query.all()
 
-    # Pre-build display ID mapping using tuple query
-    id_to_display, _ = get_display_id_map(db)
+    # Pre-build display ID mapping
+    if not (limit or offset or min_lat or max_lat or min_lon or max_lon or start_date or end_date or risk_threshold > 0.0):
+        id_to_display = {c.id: idx + 1 for idx, c in enumerate(clusters)}
+    else:
+        id_to_display, _ = get_display_id_map(db)
+
+    # Efficiently load child hotspots using lightweight tuple projection to avoid ORM object graph memory overhead
+    cluster_ids = [c.id for c in clusters]
+    hotspots_by_cluster = {}
+    if cluster_ids:
+        raw_query = db.query(
+            RawHotspot.id,
+            RawHotspot.cluster_id,
+            RawHotspot.latitude,
+            RawHotspot.longitude,
+            RawHotspot.frp,
+            RawHotspot.brightness,
+            RawHotspot.confidence,
+            RawHotspot.acquisition_date,
+            RawHotspot.satellite,
+            RawHotspot.risk_score,
+            RawHotspot.risk_level
+        )
+        if limit is not None or offset is not None or risk_threshold > 0.0 or min_lat is not None or max_lat is not None or min_lon is not None or max_lon is not None:
+            raw_tuples = raw_query.filter(RawHotspot.cluster_id.in_(cluster_ids)).all()
+        else:
+            raw_tuples = raw_query.filter(RawHotspot.cluster_id.isnot(None)).all()
+
+        for h_id, c_id, lat, lon, frp, br, conf, acq, sat, r_score, r_lvl in raw_tuples:
+            r_val = round(r_score, 1) if r_score is not None else 0.0
+            h_dict = {
+                "id": h_id,
+                "latitude": lat,
+                "longitude": lon,
+                "frp": round(frp, 1) if frp is not None else 0.0,
+                "brightness": round(br, 1) if br is not None else 0.0,
+                "confidence": round(conf, 1) if conf is not None else 0.0,
+                "acquisition_date": acq.isoformat() if acq else None,
+                "satellite": sat,
+                "risk_score": r_val,
+                "risk_level": r_lvl or "LOW",
+                "color": "#EF4444" if r_val > 70 else ("#F97316" if r_val > 40 else "#22C55E")
+            }
+            if c_id not in hotspots_by_cluster:
+                hotspots_by_cluster[c_id] = []
+            hotspots_by_cluster[c_id].append(h_dict)
 
     results = []
     for c in clusters:
         disp_id = id_to_display.get(c.id, c.id)
-        hotspot_list = [
-            {
-                "id": h.id,
-                "latitude": h.latitude,
-                "longitude": h.longitude,
-                "frp": round(h.frp, 1) if h.frp is not None else 0.0,
-                "brightness": round(h.brightness, 1) if h.brightness is not None else 0.0,
-                "confidence": round(h.confidence, 1) if h.confidence is not None else 0.0,
-                "acquisition_date": h.acquisition_date.isoformat() if h.acquisition_date else None,
-                "satellite": h.satellite,
-                "risk_score": round(h.risk_score, 1) if h.risk_score is not None else 0.0,
-                "risk_level": h.risk_level or "LOW",
-                "color": "#EF4444" if (h.risk_score or 0) > 70 else ("#F97316" if (h.risk_score or 0) > 40 else "#22C55E")
-            }
-            for h in c.hotspots
-        ]
+        hotspot_list = hotspots_by_cluster.get(c.id, [])
         results.append({
             "id": c.id,
             "display_id": disp_id,
@@ -2097,7 +2139,7 @@ def list_clusters(
             "acknowledged_by": c.acknowledged_by,
             "acknowledged_at": c.acknowledged_at.isoformat() if c.acknowledged_at else None,
             "created_at": c.created_at.isoformat() if c.created_at else None,
-            "evidence": c.evidence_json,
+            "evidence": None,
             "multi_satellite_verification": {
                 "landsat_scene_id": c.landsat_scene_id,
                 "sentinel2_scene_id": c.sentinel2_scene_id,
@@ -2155,6 +2197,7 @@ def get_cluster_detail(cluster_id: int, db: Session = Depends(get_db)):
         "satellite_status": cluster.satellite_status
     }
 
+    from model.explainer import generate_shap_or_evidence_explanation
     explanations = generate_shap_or_evidence_explanation(feature_dict)
 
     return {
@@ -2256,6 +2299,7 @@ async def trigger_pipeline_scan(admin_user: User = Depends(require_roles(["ADMIN
 
 @app.post("/api/retrain")
 def trigger_model_retrain(admin_user: User = Depends(require_roles(["ADMIN"])), db: Session = Depends(get_db)):
+    from model.train import train_model_from_human_feedback
     res = train_model_from_human_feedback(db, min_samples_required=5)
     if res.get("status") == "error":
         raise HTTPException(status_code=400, detail=res["message"])

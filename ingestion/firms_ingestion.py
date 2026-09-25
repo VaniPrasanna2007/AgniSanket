@@ -1,7 +1,6 @@
 import os
 import io
 import requests
-import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
@@ -68,6 +67,7 @@ def get_real_firms_data(map_key: str = None, days: int = 2, sources: list = ["VI
                 print(f"[FIRMS PIPELINE] NASA FIRMS returned 0 active hotspots for source {src}.")
                 continue
 
+            import pandas as pd
             df = pd.read_csv(io.StringIO(content))
             records = parse_and_clean_firms_dataframe(df, src)
             print(f"[FIRMS PIPELINE] Source '{src}': Parsed {len(records)} active hotspot records.")
